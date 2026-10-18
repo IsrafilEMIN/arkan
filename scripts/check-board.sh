@@ -164,7 +164,18 @@ for k in "${!c_line[@]}"; do
 	elif ! want="$(canon_refs "$raw" "${c_feat[$k]}")"; then
 		fail $ln "$name: cannot read the **Blocked by:** line in $path ('$raw')"; continue
 	fi
-	[ "$refs" = "$want" ] || fail $ln "$name: blocked by '$refs' but $path says '$want'"
+	# the note lists only the open blockers: drop those whose card is in Done
+	if [ "$want" != none ]; then
+		IFS=, read -ra wl <<<"$want"
+		open=()
+		for b in "${wl[@]}"; do
+			b="$(trim "$b")" bk="${by_ref[$b]:-}"
+			[ -n "$bk" ] && [ "${c_lane[$bk]}" = Done ] || open+=("$b")
+		done
+		want=none
+		[ ${#open[@]} = 0 ] || want="$(printf '%s\n' "${open[@]}" | paste -sd, - | sed 's/,/, /g')"
+	fi
+	[ "$refs" = "$want" ] || fail $ln "$name: blocked by '$refs' but $path says '$want' (its open blockers)"
 
 	# lane rule: Done if closed; else Todo if ready; else Backlog
 	if [ "${c_tick[$k]}" = x ]; then expect=Done
