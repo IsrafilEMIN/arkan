@@ -6,5 +6,9 @@
 
 - [ ] the install command and the `pre-setup` step are the first two steps, in that order, and the readme says plainly that `pre-setup` comes first
 - [ ] it says what `pre-setup` asks (harnesses, tracker, and so on) and that a re-run is safe
-- [ ] it links `docs/flow.md` for the flow, and `GLOSSARY.md` for the words
+- [ ] it shows the flow, and links `GLOSSARY.md` for the words
 - [ ] each command in it was run once on a clean machine and works as written
+
+## Comments
+
+- 2026-10-18: a first `README.md` exists, with what arkan is, the flow and where the skills come from. this ticket now finishes its install and `pre-setup` steps.
