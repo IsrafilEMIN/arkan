@@ -1,9 +1,9 @@
 ---
 name: retro
-description: "Conduct a retrospective on a coding session."
+description: "Retrospective on a coding session: proposes changes to the agent's environment so future runs go better. Use when the person asks for a retrospective or a look back, when a review loop stops after round 3, when the same class of finding comes back in two or more review rounds, or after `post-merge` tickets a miss."
 ---
 
-The user has asked for a **retrospective**. You are suggesting improvements to the coding agent's **environment** to improve future runs.
+This is a **retrospective**, started by the user or by you. You are suggesting improvements to the coding agent's **environment** to improve future runs. You only propose: you write nothing, and the user picks what to apply.
 
 ## Steps
 
