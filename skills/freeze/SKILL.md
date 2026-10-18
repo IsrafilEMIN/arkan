@@ -1,6 +1,7 @@
 ---
 name: freeze
 description: Freeze writes to one directory so every edit stays inside it, with a pre-tool-use guard that blocks writes outside the frozen directory. Use when the user says freeze <dir>, wants to lock edits to a directory, or asks to stop writes outside a path.
+disable-model-invocation: true
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

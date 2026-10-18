@@ -1,5 +1,3 @@
 interface:
   display_name: "Test to Break"
   short_description: "Plan, audit, list or prune a test suite"
-policy:
-  allow_implicit_invocation: false

@@ -1,7 +1,7 @@
 ---
 name: test-to-break
 description: Suite strategy for tests - plan, audit, list, or prune; the policy the tdd engine reads when the suite shape is unsettled.
-disable-model-invocation: true
+user-invocable: false
 ---
 
 # Test to break

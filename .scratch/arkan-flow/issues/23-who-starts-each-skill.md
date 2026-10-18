@@ -16,7 +16,7 @@
 
 harness facts (sources in ticket 17): only claude code can hide a skill from the menu; codex, pi and omp ignore `user-invocable`, so agent-only skills still show there. `triage` stays person only because `#ready-for-agent` is the person's go (ticket 26).
 
-- [ ] every `skills/*/SKILL.md` frontmatter matches the table, and `agents/openai.yaml` matches where it exists
+- [x] every `skills/*/SKILL.md` frontmatter matches the table, and `agents/openai.yaml` matches where it exists
 - [ ] proof: in claude code, the agent-only skills are not in the `/` menu and the person-only ones are not in the agent's skill list
 
 ## Comments
