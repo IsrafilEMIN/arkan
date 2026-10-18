@@ -2,8 +2,8 @@
 
 ## Backlog
 
-- [ ] reconstruct skills according to tern board TODO.md #skills
-  even refine skills to add proper details in notes section of TODO tasks
+- [ ] 01: Reconstruct skills for the tern board #skills #needs-info
+  `.scratch/skills/issues/01-reconstruct-skills-for-the-board.md` · blocked by: none
 
 - [ ] 02: Install the remaining pstack skills (later) #completion-loop
   `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: arkan-flow 01
@@ -60,6 +60,9 @@
 
 - [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
+
+- [ ] 01: Check that every card has a ticket #board #ready-for-agent
+  `.scratch/board/issues/01-check-every-card-has-a-ticket.md` · blocked by: none
 
 ## Done
 
