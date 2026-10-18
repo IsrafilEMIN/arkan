@@ -24,8 +24,9 @@ other arkan skills sit beside this file in the same skills folder (`../grill/SKI
 - code crosses a function boundary → the **build** skill (sketch the shape before the code).
 - a behavior to build or a bug with a cheap test path → the **tdd** skill.
 - something is broken, flaky or slow → the **debug** skill.
-- a diff is ready → the **review** skill, before you open a pr.
+- a diff is ready → the **review** skill and the **security-review** skill, before you open a pr.
 - a pr to open, or a pr to drive to green → the **ship** skill.
+- a merged change broke something → the **post-merge** skill.
 - the user corrected you, or a session went badly → the **learn** skill.
 - any prose (replies, docs, pr bodies, commit messages, skills) → the **write** skill.
 

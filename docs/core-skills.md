@@ -1,10 +1,10 @@
 # arkan core skills: what each one does
 
-status: proposal, waiting for kutluk's approval (2026-10-12).
+status: proposal, waiting for kutluk's approval (2026-10-12). updated 2026-10-18 with the gaps in [review-gaps.md](review-gaps.md): `review`, `ship` and `learn` changed, `security-review` and `post-merge` added (named `post-merge`, because `skills/triage` is already matt's issue-triage skill).
 
 each entry says what the skill does, when it starts, and which source skills it comes from. "it starts" means the agent can call it by itself when the situation fits. you can also type its name, for example `/debug`.
 
-## the core (12 skills)
+## the core (14 skills)
 
 ### 1. arkan-mode
 
@@ -58,25 +58,41 @@ each entry says what the skill does, when it starts, and which source skills it 
 
 ### 7. review
 
-**what it does.** reviews a diff before it ships. it checks two things on their own: does the code follow the repo's standards, and does it do what the spec asked. then it asks "what else can this break?" and proves the one fact the change is safe because of by running real code. it sorts each finding into act on, consider, noted or dismissed, so you see only what matters. it also deletes comments that only explain a workaround.
+**what it does.** reviews a diff before it ships. it runs in a fresh context (a subagent that did not write the code). it checks two things on their own: does the code follow the repo's standards, and does it do what the spec asked. then it asks "what else can this break?" and proves the one fact the change is safe because of by running real code. it reads the repo's `REVIEW.md` if there is one. it also deletes comments that only explain a workaround.
 
-**it starts** when a diff is ready, before a pr.
+findings go through two steps:
 
-**from:** matt `code-review`, pstack `interrogate`, `blast-radius`, `no-comments`.
+- **find, then verify.** finders look for bugs in parallel. then a separate verifier tries to prove each finding wrong. only the findings that survive go on. style-only findings are dropped.
+- **tag each finding.** `important` (blocks the pr), `nit` (optional) or `pre-existing` (the bug was there before this diff, so it does not block and it is not the author's fault). each finding names a `file:line` as evidence, not a guess from a name.
+
+review must converge (reach an end):
+
+- at most 3 rounds. after round 3, it stops and asks the author to rethink the approach.
+- after the first round, it reviews only the new diff.
+- it names the class of bug, so the author fixes every instance in one round, not one line per round.
+- it never posts a finding again that it already posted.
+
+it also sets the risk tier of the change from the diff, not from the author: `low` (docs, copy, additive work behind a flag), `medium` (normal product code), `high` (risky code). paths the repo lists as sensitive (ci workflows, installers, auth, billing) are never `low`. a second check asks if this change needs a person even when its tier says no; if yes, the tier goes up one. the tier tells `ship` how many people must approve (see node 9 in [flow.md](flow.md)). the repo host and the guard repo enforce it, not this skill.
+
+**it starts** when a diff is ready, before a pr, and again on each new push to an open pr.
+
+**from:** matt `code-review`, pstack `interrogate`, `blast-radius`, `no-comments`, and the claude code team's review flow (see [review-gaps.md](review-gaps.md)).
 
 ### 8. ship
 
-**what it does.** opens the pr and drives it to merge-ready. it makes small ordered commits, writes a short pr body (why, what changed, what it can break, how it was checked), then fixes ci failures, merge conflicts and review comments one by one. it never merges without your clear "merge".
+**what it does.** opens the pr and drives it to merge-ready. it makes small ordered commits, writes a short pr body (why, what changed, risk tier, how it was checked, how to revert), then fixes ci failures, merge conflicts and review comments one by one. it answers every finding: it fixes it, or it resolves the thread with a one-line reason. an `important` or security finding that is still open means the pr is not ready. then it merges by risk tier: a `low` change auto-merges once ci and both reviews are green; `medium` waits for one person, `high` for two; a sensitive path or a ci workflow file always waits for a person. an agent's approval never takes the place of a person's, and a new push needs a new approval.
 
 **it starts** when work is ready for a pr, or when you say "get this pr green".
 
-**from:** matt `pr`, pstack opening-a-pr, babysit and shipping playbooks.
+**from:** matt `pr`, pstack opening-a-pr, babysit and shipping playbooks, and the claude code team's pr template (testing, risk, how to revert).
 
 ### 9. learn
 
 **what it does.** after a session, or after you correct the agent, it finds the mistakes that repeat and makes them hard to repeat. it tries the strongest fix first: change the code structure, then add a type, then a lint rule whose error names the right fix, then a test, and only last a written rule. it proves each new check fails on a real past mistake. this is the dune idea in skill form.
 
-**it starts** when you correct the agent, or when you say "learn" or "retro".
+when the reviewer keeps flagging the same thing, it moves that rule into the repo's `REVIEW.md` (or `CLAUDE.md`, or a lint rule). it keeps both files short.
+
+**it starts** when you correct the agent, or when you say "learn" or "retro", or when `post-merge` finds a miss.
 
 **from:** pstack `correct`, `reflect`, matt `retro`.
 
@@ -103,6 +119,22 @@ each entry says what the skill does, when it starts, and which source skills it 
 **it starts** when you ask, or on a schedule you choose.
 
 **from:** pstack `maintain-verification-skill`.
+
+### 13. security-review
+
+**what it does.** a separate review pass that looks only for security problems: secrets in code, injection, unsafe input, wrong auth checks, risky changes to ci workflows and installers. it uses the same find-then-verify step and the same tags as `review`. an open finding blocks the pr until it is fixed or closed with a reason. if a later commit fixes it, the finding clears.
+
+**it starts** when a diff is ready, beside `review`.
+
+**from:** the claude code team's security review layer, and claude code's `/security-review` command.
+
+### 14. post-merge
+
+**what it does.** watches a change after it merges, and handles what went wrong. it checks the signals the repo has (ci on main, error logs, revert and incident reports). when a merged change breaks something, it fixes forward or reverts, whichever is faster to make safe. then it asks "which layer should have caught this?" and hands the answer to `learn`. it also saves each real incident or revert as a test case for the reviewer: the bad diff and the bug an expert confirmed. the cases live in the repo they came from (`.arkan/evals/review/`), not in arkan, because arkan is shared infra, not a project. when `review` or its prompts change, it runs the reviewer on all saved cases, and keeps the change only if the score did not drop.
+
+**it starts** after a merge, when a change breaks something, or when you ask.
+
+**from:** the claude code team's "fast detection, fast rollback" layer and their incident eval set.
 
 ## after the core
 
