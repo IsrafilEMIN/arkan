@@ -37,9 +37,6 @@
 
 ## Todo
 
-- [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
-  `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
-
 - [ ] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: none
 
@@ -62,6 +59,9 @@
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
+
+- [x] 19: Test arkan on real scenarios #arkan-flow #wontfix
+  `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
 
 - [x] 27: Review that converges #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/27-review-converges.md` · blocked by: none
