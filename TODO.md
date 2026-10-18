@@ -46,9 +46,6 @@
 - [ ] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
 
-- [ ] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: 03
-
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
 
@@ -83,3 +80,6 @@
 
 - [x] 03: Decide which core skills to merge, if any #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/03-decide-core-skill-merges.md` · blocked by: none
+
+- [x] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: 03
