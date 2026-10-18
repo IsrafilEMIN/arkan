@@ -43,9 +43,6 @@
 - [ ] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
 
-- [ ] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
-
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
 
@@ -92,6 +89,9 @@
 
 - [x] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
+
+- [x] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
 
 - [x] 01: Port poteto-mode to all agents (drop cursor-only mechanics) #completion-loop #wontfix
   `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none
