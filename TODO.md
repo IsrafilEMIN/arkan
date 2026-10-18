@@ -43,9 +43,6 @@
 - [ ] 23: Who starts each skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/23-who-starts-each-skill.md` · blocked by: none
 
-- [ ] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
-
 - [ ] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: none
 
@@ -65,6 +62,9 @@
 
 - [x] 03: Card shows only open blockers #board #ready-for-agent
   `.scratch/board/issues/03-card-shows-only-open-blockers.md` · blocked by: none
+
+- [x] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
 
 - [x] 01: Port poteto-mode to all agents (drop cursor-only mechanics) #completion-loop #wontfix
   `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none
