@@ -34,20 +34,8 @@
 
 ## Todo
 
-- [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
-  `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
-
 - [ ] 32: Log how each review finding ends #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/32-log-how-each-finding-ends.md` · blocked by: none
-
-- [ ] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
-
-- [ ] 38: Ship a ci test job a repo can copy #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/38-ship-a-ci-test-job.md` · blocked by: none
-
-- [ ] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
 
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
@@ -59,6 +47,9 @@
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
+
+- [x] 19: Test arkan on real scenarios #arkan-flow #wontfix
+  `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
 
 - [x] 27: Review that converges #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/27-review-converges.md` · blocked by: none
@@ -90,8 +81,17 @@
 - [x] 23: Who starts each skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/23-who-starts-each-skill.md` · blocked by: none
 
+- [x] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
+
+- [x] 38: Ship a ci test job a repo can copy #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/38-ship-a-ci-test-job.md` · blocked by: none
+
 - [x] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
+
+- [x] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
 
 - [x] 01: Port poteto-mode to all agents (drop cursor-only mechanics) #completion-loop #wontfix
   `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none
