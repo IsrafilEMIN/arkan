@@ -25,3 +25,8 @@ questions for the grill:
 - [ ] each question above has an answer recorded here
 - [ ] the section list, their order, and each section's shape are agreed
 - [ ] ticket 06, and sections 12, 13, 14 and 16 of the parked spec, are updated to match
+
+## Comments
+
+- 2026-10-18: round 1 asked, not yet answered; the owner put the grill on hold. proposed answers: (1) leave sections f to j out while `.scratch/review-ci/spec.md` is parked, add only section k now; (2) two skills, a machine skill built last with 04, 06 and 17, and `pre-setup` for the repo; (3) check mode is the default on a re-run; (4) keep one `SKILL.md` until the review-ci sections return.
+- 2026-10-18: for the grill: the domain-docs section could write `GLOSSARY.md merge=union` into the repo's `.gitattributes`, as this repo does, since an agent (`domain-modeling`) adds terms.

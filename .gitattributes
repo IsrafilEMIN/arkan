@@ -1,0 +1,2 @@
+# a glossary only gains terms: keep both sides of a merge. an edited term can come out twice, so check for duplicate terms after a merge.
+GLOSSARY.md merge=union

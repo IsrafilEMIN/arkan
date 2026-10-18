@@ -25,4 +25,4 @@ when you write the same instruction a second time, or the user corrects the same
 
 - if the fix is structural, use only the structural fix. the instruction was the symptom.
 - if the lesson needs judgment and cannot be encoded, make the instruction more visible and add an example of the failure.
-- the **learn** skill runs this on a whole session.
+- the `retro` skill runs this on a whole session, when a person starts it.

@@ -36,19 +36,19 @@ when the task is a ticket:
 
 ## 2. when to reach for another skill
 
-each line names the skill to call today. a name in brackets is a planned arkan skill that may replace it (ticket `arkan-flow` 03).
+each line names the skill to call today. a ticket in brackets is a planned arkan skill that will take over that line.
 
 - a term or a domain rule is unclear inside the task → `grilling` and `domain-modeling`. if the answer changes what to build, stop: the work is not a task (step 0).
-- code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook). [build]
+- code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook).
 - a behavior to build, or a bug with a cheap test path → `tdd`.
-- something is broken, flaky or slow → `diagnosing-bugs`. [debug]
+- something is broken, flaky or slow → `diagnosing-bugs`.
 - a design question you can settle by running code → `prototype`, or the prototype playbook.
-- a diff is ready → `code-review` in a fresh context, before you open a pr. fix every issue it raises, then run the full test suite again. [review]
-- a diff is ready and touches input, auth, secrets, ci or installers → the harness's own security review if it has one; else say that no security review ran. [security-review]
-- a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook. [ship]
-- a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [post-merge]
-- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. [learn]
-- any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply). text that agents read (skills, `AGENTS.md`) → `writing-for-agents`. [write]
+- a diff is ready → `code-review` in a fresh context, before you open a pr. fix every issue it raises, then run the full test suite again.
+- a diff is ready and touches input, auth, secrets, ci or installers → the harness's own security review if it has one; else say that no security review ran. [ticket `arkan-flow` 20]
+- a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
+- a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [ticket `arkan-flow` 08]
+- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last.
+- any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply). text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
 - a repo has no scripted way to prove the app works → tell the user. a person starts `create-verification`; you do not.
 
 more triggers:
