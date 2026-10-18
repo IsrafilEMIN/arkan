@@ -11,3 +11,7 @@
 - [ ] cursor-only references ported per ticket 01's approach
 - [ ] `link-agents.sh --check` prints `ok`; `agents/openai.yaml` present with matching policy flags
 - [ ] board updated per change
+
+## Comments
+
+- 2026-10-18: proposal, not yet decided: install only what the flow calls. first `create-verification-skill` and `maintain-verification-skill` (step 2 of the flow has nothing behind it without them; both write to `.cursor/skills/`, so they need the port), then maybe `unslop`, `blast-radius`, `interrogate`; the rest on a real need.
