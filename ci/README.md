@@ -27,3 +27,38 @@
 the settings are the `env:` lines at the top: `REVIEW_MODEL`, `MAX_TURNS`, `DOCS_ONLY_REGEX`, `NEVER_DOCS_REGEX`.
 
 **on a pro or max plan,** each review uses the plan's usage. when the plan hits its limit, the review returns nothing, the check stays red, and nothing merges until the limit resets: the gate fails closed. if reviews run out often, set `REVIEW_MODEL` to a lighter model (the sandbox uses `claude-sonnet-5-5`). to move the action to a newer release, replace the commit sha and its `# v1.x.y` comment together, and read that release's inputs in its `action.yml` first.
+
+## arkan-merge
+
+[`github/arkan-merge.yml`](github/arkan-merge.yml) merges a pull request once its verifier posts a `PASS` verdict on the head commit and every check on that commit passed. the person installs it once in a repo. after that the agent never merges: it opens the pr, its verifier posts the verdict, and the repo merges. it uses no third-party actions, only `gh` on the runner.
+
+### add it to a repo
+
+1. add `arkan-review` first (above), so each push gets a review check.
+2. copy the file to `.github/workflows/arkan-merge.yml` on the default branch, and on each base branch a pr can target.
+3. allow squash merges in the repo settings: the workflow merges with `--squash`.
+4. add a branch rule (a ruleset or branch protection) on each base branch:
+   - require a pull request before merging.
+   - require the status checks `check` (the repo's tests) and `arkan-review` to pass.
+   - leave the bypass list empty, so nobody, the owner included, can merge around the rules.
+   - if new branches that the rule covers are created by a push (for example `run/**` trunks), turn on "do not require status checks on creation", or the first push is refused.
+
+### what one run does
+
+- **runs on** `pull_request_review` `submitted`, only for a review whose body begins with `PASS` from an author association of `OWNER`, `MEMBER` or `COLLABORATOR`. this filter only keeps strangers on a public repo from starting runs.
+- **counts the verdict** only when the reviewer's repo permission is `write`, `maintain` or `admin` (`gh api repos/<repo>/collaborators/<login>/permission --jq .permission`). an author association does not prove write access: an org member can have read only.
+- **refuses** when the review's `commit_id` is not the pr's current head: a push after the verdict needs a new verdict.
+- **waits** up to 35 minutes, longer than `arkan-review`'s 30-minute job limit, for every other check run on the head. it refuses if any check ends other than `success` or `skipped`.
+- **merges** with `gh pr merge --squash --match-head-commit <head>`, so github refuses the merge if the head moved while the run waited. the branch rule still applies: a missing required check stops the merge.
+- **sets the check** `arkan-merge` (the job name). a refusal fails it with the reason in the log.
+- **permissions**: `contents: write` and `pull-requests: write` to merge, `checks: read` to read the check runs.
+
+### why the verdict is a COMMENT review
+
+on github, a pr author cannot approve their own pr. the agent's verifier posts as the same account that opened the pr, so its verdict is a `COMMENT` review on the head commit whose body begins with `PASS`, not an approval:
+
+```sh
+gh api -X POST repos/<owner>/<repo>/pulls/<n>/reviews -f event=COMMENT -f commit_id=<head-sha> -F body=@verdict.md
+```
+
+a merge made with the job's `github.token` does not start `push` workflows on the base branch. if the base runs ci on push, that run does not happen for these merges.

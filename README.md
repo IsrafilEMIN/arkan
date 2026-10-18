@@ -42,6 +42,8 @@ not built yet: merge approval by risk tier, and starting `post-merge` by itself 
 
 it skips docs-only prs and prs from forks, and says so on the pr. the details are in [`ci/README.md`](ci/README.md).
 
+[`ci/github/arkan-merge.yml`](ci/github/arkan-merge.yml) is the merge gate a person installs once: it merges a pr when every check on the head passed and a review on that head, from a reviewer with write access, begins with `PASS`, so the agent never merges. install steps and branch rules: [`ci/README.md`](ci/README.md#arkan-merge).
+
 ## where the skills come from
 
 | source | skills in arkan |
