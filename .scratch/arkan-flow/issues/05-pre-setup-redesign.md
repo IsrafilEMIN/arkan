@@ -34,3 +34,4 @@ questions for the grill:
 
 - 2026-10-18: round 1 asked, not yet answered; the owner put the grill on hold. proposed answers: (1) leave sections f to j out while `.scratch/review-ci/spec.md` is parked, add only section k now; (2) two skills, a machine skill built last with 04, 06 and 17, and `pre-setup` for the repo; (3) check mode is the default on a re-run; (4) keep one `SKILL.md` until the review-ci sections return.
 - 2026-10-18: for the grill: the domain-docs section could write `GLOSSARY.md merge=union` into the repo's `.gitattributes`, as this repo does, since an agent (`domain-modeling`) adds terms.
+- 2026-10-18: owner: the seed `skills/pre-setup/issue-tracker-local.md` still describes the hand-edited board; the redesign must update it to the generated board (edit the ticket, run `scripts/build-board.sh`), and decide how `pre-setup` gives a repo the two board scripts.
