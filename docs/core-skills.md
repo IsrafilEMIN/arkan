@@ -72,7 +72,7 @@ review must converge (reach an end):
 - it names the class of bug, so the author fixes every instance in one round, not one line per round.
 - it never posts a finding again that it already posted.
 
-it also sets the risk tier of the change from the diff, not from the author: `low` (docs, copy, additive work behind a flag), `medium` (normal product code), `high` (risky code). paths the repo lists as sensitive (ci workflows, installers, auth, billing) are never `low`. the tier tells `ship` how many people must approve. the repo's branch protection enforces it, not this skill.
+it also sets the risk tier of the change from the diff, not from the author: `low` (docs, copy, additive work behind a flag), `medium` (normal product code), `high` (risky code). paths the repo lists as sensitive (ci workflows, installers, auth, billing) are never `low`. a second check asks if this change needs a person even when its tier says no; if yes, the tier goes up one. the tier tells `ship` how many people must approve (see node 9 in [flow.md](flow.md)). the repo host and the guard repo enforce it, not this skill.
 
 **it starts** when a diff is ready, before a pr, and again on each new push to an open pr.
 
@@ -80,7 +80,7 @@ it also sets the risk tier of the change from the diff, not from the author: `lo
 
 ### 8. ship
 
-**what it does.** opens the pr and drives it to merge-ready. it makes small ordered commits, writes a short pr body (why, what changed, risk tier, how it was checked, how to revert), then fixes ci failures, merge conflicts and review comments one by one. it answers every finding: it fixes it, or it resolves the thread with a one-line reason. an `important` or security finding that is still open means the pr is not ready. it never merges without your clear "merge". an agent's approval never takes the place of a person's.
+**what it does.** opens the pr and drives it to merge-ready. it makes small ordered commits, writes a short pr body (why, what changed, risk tier, how it was checked, how to revert), then fixes ci failures, merge conflicts and review comments one by one. it answers every finding: it fixes it, or it resolves the thread with a one-line reason. an `important` or security finding that is still open means the pr is not ready. then it merges by risk tier: a `low` change auto-merges once ci and both reviews are green; `medium` waits for one person, `high` for two; a sensitive path or a ci workflow file always waits for a person. an agent's approval never takes the place of a person's, and a new push needs a new approval.
 
 **it starts** when work is ready for a pr, or when you say "get this pr green".
 

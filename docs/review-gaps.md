@@ -47,7 +47,7 @@ two more lessons:
 | 8 | pr body lacks "how to revert" | `ship`: pr body has risk tier and how to revert |
 | 9 | no noise metric | open. start with a log of how each finding ended. decide where it lives when `review` is built |
 
-all changes are in [core-skills.md](core-skills.md).
+all changes are in [core-skills.md](core-skills.md). the full flow, node by node, and every known opening are in [flow.md](flow.md).
 
 ## gaps in the repo, not from the article
 
