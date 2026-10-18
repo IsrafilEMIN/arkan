@@ -1,6 +1,6 @@
 # arkan core skills: what each one does
 
-status: proposal, waiting for kutluk's approval (2026-10-12). updated 2026-10-18 with the gaps in [review-gaps.md](review-gaps.md): `review`, `ship` and `learn` changed, `security-review` and `post-merge` added (named `post-merge`, because `skills/triage` is already matt's issue-triage skill).
+status: proposal, waiting for kutluk's approval (2026-10-12). updated 2026-10-18: grill and plan are shaping steps that run before the task, and a person starts them; `arkan-mode` runs the task. whether these skills need merging at all is open (ticket `arkan-flow` 03). updated 2026-10-18 with the gaps in [review-gaps.md](review-gaps.md): `review`, `ship` and `learn` changed, `security-review` and `post-merge` added (named `post-merge`, because `skills/triage` is already matt's issue-triage skill).
 
 each entry says what the skill does, when it starts, and which source skills it comes from. "it starts" means the agent can call it by itself when the situation fits. you can also type its name, for example `/debug`.
 
@@ -8,11 +8,11 @@ each entry says what the skill does, when it starts, and which source skills it 
 
 ### 1. arkan-mode
 
-**what it does.** the entry point for all coding work. it reads your task, picks a playbook (a fixed list of steps for one kind of task), and calls the other skills when a step needs them. it also holds 24 short engineering rules ("principles"), such as "prove it works" and "fix the root cause, not the symptom". before the agent says "done", it must check the real result.
+**what it does.** the entry point for every task (see `GLOSSARY.md`: the smallest piece of work an agent can finish alone). it replaces pstack's `poteto-mode`. it first checks that the work is a task; if the work is still fuzzy or too big, it stops and names the shaping step to run (`grill` or `plan`). then it picks a playbook (a fixed list of steps for one kind of task), and calls the other skills when a step needs them. it also holds 24 short engineering rules ("principles"), such as "prove it works" and "fix the root cause, not the symptom". before the agent says "done", it must check the real result.
 
-**it starts** at the beginning of any non-trivial coding task.
+**it starts** at the beginning of any non-trivial task.
 
-**playbooks inside it:** investigation (answer a question about the code), bug fix, feature, refactor, prototype, autonomous run (work until a goal is met, without stopping), pause and resume, opening a pr.
+**playbooks inside it:** investigation (answer a question about the code), bug fix, feature, refactor, prototype, authoring a skill, autonomous run (work until a goal is met, without stopping), pause safely, session pickup, opening a pr, babysit, shipping.
 
 **from:** pstack `poteto-mode` and its principles and playbooks, plus matt's `ask-matt` flow.
 
@@ -20,15 +20,15 @@ each entry says what the skill does, when it starts, and which source skills it 
 
 **what it does.** interviews you about an idea until nothing is left unclear. it asks a few numbered questions per round, each with its recommended answer, so "yes" accepts the recommendation. it looks up facts in the code by itself and asks you only for decisions. as words get clear, it writes them into a `GLOSSARY.md`, and it writes a short decision record (an "adr") for hard-to-undo choices.
 
-**it starts** when an idea or a feature is still fuzzy, or when you say "grill me".
+**it starts** before the task, when you start it: an idea or a feature is still fuzzy, or you say "grill me". it is a shaping step, so `arkan-mode` does not call it; it tells you to run it.
 
 **from:** matt `grilling`, `grill-me`, `grill-with-docs`, `domain-modeling`.
 
 ### 3. plan
 
-**what it does.** turns a talk or an idea into a spec (what to build and why) and then into small tickets. each ticket is a thin slice that works end to end and can be checked by itself. each ticket lists the tickets that must finish first. tickets are plain files in the repo (`.arkan/plans/<feature>/`), so no issue tracker is needed.
+**what it does.** turns a talk or an idea into a spec (what to build and why) and then into small tickets. each ticket is a thin slice that works end to end and can be checked by itself. each ticket lists the tickets that must finish first. each ticket is a task: an agent can build, check and merge it alone. tickets go to the repo's issue tracker, which `pre-setup` sets (local files under `.scratch/<feature>/` work without any service).
 
-**it starts** when the work is too big for one session or one pr.
+**it starts** before the task, when you start it: the work is more than one task (more than one session or one pr). it is a shaping step, so `arkan-mode` does not call it; it tells you to run it.
 
 **from:** matt `to-spec`, `to-tickets`, `wayfinder`, pstack `figure-it-out` and the multi-phase playbook.
 
@@ -72,7 +72,7 @@ review must converge (reach an end):
 - it names the class of bug, so the author fixes every instance in one round, not one line per round.
 - it never posts a finding again that it already posted.
 
-it also sets the risk tier of the change from the diff, not from the author: `low` (docs, copy, additive work behind a flag), `medium` (normal product code), `high` (risky code). paths the repo lists as sensitive (ci workflows, installers, auth, billing) are never `low`. a second check asks if this change needs a person even when its tier says no; if yes, the tier goes up one. the tier tells `ship` how many people must approve (see node 9 in [flow.md](flow.md)). the repo host and the guard repo enforce it, not this skill.
+it also sets the risk tier of the change from the diff, not from the author: `low` (docs, copy, additive work behind a flag), `medium` (normal product code), `high` (risky code). paths the repo lists as sensitive (ci workflows, installers, auth, billing) are never `low`. a second check asks if this change needs a person even when its tier says no; if yes, the tier goes up one. the tier tells `ship` how many people must approve (see node 7 in [flow.md](flow.md)). the repo host and the guard repo enforce it, not this skill.
 
 **it starts** when a diff is ready, before a pr, and again on each new push to an open pr.
 
@@ -108,7 +108,7 @@ when the reviewer keeps flagging the same thing, it moves that rule into the rep
 
 **what it does.** makes a verification skill inside one repo (for example `.claude/skills/verify-chopper/`). that skill tells any agent how to start the real app, check it is healthy, use it the way a person does (browser, terminal or api calls), save proof (screenshots, output) and shut it down. it also writes a short feature map: one file per main feature, with how to reach it and what "it works" looks like. it runs the new skill once end to end before it calls it done.
 
-**it starts** when a repo has no scripted way to prove that the app works, or when you ask for one.
+**it starts** only when a person starts it (decided 2026-10-18). when a repo has no scripted way to prove that the app works, `arkan-mode` tells you, and does not start it by itself.
 
 **from:** pstack `create-verification-skill`. this is the dune "verifier agent" idea.
 

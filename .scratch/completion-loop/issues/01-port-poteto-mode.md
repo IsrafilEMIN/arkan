@@ -11,3 +11,7 @@
 - [ ] every playbook still reads coherently after the replacement; no reference to a removed mechanic remains
 - [ ] the skill stays user-invoked: `disable-model-invocation: true` and `allow_implicit_invocation: false` unchanged; `link-agents.sh --check` prints `ok`
 - [ ] each behavior-changing adaptation is reported in this ticket's comments for maintainer confirmation before it lands
+
+## Comments
+
+- closed 2026-10-18 as superseded: `arkan-mode` replaces `poteto-mode` (owner decision), so the port goes into `arkan-mode`. see `.scratch/arkan-flow/issues/01-arkan-mode-replaces-poteto-mode.md`. its acceptance checks moved there.
