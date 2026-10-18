@@ -32,13 +32,14 @@ when the task is a ticket:
 - the repo has no issue tracker set up (no `docs/agents/issue-tracker.md`) → tell the user to run `/pre-setup`.
 - fetch the ticket from the issue tracker and state its title before you start. if the reference is ambiguous, ask.
 - claim the ticket before any work, the way the issue tracker doc says.
+- **a missing piece is a blocker, not a bug.** when code the ticket needs does not exist yet and belongs to another open ticket, do not build it and do not debug around it. stop, add that ticket to this ticket's `Blocked by`, drop your claim, and report which piece is missing and which ticket owns it. commit that edit and the rebuilt board on your work branch; if you have none yet, open a small branch and PR for the edit alone (the board rule in `docs/agents/issue-tracker.md`). never commit it straight to `main`.
 
 ## 1. start every task like this
 
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
 2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principles/architecture.md`.
 3. **read the principles you will use.** each entry in [principles](#principles) names when it applies. read its full text in `principles/` before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
-4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end.
+4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end. a unit that fails because a piece it needs is another open ticket's work is a missing blocker: stop the way step 0 says, instead of debugging.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
 
 ## 2. when to reach for another skill
