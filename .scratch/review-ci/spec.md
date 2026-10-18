@@ -125,4 +125,4 @@ options to offer when there is one person (recommended first):
 
 - [ ] each finding's end state is recorded (the round marker from ticket 10 is the first place to try)
 - [ ] a short report gives the noise rate per tag (`important`, `nit`, `pre-existing`)
-- [ ] `learn` reads the report when it changes `REVIEW.md` or the reviewer prompt
+- [ ] `retro` reads the report when it changes `REVIEW.md` or the reviewer prompt

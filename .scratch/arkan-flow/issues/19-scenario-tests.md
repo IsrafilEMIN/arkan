@@ -5,4 +5,4 @@
 **Blocked by:** None (can start immediately). the owner runs it.
 
 - [ ] each scenario names the nodes it went through and where a gate failed or held
-- [ ] each failure becomes a ticket, or a `learn` change
+- [ ] each failure becomes a ticket, or a change that `retro` proposes
