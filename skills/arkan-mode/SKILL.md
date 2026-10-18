@@ -20,12 +20,18 @@ arkan mode runs tasks only. the work before a task is **shaping**, and a person 
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
 
+when the task is a ticket:
+
+- the repo has no issue tracker set up (no `docs/agents/issue-tracker.md`) → tell the user to run `/pre-setup`.
+- fetch the ticket from the issue tracker and state its title before you start. if the reference is ambiguous, ask.
+- claim the ticket before any work, the way the issue tracker doc says.
+
 ## 1. start every task like this
 
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
 2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principles/architecture.md`.
 3. **read the principles you will use.** each entry in [principles](#principles) names when it applies. read its full text in `principles/` before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
-4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red.
+4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
 
 ## 2. when to reach for another skill
@@ -37,7 +43,7 @@ each line names the skill to call today. a name in brackets is a planned arkan s
 - a behavior to build, or a bug with a cheap test path → `tdd`.
 - something is broken, flaky or slow → `diagnosing-bugs`. [debug]
 - a design question you can settle by running code → `prototype`, or the prototype playbook.
-- a diff is ready → `code-review` in a fresh context, before you open a pr. [review]
+- a diff is ready → `code-review` in a fresh context, before you open a pr. fix every issue it raises, then run the full test suite again. [review]
 - a diff is ready and touches input, auth, secrets, ci or installers → the harness's own security review if it has one; else say that no security review ran. [security-review]
 - a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook. [ship]
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [post-merge]

@@ -39,3 +39,7 @@ where each job of `implement` goes:
 - [ ] `README.md` lists only the decided skills
 - [ ] `arkan-mode` section 2 routes to the decided names, with no bracketed plan names left for skills that will not exist
 - [ ] a follow-up ticket exists for each new skill and each retirement
+
+## Comments
+
+- 2026-10-18, owner: retire `implement` once `arkan-mode` has all of its jobs. done on branch `claude/fervent-turing-qu5b6e`: `arkan-mode` step 0 now has the tracker check, the ticket fetch and the claim; step 1.4 has the type check, single tests and full suite; section 2 has "fix every issue `code-review` raises, then run the full suite again"; the opening-a-pr playbook has the ticket close. `skills/implement/` is removed. the `build` row is settled.

@@ -6,6 +6,8 @@ Invoked at the end of every other playbook.
 
 **Commits.** Commit liberally. Rebase into small, ordered commits before opening PRs. Each commit is a future PR: landable, ordered to tell the story. Amend when the fix belongs in a just-made commit. New commit when separable. Commit bodies don't restate the subject.
 
+**Tickets.** If the work is a ticket, close it the way the issue tracker closes work, in the work's own branch, so the close reaches main with the merge (see `docs/agents/issue-tracker.md`).
+
 **PRs.** Before commit, read the whole diff and remove slop: dead code, debug output, needless churn, and comments that break **Comments** in `SKILL.md`. Write every PR title, description, and commit body per **The reply** in `SKILL.md`, with the STE vocabulary rules: one word per action, keep articles, a plain verb over `-ing` where one works.
 
 **Titles.** Conventional Commits `type(scope): subject`, no trailing period. Type such as `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, or `perf`. Scope is the area, such as `arkan-mode`. Subject is short, imperative, and names a real symbol when one carries the change, for example `fix(arkan-mode): retarget opening-a-pr babysit trigger`.
