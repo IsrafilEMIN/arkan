@@ -11,11 +11,8 @@
 - [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/07-readme-run-pre-setup-first.md` · blocked by: 04, 06
 
-- [ ] 17: No two skills or commands share a name #arkan-flow #needs-info
-  `.scratch/arkan-flow/issues/17-name-clashes.md` · blocked by: 03
-
-- [ ] 20: Security-review skill #arkan-flow #needs-triage
-  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: 17
+- [ ] 17: No two skills or commands share a name #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/17-name-clashes.md` · blocked by: 04
 
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: 08, 05
@@ -24,6 +21,12 @@
   `.scratch/review-ci/spec.md` · blocked by: none
 
 ## Todo
+
+- [ ] 20: Security-review skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
+
+- [ ] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
 
 - [ ] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: 03

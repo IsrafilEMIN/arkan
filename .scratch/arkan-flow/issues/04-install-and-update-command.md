@@ -12,7 +12,10 @@ proposal: a script in the repo root (for example `install.sh`) that keeps one ch
 - [ ] a skill folder in `~/.agents/skills/` that arkan did not make is never overwritten; the script reports the clash and stops for that skill
 - [ ] the command prints the arkan version (tag or commit) it installed
 - [ ] works on linux and macos (bash), with no tool beyond git
+- [ ] for claude code, arkan installs as a plugin (a `.claude-plugin/plugin.json` manifest, plus a marketplace entry or `--plugin-dir`), not as plain skills in `~/.claude/skills/`. a plain skill named like a built-in command replaces it (arkan `code-review` would replace `/code-review`); a plugin skill is named `arkan:<skill>`, so both stay
+- [ ] proof: in a fresh claude code session, `/code-review` runs the built-in and `/arkan:code-review` runs arkan's
 
 ## Comments
 
 - 2026-10-18, owner: do this ticket last, after every other open ticket. ticket 07 waits on it, so 07 comes last too.
+- 2026-10-18, owner: claude code gets arkan as a plugin, so no skill is renamed (ticket 17). sources read 2026-10-18: claude code <https://code.claude.com/docs/en/skills>; codex source `codex-rs/skills/src/` in <https://github.com/openai/codex> (its docs page was blocked from the cloud session); pi <https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/skills.md>; omp <https://github.com/can1357/oh-my-pi/blob/main/docs/skills.md>.
