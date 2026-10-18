@@ -1,7 +1,7 @@
 # 20: security-review skill
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 1
 
 **What to build:** an arkan `security-review` skill, copied from the prompt claude code publishes for its own `/security-review` (`.claude/commands/security-review.md` in <https://github.com/anthropics/claude-code-security-review>, mit license), so every harness gets the same security pass, not only claude code. it stays separate from `code-review` (owner's decision in ticket 03). in claude code the plugin install (ticket 04) keeps it from replacing the built-in.

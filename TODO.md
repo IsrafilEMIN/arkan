@@ -57,6 +57,9 @@
 
 ## Done
 
+- [x] 20: Security-review skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
+
 - [x] 02: Build the board from the tickets #board #ready-for-agent
   `.scratch/board/issues/02-build-board-from-tickets.md` · blocked by: none
 
@@ -80,6 +83,3 @@
 
 - [x] 03: Decide which core skills to merge, if any #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/03-decide-core-skill-merges.md` · blocked by: none
-
-- [x] 20: Security-review skill #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
