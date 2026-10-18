@@ -44,8 +44,6 @@ These are canonical role names. The actual label strings used in the issue track
 
 State transitions: an unlabeled issue normally goes to `needs-triage` first; from there it moves to `needs-info`, `ready-for-agent`, `ready-for-human`, or `wontfix`. `needs-info` returns to `needs-triage` once the reporter replies. The maintainer can override at any time; flag transitions that look unusual and ask before proceeding.
 
-Every role change or close also updates the issue's card in `TODO.md`: the board **Change role** or **Resolve** operation (see the `## Board` section of the issue tracker doc). If the issue has no card yet, apply **Add** first.
-
 ## Invocation
 
 The maintainer invokes `/triage` and describes what they want in natural language. Interpret the request and act. Examples:

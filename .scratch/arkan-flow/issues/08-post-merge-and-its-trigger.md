@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-what post-merge does (from `docs/core-skills.md` node 9):
+what post-merge does (from `docs/core-skills.md` node 9, now removed; see git history):
 
 1. read the signals: ci on main, error logs or alerts the repo has, revert commits, incident issues.
 2. tie a failure to the merge that caused it (the first bad commit on main).

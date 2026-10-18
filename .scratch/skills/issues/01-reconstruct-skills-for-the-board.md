@@ -16,3 +16,10 @@ questions for the owner:
 - [ ] the owner answers both questions; the answers are recorded here
 - [ ] each skill in scope writes cards in the agreed shape
 - [ ] the card format in `docs/agents/issue-tracker.md` and `skills/pre-setup/issue-tracker-local.md` matches
+
+## Answer
+
+owner, 2026-10-18:
+
+1. no skill carries the board rule. it lives only in the `## Board` section of `docs/agents/issue-tracker.md` and the `pre-setup` seeds it comes from. the copies in `to-spec`, `to-tickets`, `wayfinder`, `implement`, `implement-spec` and `triage` are removed.
+2. `TODO.md` is only the cards: one card per ticket, as a picture of the tickets. every detail stays in the ticket file, so the note line stays as it is (`<path> · blocked by: <refs>`).

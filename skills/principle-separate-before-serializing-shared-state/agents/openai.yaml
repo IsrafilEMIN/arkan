@@ -1,5 +1,0 @@
-interface:
-  display_name: "Separate before Serializing Shared State"
-  short_description: "Apply when concurrent actors might write to the same file, branch, key, or state object."
-policy:
-  allow_implicit_invocation: false

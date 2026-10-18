@@ -1,6 +1,6 @@
 # 03: decide which core skills to merge, if any
 
-**What to build:** the owner decides which of the 14 planned core skills in `docs/core-skills.md` get written, which are only routes to skills that exist, and which source skills retire. `core-skills.md` and `arkan-mode` then name only skills that exist or have a ticket.
+**What to build:** the owner decides which of the 14 planned core skills (from `docs/core-skills.md`, now removed; see git history) get written, which are only routes to skills that exist, and which source skills retire. `README.md` and `arkan-mode` then name only skills that exist or have a ticket.
 
 **Blocked by:** None (can start immediately). needs the owner's decision.
 
@@ -14,7 +14,7 @@ proposal (rule: merge only when two skills start at the same moment and do the s
 | tdd | keep `tdd` (+ `test-to-break` as its policy) | already one engine and one policy. do not install pstack's `tdd` (name clash) |
 | debug | keep `diagnosing-bugs` | does the job; renaming costs more than it gives |
 | review + security-review | **decided: two separate skills**, `code-review` and `security-review` | the owner rejected one merged skill (2026-10-18). each runs in fresh-context subagents. the clash with the harness's built-in commands of the same names is ticket 17 |
-| ship | no new skill | the `pr` skill plus the opening-a-pr, babysit and shipping playbooks; tier and approval live in ci (tickets 09, 11) |
+| ship | no new skill | the `pr` skill plus the opening-a-pr, babysit and shipping playbooks; tier and approval live in ci (parked: `.scratch/review-ci/spec.md`, sections 09 and 11) |
 | learn | open. **keep `retro`** (revised) | `retro` is a person-started look back over a whole session that proposes changes to the agent's environment. `learn` would start by itself on one miss (a correction, or a hand-off from `post-merge`) and make the fix. they start at different moments, so by the rule above they do not merge. option: no `learn` skill; `post-merge` and `arkan-mode` call `retro` on the one miss |
 | post-merge | **one new skill** | nothing does it today (ticket 08) |
 | write | no new skill for now | `arkan-mode` holds the reply rules; `writing-for-agents` covers agent text. revisit after pstack `unslop` is installed |
@@ -36,6 +36,10 @@ where each job of `implement` goes:
 | close the ticket the tracker's way, board **Resolve** in the same branch | opening-a-pr playbook (a new step), so the card reaches `main` with the merge |
 
 - [ ] the owner accepts, changes or rejects each row; the decision is recorded here
-- [ ] `docs/core-skills.md` lists only the decided skills
+- [ ] `README.md` lists only the decided skills
 - [ ] `arkan-mode` section 2 routes to the decided names, with no bracketed plan names left for skills that will not exist
 - [ ] a follow-up ticket exists for each new skill and each retirement
+
+## Comments
+
+- 2026-10-18, owner: retire `implement` once `arkan-mode` has all of its jobs. done on branch `claude/fervent-turing-qu5b6e`: `arkan-mode` step 0 now has the tracker check, the ticket fetch and the claim; step 1.4 has the type check, single tests and full suite; section 2 has "fix every issue `code-review` raises, then run the full suite again"; the opening-a-pr playbook has the ticket close. `skills/implement/` is removed. the `build` row is settled.
