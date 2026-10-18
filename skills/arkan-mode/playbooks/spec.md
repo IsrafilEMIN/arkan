@@ -13,7 +13,7 @@ Talk to subagents through context pointers: the spec, the ticket paths, the note
    - confirms its worktree is based on the integration branch tip, and resets onto it if not;
    - reads `SKILL.md` and runs the task loop on its one ticket: claim it, check it in step 0, match a playbook, build with `tdd`, prove it. It skips the code review and the PR: the spec has one of each, in steps 7 and 8;
    - merges the integration branch tip into its own branch, and proves it again, before it reports done.
-5. When an implementer reports done, read its diff yourself, then merge its branch into the integration branch with a **merger subagent**.
+5. When an implementer reports done, read its diff yourself, then merge its branch into the integration branch with a **merger subagent**. An implementer that reports a missing blocker (step 0 of `SKILL.md`) gets no merge: its ticket leaves the frontier until that blocker merges.
 6. A merge can unblock tickets. Each ticket whose blockers are now all merged, and that passes the gate, joins the frontier: start an implementer for it at once (step 4). Repeat steps 4 to 6 until the frontier is empty.
 7. Once every ticket is merged, run the `code-review` skill on the integration branch in a fresh context. Fix every issue it raises in a single implementer subagent, then run the full test suite.
 8. If a draft PR exists, mark it ready for review and drive it with **Opening a PR**. Otherwise, resolve each ticket the way the issue tracker closes work, and report the integration branch.
