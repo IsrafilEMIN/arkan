@@ -13,25 +13,33 @@ other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, 
 
 a **task** is the smallest piece of work you can finish alone, from start to a merged and checked change, with no more decisions from a person (see `GLOSSARY.md` in the arkan repo). a ticket is a task. a small, clear request is a task.
 
+pick the mode from what you were given:
+
+- one ticket, or a small, clear request → one task loop, from section 1 on.
+- a spec with tickets → the spec playbook (`playbooks/spec.md`): one task loop per ready ticket, in parallel where the blocking edges allow, then one review and one pr.
+
 arkan mode runs tasks only. the work before a task is **shaping**, and a person starts each shaping step:
 
 - the idea or its words are still fuzzy → stop and tell the user to run `/grill-with-docs`.
-- the work needs more than one pr or more than one session → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
+- the work needs more than one pr or more than one session, and has no tickets yet → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
+
+**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the person sets the role with `/triage`, so the role is the person's go.
 
 when the task is a ticket:
 
 - the repo has no issue tracker set up (no `docs/agents/issue-tracker.md`) → tell the user to run `/pre-setup`.
 - fetch the ticket from the issue tracker and state its title before you start. if the reference is ambiguous, ask.
 - claim the ticket before any work, the way the issue tracker doc says.
+- **a missing piece is a blocker, not a bug.** when code the ticket needs does not exist yet and belongs to another open ticket, do not build it and do not debug around it. stop, add that ticket to this ticket's `Blocked by`, drop your claim, and report which piece is missing and which ticket owns it. commit that edit and the rebuilt board on your work branch; if you have none yet, open a small branch and PR for the edit alone (the board rule in `docs/agents/issue-tracker.md`). never commit it straight to `main`.
 
 ## 1. start every task like this
 
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
 2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principles/architecture.md`.
 3. **read the principles you will use.** each entry in [principles](#principles) names when it applies. read its full text in `principles/` before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
-4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end.
+4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end. a unit that fails because a piece it needs is another open ticket's work is a missing blocker: stop the way step 0 says, instead of debugging.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
 
 ## 2. when to reach for another skill
@@ -43,7 +51,7 @@ each line names the skill to call today. a ticket in brackets is a planned arkan
 - a behavior to build, or a bug with a cheap test path → `tdd`.
 - something is broken, flaky or slow → `diagnosing-bugs`.
 - a design question you can settle by running code → `prototype`, or the prototype playbook.
-- a diff is ready → `code-review` in a fresh context, before you open a pr. fix every issue it raises, then run the full test suite again.
+- a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one as a ticket. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, and ask them to rethink the approach. you may start `retro`, or suggest it if you cannot.
 - a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
 - a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [ticket `arkan-flow` 08]
@@ -149,5 +157,6 @@ open the file at `playbooks/<file>`. where a step names a tool your harness does
 - **opening a pr** (`opening-a-pr.md`). the end of every other code playbook.
 - **babysit** (`babysit.md`). drive an open pr to merge-ready: conflicts, review threads, ci.
 - **shipping** (`shipping.md`). land a green pr that a verifier, not its author, has checked.
+- **spec** (`spec.md`). a spec with tickets: one task loop per ready ticket on an integration branch, then one review and one pr.
 
-pstack's other playbooks (perf, hillclimb, forensics, visual parity, eval, orchestrate, autopilot, worktree cleanup) are not part of arkan yet. multi-phase plans are shaping, not a task: see step 0.
+pstack's other playbooks (perf, hillclimb, forensics, visual parity, eval, orchestrate, autopilot, worktree cleanup) are not part of arkan yet. a multi-phase plan with no tickets yet is shaping, not a task: see step 0.
