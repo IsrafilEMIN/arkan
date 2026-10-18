@@ -42,7 +42,7 @@ two more lessons:
 | 3 | no `pre-existing` tag | `review`: tags `important`, `nit`, `pre-existing`, each with a `file:line` |
 | 4 | no security review | new skill `security-review` |
 | 5 | no risk tier | `review` sets the tier; `ship` writes it in the pr body. enforcement (codeowners, branch protection) stays in the guard-rules repo |
-| 6 | no triage after the merge | new skill `triage`: watch, fix forward or revert, incident to eval case |
+| 6 | no triage after the merge | new skill `post-merge`: watch, fix forward or revert, incident to eval case |
 | 7 | no `REVIEW.md` | `review` reads it; `learn` writes repeated findings into it |
 | 8 | pr body lacks "how to revert" | `ship`: pr body has risk tier and how to revert |
 | 9 | no noise metric | open. start with a log of how each finding ended. decide where it lives when `review` is built |
@@ -51,8 +51,8 @@ all changes are in [core-skills.md](core-skills.md). the full flow, node by node
 
 ## gaps in the repo, not from the article
 
-- `skills/arkan-mode/SKILL.md` points to `playbooks/<name>.md`, but there is no `playbooks/` folder yet. step 1 of the skill finds nothing.
-- 13 of the 14 core skills exist only as entries in `core-skills.md`.
+- `skills/arkan-mode/SKILL.md` points to `skills/arkan-mode/playbooks/`, which is empty. pstack's 23 playbooks are in `skills/poteto-mode/playbooks/`.
+- the source skills are installed (matt's set, and pstack's `poteto-mode` with 24 principles), but the merged arkan skills in `core-skills.md` are not written yet, and 29 pstack skills wait on ticket 02.
 
 ## decisions
 

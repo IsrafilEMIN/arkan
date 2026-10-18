@@ -5,8 +5,8 @@ status: draft, 2026-10-18. this file says how a change moves from a task to a me
 ## words used here
 
 - **skill.** one job, in one `SKILL.md` file. the agent calls it when the situation fits. example: `debug`.
-- **playbook.** a fixed list of steps for one kind of task, in one file under `skills/arkan-mode/playbooks/`. the agent copies the steps into its todo list and does them in order. a playbook names which skill to call at which step. a skill is a tool; a playbook is the order you use the tools in for one task type.
-- **principle.** a short rule that changes a decision, such as "fix the root cause". there are 24, in 4 files under `skills/arkan-mode/principles/`.
+- **playbook.** a fixed list of steps for one kind of task, in one file. pstack's 23 playbooks are in `skills/poteto-mode/playbooks/` (for example `bug-fix.md`, `feature.md`, `babysit.md`, `shipping.md`). the agent copies the steps into its todo list and does them in order. a playbook names which skill to call at which step. a skill is a tool; a playbook is the order you use the tools in for one task type. playbooks are per task type, and the same set works in every repo. the per-repo part is the verify skill that `create-verification` makes. when no playbook fits a task, pstack's `figure-it-out` writes a one-off playbook for it.
+- **principle.** a short rule that changes a decision, such as "fix the root cause". there are 24. the upstream text is in the 24 `skills/principle-*` folders; `skills/arkan-mode/principles/` holds a shorter draft rewrite of them in 4 files.
 - **gate.** a check that must pass before the change goes to the next node.
 - **evidence.** output you can check: a command and what it printed, a `file:line`, a screenshot, a ci run link.
 
@@ -34,7 +34,7 @@ task
  │
 10  merge ─────── merge queue, then main
  │
-11  triage ────── watch, fix forward or revert
+11  post-merge ── watch, fix forward or revert
  │
 12  learn ─────── turn the miss into a check, then back to 0
 ```
@@ -133,7 +133,7 @@ more rules from the article:
 - **gate:** the queue run is green.
 - **out:** the change is on main.
 
-### 11. triage (after the merge)
+### 11. post-merge
 
 - **in:** a merged change, and the repo's signals (ci on main, error logs, revert and incident reports).
 - **does:** watches the change. if it broke something, fixes forward or reverts, whichever makes things safe faster. asks "which node should have caught this?". saves the bad diff and the confirmed bug as a case in `.arkan/evals/review/` in that repo.
@@ -142,7 +142,7 @@ more rules from the article:
 
 ### 12. learn
 
-- **in:** a miss from `triage`, a user correction, or a finding that keeps coming back.
+- **in:** a miss from `post-merge`, a user correction, or a finding that keeps coming back.
 - **does:** makes the mistake hard to repeat. tries the strongest fix first: code structure, then a type, then a lint rule, then a test, and only last a line in `REVIEW.md` or `CLAUDE.md`. proves each new check fails on the real past mistake. when `review` changes, it runs the reviewer on all cases in `.arkan/evals/review/` and keeps the change only if the score did not drop.
 - **gate:** the new check fails on the old mistake.
 - **out:** a stronger repo for the next task at node 0.
@@ -162,14 +162,14 @@ each opening says where the fix belongs:
 
 ### the flow cannot run yet
 
-1. **no playbooks.** `arkan-mode` step 1 opens `playbooks/<name>.md`, and the folder does not exist. node 0 stops. *where:* arkan. *how we know:* each playbook named in `SKILL.md` exists, and a test run picks the right one for a sample task.
-2. **13 of 14 core skills are specs only.** only `arkan-mode` exists. *where:* arkan. *how we know:* each skill file exists and passes its own test case (opening 16).
-3. **no install, update or pre-setup command.** no repo can get arkan yet. *where:* arkan. *how we know:* a clean repo gets every skill in `.agents/skills/` with one command, and running it twice changes nothing the second time.
+1. **`arkan-mode` points to an empty playbook folder.** its step 1 opens `skills/arkan-mode/playbooks/<name>.md`, which does not exist. the 23 pstack playbooks are in `skills/poteto-mode/playbooks/`, and they still hold cursor-only parts (ticket 01). node 0 stops until `arkan-mode` points there, or the playbooks move. *where:* arkan. *how we know:* each playbook named in `arkan-mode` exists, and a test run picks the right one for a sample task.
+2. **the arkan core skills are not merged yet.** the source skills are installed: matt's (`tdd`, `to-spec`, `to-tickets`, `implement`, `retro`, `handoff`, `grilling`, `pr`, ...) and pstack's `poteto-mode` plus 24 principles. 29 pstack skills are not installed yet, among them `create-verification-skill`, `maintain-verification-skill`, `interrogate`, `blast-radius`, `unslop`, `correct` and `reflect` (ticket 02, blocked by ticket 01). the merged arkan skills in `core-skills.md` (`review`, `ship`, `learn`, `security-review`, `post-merge`, ...) do not exist yet. *where:* arkan. *how we know:* each skill file exists and passes its own test case (opening 16).
+3. **no install or update command.** a `pre-setup` skill exists (it sets up the issue tracker, labels, domain docs, the board and the change log in a repo), but nothing yet installs or updates the arkan skills into a repo's `.agents/skills/`. *where:* arkan. *how we know:* a clean repo gets every skill with one command, and running it twice changes nothing the second time.
 4. **harnesses look in different places.** claude code reads `.claude/skills/` and `CLAUDE.md`, not `.agents/skills/` and `AGENTS.md` (as far as we know; check per harness). *where:* arkan, pre-setup. *how we know:* in each harness, a fresh session lists the arkan skills.
 
 ### gaps between nodes
 
-5. **nothing starts `triage`.** a session ends at the merge, and a skill cannot wake itself. it needs a scheduled job or a ci job on main. *where:* per-repo setup. *how we know:* a planted bad merge in a test repo starts triage with no person in the loop.
+5. **nothing starts `post-merge`.** a session ends at the merge, and a skill cannot wake itself. it needs a scheduled job or a ci job on main. *where:* per-repo setup. *how we know:* a planted bad merge in a test repo starts triage with no person in the loop.
 6. **no runner for node 8.** the review skills run inside a session before the pr, but on the pr they must run in ci, outside the author's session. *where:* per-repo setup (a ci workflow that calls the skills). *how we know:* a push to a test pr gets review comments without any open session.
 7. **the round count has nowhere to live.** a new session does not remember earlier rounds. *where:* arkan (store a marker in the pr, for example in the review summary comment). *how we know:* a fourth round on a test pr gets the "step back" message.
 8. **the author picks its own tier.** if the agent that wrote the change also sets its risk tier, it can pick `low` and skip people. the tier must come from a check the author cannot change. *where:* per-repo setup (classifier in ci) plus guard repo (the author cannot edit that check). *how we know:* a test pr that touches a sensitive path but claims `low` still waits for a person.
@@ -181,7 +181,7 @@ each opening says where the fix belongs:
 ### questions for the owner
 
 13. **two people for `high`.** if you work alone, a `high` change can never get two approvals. options: a second person for those paths, or `high` means you plus a waiting period. *where:* your decision.
-14. **name clashes.** your account already has `tdd`, `grilling`, `code-review`, `prototype`, `research`. claude code also has built-in `/code-review` and `/security-review` commands. two things with one name confuse the agent. *where:* arkan (see open question 1 in `sources.md`).
+14. **name clashes.** the repo already has skills named `tdd`, `grilling`, `code-review` and `triage` (matt's issue triage; that is why the after-merge skill is called `post-merge`). claude code also has built-in `/code-review` and `/security-review` commands. two things with one name confuse the agent. *where:* arkan (see open question 1 in `sources.md`).
 15. **noise is not measured.** nothing logs how each finding ended (fixed, wrong, intended, did not matter). *where:* arkan, inside `review`.
 
 ### arkan must prove itself

@@ -1,6 +1,6 @@
 # arkan core skills: what each one does
 
-status: proposal, waiting for kutluk's approval (2026-10-12). updated 2026-10-18 with the gaps in [review-gaps.md](review-gaps.md): `review`, `ship` and `learn` changed, `security-review` and `triage` added.
+status: proposal, waiting for kutluk's approval (2026-10-12). updated 2026-10-18 with the gaps in [review-gaps.md](review-gaps.md): `review`, `ship` and `learn` changed, `security-review` and `post-merge` added (named `post-merge`, because `skills/triage` is already matt's issue-triage skill).
 
 each entry says what the skill does, when it starts, and which source skills it comes from. "it starts" means the agent can call it by itself when the situation fits. you can also type its name, for example `/debug`.
 
@@ -92,7 +92,7 @@ it also sets the risk tier of the change from the diff, not from the author: `lo
 
 when the reviewer keeps flagging the same thing, it moves that rule into the repo's `REVIEW.md` (or `CLAUDE.md`, or a lint rule). it keeps both files short.
 
-**it starts** when you correct the agent, or when you say "learn" or "retro", or when `triage` finds a miss.
+**it starts** when you correct the agent, or when you say "learn" or "retro", or when `post-merge` finds a miss.
 
 **from:** pstack `correct`, `reflect`, matt `retro`.
 
@@ -128,7 +128,7 @@ when the reviewer keeps flagging the same thing, it moves that rule into the rep
 
 **from:** the claude code team's security review layer, and claude code's `/security-review` command.
 
-### 14. triage
+### 14. post-merge
 
 **what it does.** watches a change after it merges, and handles what went wrong. it checks the signals the repo has (ci on main, error logs, revert and incident reports). when a merged change breaks something, it fixes forward or reverts, whichever is faster to make safe. then it asks "which layer should have caught this?" and hands the answer to `learn`. it also saves each real incident or revert as a test case for the reviewer: the bad diff and the bug an expert confirmed. the cases live in the repo they came from (`.arkan/evals/review/`), not in arkan, because arkan is shared infra, not a project. when `review` or its prompts change, it runs the reviewer on all saved cases, and keeps the change only if the score did not drop.
 
