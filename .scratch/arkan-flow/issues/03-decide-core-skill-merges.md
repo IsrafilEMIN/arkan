@@ -1,5 +1,9 @@
 # 03: decide which core skills to merge, if any
 
+**Role:** needs-info
+**Closed:** yes
+**Priority:** 26
+
 **What to build:** the owner decides which of the 14 planned core skills (from `docs/core-skills.md`, now removed; see git history) get written, which are only routes to skills that exist, and which source skills retire. `README.md` and `arkan-mode` then name only skills that exist or have a ticket.
 
 **Blocked by:** None (can start immediately). needs the owner's decision.

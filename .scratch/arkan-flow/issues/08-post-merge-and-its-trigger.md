@@ -1,5 +1,9 @@
 # 08: post-merge skill, run by hand
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 9
+
 **What to build:** a `post-merge` skill. when a merged change breaks something, an agent with this skill fixes forward or reverts, asks which node should have caught it, and opens a ticket for the miss so a person can act on it (with `retro` if it needs a look back). in this ticket a person starts the skill; ticket 21 makes it start by itself.
 
 **Blocked by:** 03

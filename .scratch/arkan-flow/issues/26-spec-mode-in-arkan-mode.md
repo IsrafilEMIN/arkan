@@ -1,5 +1,9 @@
 # 26: spec mode in arkan-mode
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 6
+
 **What to build:** `implement-spec` folds into `arkan-mode` as a spec playbook. given one ticket, `arkan-mode` runs one task loop; given a spec with tickets, it runs the spec playbook: integration branch, one subagent per ready ticket running the task loop, merge each, start the next ready ones, one review, one pr. gate: the agent may pick up any todo card tagged `#ready-for-agent` on its own, and for a spec it may run every such card in parallel; `#ready-for-human` and `#needs-info` cards wait. the person sets the tag (`triage`), so the tag is the person's go.
 
 **Blocked by:** None (can start immediately).

@@ -1,5 +1,9 @@
 # 07: readme that says run pre-setup first
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 14
+
 **What to build:** a `README.md` at the repo root that tells a new user, in order: what arkan is, how to install it (ticket 04), and that they must run `pre-setup` first, before any other arkan skill, on the machine and in each repo.
 
 **Blocked by:** 04, 06

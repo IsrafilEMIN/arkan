@@ -1,5 +1,9 @@
 # 01: check that every card has a ticket
 
+**Role:** ready-for-agent
+**Closed:** yes
+**Priority:** 25
+
 **What to build:** a small script that reads `TODO.md` and the `.scratch/` folders and fails when the board and the tickets disagree, so a card with no ticket (like the old "reconstruct skills" card) cannot creep in again.
 
 **Blocked by:** None (can start immediately).

@@ -1,5 +1,9 @@
 # 17: no two skills or commands share a name
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 15
+
 **What to build:** across all the harnesses a user has, no arkan skill shares a name with another skill or a built-in command, so the agent never picks the wrong one.
 
 **Blocked by:** 04

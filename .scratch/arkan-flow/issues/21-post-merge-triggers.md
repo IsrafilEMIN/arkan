@@ -1,5 +1,9 @@
 # 21: what starts post-merge
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 16
+
 **What to build:** `post-merge` (ticket 08) starts by itself, so no person has to start it after a bad merge.
 
 **Blocked by:** 08, 05 (pre-setup decides how it offers the jobs)

@@ -1,5 +1,9 @@
 # 04: install and update command
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 11
+
 **What to build:** one command installs the arkan skills into `~/.agents/skills/`, and the same command updates them. running it twice changes nothing the second time.
 
 **Blocked by:** None (can start immediately).
