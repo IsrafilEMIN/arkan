@@ -33,7 +33,7 @@ not built yet: review on each pr push in ci, merge approval by risk tier, and wa
 |---|---|
 | [pstack](https://github.com/cursor/plugins/tree/182f2ce/pstack) by lauren tan, at commit `182f2ce` | `arkan-mode`: its playbooks are pstack's, with the cursor-only parts removed; its `SKILL.md` and `principles/` are rewrites of `poteto-mode` and the 24 principle skills |
 | [mattpocock/skills](https://github.com/mattpocock/skills) by matt pocock, main branch | `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `git-guardrails-claude-code`, `grill-with-docs`, `grilling`, `handoff`, `implement`, `implement-spec`, `improve-codebase-architecture`, `pr`, `prototype`, `retro`, `setup-pre-commit`, `tdd`, `to-spec`, `to-tickets`, `triage`, `wait-what`, `wayfinder`, `wizard`, `writing-for-agents`, and `pre-setup` (from `setup-matt-pocock-skills`). some of them are changed. |
-| not recorded | `assess`, `deal-hunt`, `digest`, `freeze`, `good-css`, `halal-check`, `hardware-debug`, `mizan`, `product-brief`, `rep-mode`, `simplest-path`, `symlink-first`, `system-cleanup`, `test-to-break` |
+| not recorded | `assess`, `freeze`, `good-css`, `product-brief`, `simplest-path`, `symlink-first`, `test-to-break` |
 
 both sources use the mit license. [`NOTICE`](NOTICE) keeps their copyright notices and license text. `skills/pr/CREDITS.md` names one more source, for part of the `pr` skill.
 
