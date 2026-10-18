@@ -51,7 +51,7 @@ all changes are in [core-skills.md](core-skills.md). the full flow, node by node
 
 ## gaps in the repo, not from the article
 
-- `skills/arkan-mode/SKILL.md` points to `skills/arkan-mode/playbooks/`, which is empty. pstack's 23 playbooks are in `skills/poteto-mode/playbooks/`.
+- `skills/arkan-mode/playbooks/` now links to pstack's 23 playbooks in `skills/poteto-mode/playbooks/`; porting them and retiring `poteto-mode` is ticket `arkan-flow` 01. (updated 2026-10-18)
 - the source skills are installed (matt's set, and pstack's `poteto-mode` with 24 principles), but the merged arkan skills in `core-skills.md` are not written yet, and 29 pstack skills wait on ticket 02.
 
 ## decisions

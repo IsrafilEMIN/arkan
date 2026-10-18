@@ -60,7 +60,7 @@ verdicts: **keep** (adapt and ship), **merge** (fold into another arkan skill), 
 | arkan skill | from | verdict | why |
 |---|---|---|---|
 | `grill` | matt `grilling`, `grill-me`, `grill-with-docs`, `domain-modeling` | merge | one interview skill. it writes a glossary and decision records when a repo is there. |
-| `plan` | matt `to-spec`, `to-tickets`, `wayfinder`; pstack `figure-it-out`, `multi-phase-plan` | merge | turn a talk into a spec and small tickets, each with its blockers. local files only (`.arkan/plans/`). |
+| `plan` | matt `to-spec`, `to-tickets`, `wayfinder`; pstack `figure-it-out`, `multi-phase-plan` | merge | turn a talk into a spec and small tickets, each with its blockers. a shaping step before the task; tickets go to the issue tracker `pre-setup` set (updated 2026-10-18). |
 | `build` | matt `implement`, `implement-spec`; pstack `architect`, feature playbook | merge | sketch the types first, then build ticket by ticket. |
 | `tdd` | matt `tdd`; pstack `tdd`, `principle-test-behavior-not-implementation` | merge | matt's red-green loop, plus pstack's rule: a test that still passes when every function returns nothing is a bad test. |
 | `debug` | matt `diagnosing-bugs`; pstack bug-fix playbook, `principle-fix-root-causes` | merge | get one command that fails on this bug first, then find the root cause, then fix with a regression test. |

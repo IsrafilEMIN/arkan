@@ -1,34 +1,56 @@
 ---
 name: arkan-mode
-description: "the default way to do engineering work: pick a playbook, apply the principles, prove the result. use at the start of any non-trivial coding task (a feature, a bug, a refactor, a question about the code, a long unattended run), or when the user says arkan, /arkan-mode or 'do this properly'."
+description: "the default way to do engineering work on one task: check that it is a task, pick a playbook, apply the principles, prove the result, and drive it to a merged change. use at the start of any non-trivial coding task (a ticket, a feature, a bug, a refactor, a question about the code, a long unattended run), or when the user says arkan, /arkan-mode or 'do this properly'."
 ---
 
 # arkan mode
 
-arkan mode is how you work on code. it does three things: it picks a playbook for the task, it applies the principles that change your decisions, and it makes you prove the result before you say "done".
+arkan mode is how you work on one task. it replaces pstack's `poteto-mode` and follows the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
-other arkan skills sit beside this file in the same skills folder (`../grill/SKILL.md`, `../tdd/SKILL.md`, and so on). call them with the Skill tool when a step names them.
+other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, and so on). call them with the Skill tool when a step names them.
 
-## start every task like this
+## 0. check that the work is a task
+
+a **task** is the smallest piece of work you can finish alone, from start to a merged and checked change, with no more decisions from a person (see `GLOSSARY.md` in the arkan repo). a ticket is a task. a small, clear request is a task.
+
+arkan mode runs tasks only. the work before a task is **shaping**, and a person starts each shaping step:
+
+- the idea or its words are still fuzzy → stop and tell the user to run `/grill-with-docs`.
+- the work needs more than one pr or more than one session → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
+
+when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
+
+## 1. start every task like this
 
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
 2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principles/architecture.md`.
-3. **read the principles you will use.** each entry in [principles](#principles) names when it applies. read the full text in `principles/` before you apply one. in your reply, name each principle that changed a decision, and say which decision.
+3. **read the principles you will use.** each entry in [principles](#principles) names when it applies. read its full text in `principles/` before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
 4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
 
-## when to reach for another skill
+## 2. when to reach for another skill
 
-- the idea is still fuzzy, or terms are unclear → the **grill** skill.
-- the work needs more than one session, or more than one pr → the **plan** skill.
-- code crosses a function boundary → the **build** skill (sketch the shape before the code).
-- a behavior to build or a bug with a cheap test path → the **tdd** skill.
-- something is broken, flaky or slow → the **debug** skill.
-- a diff is ready → the **review** skill and the **security-review** skill, before you open a pr.
-- a pr to open, or a pr to drive to green → the **ship** skill.
-- a merged change broke something → the **post-merge** skill.
-- the user corrected you, or a session went badly → the **learn** skill.
-- any prose (replies, docs, pr bodies, commit messages, skills) → the **write** skill.
+each line names the skill to call today. a name in brackets is the planned arkan skill that will replace it (see `docs/core-skills.md`).
+
+- a term or a domain rule is unclear inside the task → `grilling` and `domain-modeling`. if the answer changes what to build, stop: the work is not a task (step 0).
+- code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook). [build]
+- a behavior to build, or a bug with a cheap test path → `tdd`.
+- something is broken, flaky or slow → `diagnosing-bugs`. [debug]
+- a design question you can settle by running code → `prototype`, or the prototype playbook.
+- a diff is ready → `code-review` in a fresh context, before you open a pr. [review]
+- a diff is ready and touches input, auth, secrets, ci or installers → the harness's own security review if it has one; else say that no security review ran. [security-review]
+- a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook. [ship]
+- a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [post-merge]
+- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. [learn]
+- any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply). text that agents read (skills, `AGENTS.md`) → `writing-for-agents`. [write]
+- a repo has no scripted way to prove the app works → tell the user. a person starts `create-verification`; you do not.
+
+more triggers, from `poteto-mode`:
+
+- **a fork you are about to ask about.** if the answer is a fact you can see by running something (behavior, timing, layout, output, speed), it is not a question for the user. sketch it with the prototype playbook and let the result decide. ask only for a product or taste call that no experiment can settle, and give your recommended answer.
+- **review bots and security bots.** they find real bugs and they also file noise. check each claim against the code. fix the real ones, and dismiss the rest with a concrete reason. never change code only to quiet a bot.
+- **a broken skill in the middle of a task.** fix it in its own pr. do not block on it, and do not work around it in silence.
+- **long or unattended work** ("going to bed", "run until done", "trust it when i'm back"). keep a decision trail: what you chose, why, and the evidence, in the pr body or a notes file next to the work.
 
 ## autonomy
 
@@ -36,28 +58,34 @@ other arkan skills sit beside this file in the same skills folder (`../grill/SKI
 
 **always stop and ask** before an action no one can undo: force-push to a shared branch, deploy, delete data, send a message outside the project.
 
-**a fact is not a question for the user.** if you can find the answer by running something (behavior, timing, output, layout), run it. use the prototype playbook. ask the user only for a product or taste call that no experiment can settle. when you ask, give your recommended answer.
-
 **"keep going", "i'm going to bed", "run until done"** mean you do not stop at a checkpoint. use the autonomous-run playbook.
 
-**no is a fine answer.** when asked if something is a good idea, give your real view. if it does not earn its place, say so and why.
+**no is a fine answer.** when asked if something is a good idea, give your real view. if it does not earn its place, say so and why. a recommendation is a judgment, not an agreement.
 
 ## subagents
 
-- give bulk reading, wide searches and parallel work to subagents (the Agent tool). keep summaries in your own context, not raw output.
+- give bulk reading, wide searches and parallel work to subagents. keep summaries in your own context, not raw output. run them in the background where the harness supports it.
 - point a subagent at files and skills by path. do not paste their content into the prompt.
-- tell each subagent to read this file first, so it works the same way.
+- tell each subagent that writes code to read this file first, so it works the same way. this chat runs the playbook; never give the playbook itself to a subagent.
+- match the model to the job, if the harness lets you pick: the strongest model for the hardest design and judgment, a fast model for small mechanical edits. a second opinion is the same prompt on a different model; when both agree, trust it more.
 - you own every subagent's work. read its diff yourself, and write your own summary. a self-report is not proof.
-- give new work to a fresh subagent with the full brief, every later instruction, and the last agent's report. reuse a running subagent only when the work needs state that lives in it (its checkout, a running server).
+- give new work to a fresh subagent with the full brief, every later instruction, and the last agent's report and branch. reuse a running subagent only when the work needs state that lives in it (its checkout, uncommitted changes, a running server).
 
 ## the reply
 
-write the reply with the **write** skill. in short:
+write the reply clean as you draft it. a cleanup pass after drafting does not remove bad patterns.
 
 - lead with the result. then what you chose and why, then what is still open.
-- every claim carries its evidence in the same sentence: a command and its output, a `file:line`, a link. if you did not check it, label it as inferred or a guess.
-- never make up a link, a citation or a test result.
-- say who the change is for and what changes for them before you give implementation detail.
+- short declarative sentences, one thought each. short is not a reason to drop a section the playbook's reply names.
+- say who the change is for and what changes for them before you give implementation detail. then say what the next person who owns this code inherits.
+- every claim carries its evidence or its label in the same sentence: a command and its output, a `file:line`, a link; else label it as inferred or a guess. never hand the user a check you could run.
+- never make up a link, a citation or a test result. link only what you made or read in this session.
+
+every playbook ends with a reply written this way, with the pr link in full.
+
+## comments
+
+comments follow the same rules as the reply. keep a comment only for a "why" that the code cannot show. a test or verify script gets no comments that narrate its steps; the assert message says what it checks. this holds for every file you write, and for every subagent's diff.
 
 ## principles
 
@@ -101,15 +129,19 @@ the full text is in `principles/`. one file per group.
 
 ## playbooks
 
-open the file at `playbooks/<name>.md`.
+open the file at `playbooks/<file>`. until ticket `arkan-flow` 01 ports them, `playbooks/` links to pstack's text in `../poteto-mode/playbooks/`. where a step names a cursor-only tool, model or skill that is not installed, do what the step means with your harness's own tools, and say so in the reply.
 
-- **investigation.** a read-only question: how does x work, why is y like this, should we do x or y.
-- **bug-fix.** a defect to reproduce, find the root cause of, and fix with evidence.
-- **feature.** new or changed behavior, built from a named data shape.
-- **refactor.** the structure changes, the behavior does not.
-- **prototype.** throwaway code to make a design decision, or to settle a question by watching what happens.
-- **autonomous-run.** a long task driven to a checkable end without stopping.
-- **pause-and-resume.** stop cleanly so a fresh agent can continue, or pick up work another agent left.
-- **opening-a-pr.** the end of every other code playbook.
+- **investigation** (`investigation.md`). a read-only question: how does x work, why is y like this, should we do x or y.
+- **bug fix** (`bug-fix.md`). a defect to reproduce, find the root cause of, and fix with evidence.
+- **feature** (`feature.md`). new or changed behavior, built from a named data shape.
+- **refactor** (`refactoring.md`). the structure changes, the behavior does not.
+- **prototype** (`prototype.md`). throwaway code to make a design decision, or to settle a question by watching what happens.
+- **authoring a skill** (`authoring-a-skill.md`). writing or changing a `SKILL.md`.
+- **autonomous run** (`autonomous-run.md`). a long task driven to a checkable end without stopping.
+- **pause safely** (`pause-safely.md`). stop cleanly so a fresh agent can continue.
+- **session pickup** (`session-pickup.md`). continue work another agent left.
+- **opening a pr** (`opening-a-pr.md`). the end of every other code playbook.
+- **babysit** (`babysit.md`). drive an open pr to merge-ready: conflicts, review threads, ci.
+- **shipping** (`shipping.md`). land a green pr that a verifier, not its author, has checked.
 
-a large or cross-cutting task (a migration across many files, work for more than one session) goes to the **plan** skill first, then back here for each ticket.
+pstack's other playbooks (perf, hillclimb, forensics, visual parity, eval, orchestrate, autopilot, worktree cleanup) are not part of arkan yet. multi-phase plans are shaping, not a task: see step 0.
