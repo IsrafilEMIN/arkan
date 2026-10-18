@@ -37,6 +37,9 @@
 - [ ] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: none
 
+- [ ] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
+
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
 
