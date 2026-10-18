@@ -34,9 +34,6 @@
 - [ ] 27: Review that converges #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/27-review-converges.md` · blocked by: none
 
-- [ ] 02: Build the board from the tickets #board #ready-for-agent
-  `.scratch/board/issues/02-build-board-from-tickets.md` · blocked by: none
-
 - [ ] 24: Catch a hidden dependency before the work is wasted #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/24-hidden-dependencies.md` · blocked by: none
 
@@ -60,6 +57,9 @@
 
 ## Done
 
+- [x] 02: Build the board from the tickets #board #ready-for-agent
+  `.scratch/board/issues/02-build-board-from-tickets.md` · blocked by: none
+
 - [x] 01: Port poteto-mode to all agents (drop cursor-only mechanics) #completion-loop #wontfix
   `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none
 
@@ -69,7 +69,7 @@
 - [x] 15: A person starts create-verification #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/15-create-verification-is-human-started.md` · blocked by: none
 
-- [x] 01: arkan-mode replaces poteto-mode #arkan-flow #ready-for-agent
+- [x] 01: Arkan-mode replaces poteto-mode #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/01-arkan-mode-replaces-poteto-mode.md` · blocked by: none
 
 - [x] 01: Reconstruct skills for the tern board #skills #needs-info

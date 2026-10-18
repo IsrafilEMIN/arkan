@@ -1,5 +1,9 @@
 # 06: pre-setup sets up each harness the user has
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 13
+
 **What to build:** `pre-setup` asks which harnesses the user works in (for example claude code, codex, cursor, pi, omp), and sets each one up the way that harness expects, so a fresh session in each harness lists the arkan skills.
 
 **Blocked by:** 05

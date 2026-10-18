@@ -1,5 +1,9 @@
 # 15: a person starts create-verification
 
+**Role:** ready-for-agent
+**Closed:** yes
+**Priority:** 22
+
 **What to build:** `create-verification` runs only when a person starts it. when a repo has no verify skill, `arkan-mode` tells the person, and does not start it.
 
 **Blocked by:** None (can start immediately).

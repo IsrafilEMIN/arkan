@@ -1,5 +1,9 @@
 # 01: reconstruct skills for the tern board
 
+**Role:** needs-info
+**Closed:** yes
+**Priority:** 24
+
 **What to build:** every skill that creates or changes a ticket writes a useful card on the `TODO.md` board, with proper details in the card's note line, and follows the `## Board` section of `docs/agents/issue-tracker.md`.
 
 **Blocked by:** None (can start immediately). needs the owner's answers below first.

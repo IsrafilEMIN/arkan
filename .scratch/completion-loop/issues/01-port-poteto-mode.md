@@ -1,5 +1,9 @@
 # 01: Port poteto-mode to all agents (drop cursor-only mechanics)
 
+**Role:** wontfix
+**Closed:** yes
+**Priority:** 20
+
 **What to build:** `~/.agents/skills/poteto-mode` works for every agent that reads `~/.agents/skills/` (claude code, codex, pi, omp). Replace the cursor-only mechanics with harness-neutral wording; keep the playbooks and the principles model intact. Nothing outside `~/.agents/skills/poteto-mode/` changes.
 
 **Blocked by:** None (can start immediately).

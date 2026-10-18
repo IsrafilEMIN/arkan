@@ -1,5 +1,9 @@
 # 02: Install the remaining pstack skills (later)
 
+**Role:** needs-triage
+**Closed:** no
+**Priority:** 12
+
 **What to build:** install the rest of the pstack skills from `pstack/skills/` into `~/.agents/skills/`, cursor parts ported like ticket 01. The remaining set:
 
 `poteto-help`, `setup-pstack`, `figure-it-out`, `automate-me`, `reflect`, `correct`, `teach`, `sharpen`, `in-your-own-words`, `how`, `why`, `recall`, `ketchup`, `bro`, `blast-radius`, `architect`, `arena`, `swarm`, `interrogate`, `benchmark-checklist`, `no-comments`, `unslop`, `technical-writing`, `typescript-best-practices`, `show-me-your-work`, `create-verification-skill`, `maintain-verification-skill`, `make-bot-ui`.

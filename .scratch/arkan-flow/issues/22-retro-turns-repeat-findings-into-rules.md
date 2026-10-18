@@ -1,5 +1,9 @@
 # 22: retro turns repeated review findings into rules
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 8
+
 **What to build:** when review keeps flagging the same kind of problem, `retro` moves the fix upstream so the problem stops being written: a check (lint rule, type, test, hook) when the rule is mechanical, else a line in the repo's `CODING_STANDARDS.md`, which `code-review` already reads. this is the job the article gives to a `REVIEW.md` file and that the dropped `learn` skill was going to do (ticket 03). no new file: `CODING_STANDARDS.md` is that file.
 
 **Blocked by:** None (can start immediately).

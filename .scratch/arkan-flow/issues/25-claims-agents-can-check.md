@@ -1,5 +1,9 @@
 # 25: a claim that agents can check
 
+**Role:** needs-info
+**Closed:** no
+**Priority:** 18
+
 **What to build:** a claim works as a lock: before any work, the agent pushes a branch with a fixed name per ticket, `claim/<feature>-<NN>`. git rejects the push if that branch exists, so two agents never start the same ticket. the claim branch points at the work branch (the harness may pick the work branch's name). the merge deletes the claim branch, the work branch and the worktree.
 
 **Blocked by:** None (can start immediately).

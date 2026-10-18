@@ -1,4 +1,7 @@
-# review and ci: parked
+# review and ci, parked (was 09, 10, 11, 12, 13, 14, 16, 18)
+
+**Closed:** no
+**Priority:** 17
 
 **status:** parked by the owner on 2026-10-18. nothing here is built. it needs a ci review runner, a guard repo and repo host settings, which live outside this repo. when it comes back, split it into tickets again with `/to-tickets`.
 
