@@ -32,7 +32,7 @@ when the task is a ticket:
 - the repo has no issue tracker set up (no `docs/agents/issue-tracker.md`) → tell the user to run `/pre-setup`.
 - fetch the ticket from the issue tracker and state its title before you start. if the reference is ambiguous, ask.
 - claim the ticket before any work, the way the issue tracker doc says.
-- **a missing piece is a blocker, not a bug.** when code the ticket needs does not exist yet and belongs to another open ticket, do not build it and do not debug around it. stop, add that ticket to this ticket's `Blocked by`, drop your claim, and report which piece is missing and which ticket owns it.
+- **a missing piece is a blocker, not a bug.** when code the ticket needs does not exist yet and belongs to another open ticket, do not build it and do not debug around it. stop, add that ticket to this ticket's `Blocked by`, drop your claim, and report which piece is missing and which ticket owns it. commit that edit and the rebuilt board on your work branch; if you have none yet, open a small branch and PR for the edit alone (the board rule in `docs/agents/issue-tracker.md`). never commit it straight to `main`.
 
 ## 1. start every task like this
 
