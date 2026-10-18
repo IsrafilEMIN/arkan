@@ -17,12 +17,15 @@
 - [ ] 20: Security-review skill #arkan-flow #needs-triage
   `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: 17
 
+- [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: 08, 05
+
 - [ ] Review and ci, parked (was 09, 10, 11, 12, 13, 14, 16, 18) #review-ci #spec
   `.scratch/review-ci/spec.md` · blocked by: none
 
 ## Todo
 
-- [ ] 08: Post-merge skill and what starts it #arkan-flow #ready-for-agent
+- [ ] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: 03
 
 - [ ] 04: Install and update command #arkan-flow #ready-for-agent

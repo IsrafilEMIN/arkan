@@ -1,6 +1,6 @@
-# 08: post-merge skill and what starts it
+# 08: post-merge skill, run by hand
 
-**What to build:** after a change merges, something watches main, and when a merged change breaks something, an agent fixes forward or reverts, asks which node should have caught it, and opens a ticket for the miss so a person can act on it (with `retro` if it needs a look back). no person has to start it.
+**What to build:** a `post-merge` skill. when a merged change breaks something, an agent with this skill fixes forward or reverts, asks which node should have caught it, and opens a ticket for the miss so a person can act on it (with `retro` if it needs a look back). in this ticket a person starts the skill; ticket 21 makes it start by itself.
 
 **Blocked by:** 03
 
@@ -12,11 +12,7 @@ what post-merge does (from `docs/core-skills.md` node 9, now removed; see git hi
 4. ask "which node should have caught this?" (review, prove, tier, ...).
 5. open a ticket for the miss on the repo's tracker: the bad diff, the confirmed bug, the fix pr and the answer to step 4. (saving it as a reviewer eval case is parked with review in `.scratch/review-ci/spec.md`.)
 
-what can start it (proposal: a and b together):
-
-- a. **event:** a ci job on main. when main's ci fails, or a revert lands, it starts an agent headless (for example claude code in github actions) with the post-merge skill. fast and cheap: it runs only when something broke.
-- b. **schedule:** a daily job for slow signals (error logs, incident issues). on github actions this is a `schedule` trigger; claude code on the web can also run scheduled tasks.
-- c. in-session `/loop` only while a person keeps a session open. good for a test, not a base.
+what can start it: ticket 21.
 
 pstack parts to draw from (read in pstack's `poteto-mode` on 2026-10-18; the playbooks now live in `skills/arkan-mode/playbooks/`):
 
@@ -28,5 +24,8 @@ pstack parts to draw from (read in pstack's `poteto-mode` on 2026-10-18; the pla
 none of these is a full post-merge skill, so arkan writes its own and uses these as parts.
 
 - [ ] a post-merge skill exists, with the 5 steps above
-- [ ] `pre-setup` offers the ci job (a) and the scheduled job (b) per repo (ticket 05 decides how)
-- [ ] proof: a planted bad merge in a test repo gets a revert or fix pr and a ticket for the miss, with no person in the loop
+- [ ] proof: in a throwaway local git repo, a planted bad merge on main, then one run of the skill, gives the first bad commit, a revert or fix commit on a branch, and a ticket for the miss. the person only starts the run.
+
+## Comments
+
+- 2026-10-18, owner: split. this ticket is the skill run by hand; the triggers (ci job, daily job, pre-setup offering them) are ticket 21.
