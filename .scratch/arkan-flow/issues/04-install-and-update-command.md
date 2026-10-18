@@ -12,3 +12,7 @@ proposal: a script in the repo root (for example `install.sh`) that keeps one ch
 - [ ] a skill folder in `~/.agents/skills/` that arkan did not make is never overwritten; the script reports the clash and stops for that skill
 - [ ] the command prints the arkan version (tag or commit) it installed
 - [ ] works on linux and macos (bash), with no tool beyond git
+
+## Comments
+
+- 2026-10-18, owner: do this ticket last, after every other open ticket. ticket 07 waits on it, so 07 comes last too.

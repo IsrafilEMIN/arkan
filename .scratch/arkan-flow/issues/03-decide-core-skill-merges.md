@@ -35,11 +35,12 @@ where each job of `implement` goes:
 | commit to the branch | opening-a-pr playbook |
 | close the ticket the tracker's way, board **Resolve** in the same branch | opening-a-pr playbook (a new step), so the card reaches `main` with the merge |
 
-- [ ] the owner accepts, changes or rejects each row; the decision is recorded here
-- [ ] `README.md` lists only the decided skills
-- [ ] `arkan-mode` section 2 routes to the decided names, with no bracketed plan names left for skills that will not exist
-- [ ] a follow-up ticket exists for each new skill and each retirement
+- [x] the owner accepts, changes or rejects each row; the decision is recorded here
+- [x] `README.md` lists only the decided skills
+- [x] `arkan-mode` section 2 routes to the decided names, with no bracketed plan names left for skills that will not exist
+- [x] a follow-up ticket exists for each new skill and each retirement
 
 ## Comments
 
 - 2026-10-18, owner: retire `implement` once `arkan-mode` has all of its jobs. done on branch `claude/fervent-turing-qu5b6e`: `arkan-mode` step 0 now has the tracker check, the ticket fetch and the claim; step 1.4 has the type check, single tests and full suite; section 2 has "fix every issue `code-review` raises, then run the full suite again"; the opening-a-pr playbook has the ticket close. `skills/implement/` is removed. the `build` row is settled.
+- 2026-10-18, owner: accepted. no merges: the stage names from the old core-skill plan were the only reason to merge, and that reason is gone. keep `retro`; no `learn` skill. new skills: `post-merge` (ticket 08) and `security-review` (ticket 20). retired: `implement` (done). `README.md` already lists only skills that exist. `arkan-mode` section 2 now tags only lines with a ticket (08, 20).
