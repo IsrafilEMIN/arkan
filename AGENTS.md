@@ -21,3 +21,5 @@ Single-context: one root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.
 ### Board
 
 `TODO.md` (the Tern board) shows one card per ticket; the details stay in the ticket. See the `## Board` section of `docs/agents/issue-tracker.md`.
+
+Run `scripts/check-board.sh` before each commit that touches `TODO.md` or `.scratch/`; it must print `ok`.

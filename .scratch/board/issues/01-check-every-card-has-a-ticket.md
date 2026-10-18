@@ -11,7 +11,7 @@ the script fails when:
 - a card's `blocked by` differs from the `**Blocked by:**` line in its ticket file
 - a card is in the wrong lane by the lane rule
 
-- [ ] the script exists in the repo and runs with no tool beyond bash and git
-- [ ] it passes on the board as it is now
-- [ ] proof: a planted card with no ticket makes it fail, with a message that names the card
-- [ ] `AGENTS.md` or `pre-setup` says when to run it (before each commit that touches `TODO.md`, or in ci when there is ci)
+- [x] the script exists in the repo and runs with no tool beyond bash and git
+- [x] it passes on the board as it is now
+- [x] proof: a planted card with no ticket makes it fail, with a message that names the card
+- [x] `AGENTS.md` or `pre-setup` says when to run it (before each commit that touches `TODO.md`, or in ci when there is ci)

@@ -2,7 +2,7 @@
 
 ## Backlog
 
-- [ ] 02: Install the remaining pstack skills (later) #completion-loop
+- [ ] 02: Install the remaining pstack skills (later) #completion-loop #needs-triage
   `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: arkan-flow 01
 
 - [ ] 03: Decide which core skills to merge, if any #arkan-flow #needs-info
@@ -34,13 +34,10 @@
 - [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
 
-- [ ] 01: Check that every card has a ticket #board #ready-for-agent
-  `.scratch/board/issues/01-check-every-card-has-a-ticket.md` · blocked by: none
-
 ## Done
 
 - [x] 01: Port poteto-mode to all agents (drop cursor-only mechanics) #completion-loop #wontfix
-  `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none · superseded by arkan-flow 01
+  `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none
 
 - [x] 02: Shaping happens before the task #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/02-shaping-before-the-task.md` · blocked by: none
@@ -53,3 +50,6 @@
 
 - [x] 01: Reconstruct skills for the tern board #skills #needs-info
   `.scratch/skills/issues/01-reconstruct-skills-for-the-board.md` · blocked by: none
+
+- [x] 01: Check that every card has a ticket #board #ready-for-agent
+  `.scratch/board/issues/01-check-every-card-has-a-ticket.md` · blocked by: none
