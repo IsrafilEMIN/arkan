@@ -8,7 +8,7 @@ the kit for ticket `arkan-flow` 19: run arkan, unattended, on planted scenarios 
 
 - **branches.** `pre-break` is the clean start for every scenario but one. `main` holds a planted bad merge for the `post-merge` scenario, so its tests fail on purpose. each run gets its own trunk, `run/<name>`, pushed from its start ref, so one run's merges never touch another's.
 - **ci.** [`sandbox/check.yml`](sandbox/check.yml) runs `scripts/check.sh` on each push and pr. arkan's [`ci/github/arkan-review.yml`](../../ci/github/arkan-review.yml) reviews each push; in the sandbox it runs on sonnet 5.5, so the owner's pro plan lasts a whole round.
-- **the merge gate.** [`sandbox/auto-merge.yml`](sandbox/auto-merge.yml) merges a pr once every check on its head passed and a review on that same commit, from someone with write access, begins with `PASS`. no agent ever calls the merge api. shipping it in arkan is ticket 34.
+- **the merge gate.** [`sandbox/auto-merge.yml`](sandbox/auto-merge.yml) merges a pr once every check on its head passed and a review on that same commit, from someone with write access, begins with `PASS`. no agent ever calls the merge api. arkan ships the hardened version as [`ci/github/arkan-merge.yml`](../../ci/github/arkan-merge.yml).
 - **branch rules.** one ruleset on `main`, `pre-break` and `run/**`: a pr is required, `check` must pass (add `arkan-review` too), no deletions, no force pushes, no bypass, and no status check on branch creation (so `run-one.sh` can push a new trunk).
 
 ## run it
