@@ -130,7 +130,7 @@ when the reviewer keeps flagging the same thing, it moves that rule into the rep
 
 ### 14. triage
 
-**what it does.** watches a change after it merges, and handles what went wrong. it checks the signals the repo has (ci on main, error logs, revert and incident reports). when a merged change breaks something, it fixes forward or reverts, whichever is faster to make safe. then it asks "which layer should have caught this?" and hands the answer to `learn`. it also saves each real incident or revert as a test case for the reviewer: the bad diff and the bug an expert confirmed. when `review` or its prompts change, it runs the reviewer on all saved cases, and keeps the change only if the score did not drop.
+**what it does.** watches a change after it merges, and handles what went wrong. it checks the signals the repo has (ci on main, error logs, revert and incident reports). when a merged change breaks something, it fixes forward or reverts, whichever is faster to make safe. then it asks "which layer should have caught this?" and hands the answer to `learn`. it also saves each real incident or revert as a test case for the reviewer: the bad diff and the bug an expert confirmed. the cases live in the repo they came from (`.arkan/evals/review/`), not in arkan, because arkan is shared infra, not a project. when `review` or its prompts change, it runs the reviewer on all saved cases, and keeps the change only if the score did not drop.
 
 **it starts** after a merge, when a change breaks something, or when you ask.
 

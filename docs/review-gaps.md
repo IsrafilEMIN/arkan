@@ -54,7 +54,10 @@ all changes are in [core-skills.md](core-skills.md).
 - `skills/arkan-mode/SKILL.md` points to `playbooks/<name>.md`, but there is no `playbooks/` folder yet. step 1 of the skill finds nothing.
 - 13 of the 14 core skills exist only as entries in `core-skills.md`.
 
+## decisions
+
+- **the reviewer eval set lives in each repo** (`.arkan/evals/review/`), not in arkan. arkan is infra that repos use, not a project with its own incidents. (decided 2026-10-18)
+
 ## open questions
 
-- where does the reviewer eval set live: in each repo, or in arkan?
 - a per-repo setup step could create a starter `REVIEW.md`. is that part of `create-verification`, or of the install and pre-setup command?
