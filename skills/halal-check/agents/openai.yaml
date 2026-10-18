@@ -1,0 +1,5 @@
+interface:
+  display_name: "Halal Check"
+  short_description: "Check if a food or supplement is halal"
+policy:
+  allow_implicit_invocation: false

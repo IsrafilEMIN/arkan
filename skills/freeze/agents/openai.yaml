@@ -1,0 +1,3 @@
+interface:
+  display_name: "Freeze"
+  short_description: "Lock edits to one directory"

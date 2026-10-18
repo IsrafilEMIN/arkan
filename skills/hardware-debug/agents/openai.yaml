@@ -1,0 +1,3 @@
+interface:
+  display_name: "Hardware Debug"
+  short_description: "Debug PC hardware with the user as the hands"

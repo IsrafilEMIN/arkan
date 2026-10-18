@@ -1,0 +1,5 @@
+interface:
+  display_name: "Rep mode"
+  short_description: "Learn a skill through measured reps and short lessons"
+policy:
+  allow_implicit_invocation: false
