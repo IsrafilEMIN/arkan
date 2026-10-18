@@ -1,7 +1,7 @@
 # 23: who starts each skill
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 7
 
 **What to build:** each skill's frontmatter says who starts it: only the person (`disable-model-invocation: true`, and `agents/openai.yaml` `allow_implicit_invocation: false`), both (default), or only the agent (`user-invocable: false`, which hides it from the `/` menu). rule: a skill that shapes the work, has side effects on the repo or harness, or looks back is the person's; one the person wants on demand and the agent needs mid-task is both; a policy or vocabulary the agent applies is the agent's.
@@ -17,9 +17,10 @@
 harness facts (sources in ticket 17): only claude code can hide a skill from the menu; codex, pi and omp ignore `user-invocable`, so agent-only skills still show there. `triage` stays person only because `#ready-for-agent` is the person's go (ticket 26).
 
 - [x] every `skills/*/SKILL.md` frontmatter matches the table, and `agents/openai.yaml` matches where it exists
-- [ ] proof: in claude code, the agent-only skills are not in the `/` menu and the person-only ones are not in the agent's skill list
+- [x] proof: in claude code, the agent-only skills are not in the `/` menu and the person-only ones are not in the agent's skill list
 
 ## Comments
 
 - 2026-10-18, owner: agreed in session. `retro` as both, `setup-pre-commit` and `handoff` as person only were proposed last and not yet confirmed: confirm before merge.
 - 2026-10-18, owner: confirmed `retro` as both and `setup-pre-commit` as person only. `handoff` is both, since `arkan-mode`'s `pause-safely` playbook calls it. `security-review` is both, since `arkan-mode` section 2 calls it. the proof needs a local claude code session, so this ticket stays open until the owner runs it.
+- 2026-10-18: proof, run headless in claude code 2.1.302 with `skills/` copied into a throwaway project's `.claude/skills/`. the session's init `slash_commands` (the `/` menu) held the 24 person-only and both skills and none of the 8 agent-only ones (`codebase-design`, `domain-modeling`, `good-css`, `pr`, `symlink-first`, `tdd`, `test-to-break`, `writing-for-agents`). asked to list the skills its Skill tool can start, the agent named the 19 both and agent-only skills and no person-only one. limit: the agent list is the model's own report of its skill list, and the menu was read from the init event, not the interactive ui.
