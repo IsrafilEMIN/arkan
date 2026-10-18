@@ -1,6 +1,6 @@
 ---
 name: test-to-break
-description: Suite strategy for tests - plan, audit, list, or prune; the policy the tdd engine reads when the suite shape is unsettled.
+description: Suite strategy for tests. Use when planning a new suite, auditing or pruning slow, flaky or overlapping tests, listing what tests exist, or when `tdd` finds the suite shape unsettled.
 user-invocable: false
 ---
 
@@ -8,7 +8,7 @@ user-invocable: false
 
 The purpose of a test is to break the system and say exactly where it broke. A suite that only confirms what it just set up proves nothing.
 
-This skill is the policy layer for tests. The `tdd` engine reads it when a build session starts without a settled suite shape. Run it by hand to plan, audit, list, or prune a suite.
+This skill is the policy layer for tests. The `tdd` engine reads it when a build session starts without a settled suite shape.
 
 ## Seams: where tests go
 

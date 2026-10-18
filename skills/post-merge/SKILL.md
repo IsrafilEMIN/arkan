@@ -22,7 +22,7 @@ A merged change broke something. You make main safe, then turn the **miss** (the
 
 5. **Name the node that should have caught it.** Walk the task loop in order: build + `tdd` (a test for this case), prove (tests, build, lint, verify), `code-review`, `security-review`. Pick the first node that had what it needed to catch the bug, and say what it lacked: a missing test, a check that never ran, a rule the reviewer does not hold. _Done when_ the answer cites evidence from the bad diff or the node's own output, not a guess.
 
-6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket and suggest `retro`. _Done when_ the ticket exists and its link or path is in your reply.
+6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket, then start `retro` (proposals only). _Done when_ the ticket exists and its link or path is in your reply.
 
 ## Reply
 
