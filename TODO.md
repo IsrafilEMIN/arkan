@@ -40,9 +40,6 @@
 - [ ] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: none
 
-- [ ] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
-
 - [ ] 38: Ship a ci test job a repo can copy #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/38-ship-a-ci-test-job.md` · blocked by: none
 
@@ -86,6 +83,9 @@
 
 - [x] 23: Who starts each skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/23-who-starts-each-skill.md` · blocked by: none
+
+- [x] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
 
 - [x] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
