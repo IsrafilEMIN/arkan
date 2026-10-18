@@ -28,9 +28,6 @@
 
 ## Todo
 
-- [ ] 20: Security-review skill #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
-
 - [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
 
@@ -59,6 +56,9 @@
   `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
 
 ## Done
+
+- [x] 20: Security-review skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
 
 - [x] 02: Build the board from the tickets #board #ready-for-agent
   `.scratch/board/issues/02-build-board-from-tickets.md` · blocked by: none

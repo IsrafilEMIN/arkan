@@ -44,7 +44,7 @@ each line names the skill to call today. a ticket in brackets is a planned arkan
 - something is broken, flaky or slow → `diagnosing-bugs`.
 - a design question you can settle by running code → `prototype`, or the prototype playbook.
 - a diff is ready → `code-review` in a fresh context, before you open a pr. fix every issue it raises, then run the full test suite again.
-- a diff is ready and touches input, auth, secrets, ci or installers → the harness's own security review if it has one; else say that no security review ran. [ticket `arkan-flow` 20]
+- a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
 - a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [ticket `arkan-flow` 08]
 - the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last.
