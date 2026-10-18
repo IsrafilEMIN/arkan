@@ -56,4 +56,4 @@ all three sources use the mit license. [`NOTICE`](NOTICE) keeps their copyright 
 
 ## work on arkan itself
 
-tickets live in `.scratch/<feature>/issues/`, and [`TODO.md`](TODO.md) is the board: one card per ticket. the rules are in [`docs/agents/`](docs/agents/).
+tickets live in `.scratch/<feature>/issues/`, and [`TODO.md`](TODO.md) is the board: one card per ticket. the rules are in [`docs/agents/`](docs/agents/). [`eval/scenarios/`](eval/scenarios/) runs arkan unattended on planted scenarios in a sandbox repo and scores each run.

@@ -29,6 +29,12 @@
 - [ ] 28: Feature flags in the flow #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/28-feature-flags.md` · blocked by: none
 
+- [ ] 36: Red-first commits clash with "checks green before each commit" #arkan-flow #needs-triage
+  `.scratch/arkan-flow/issues/36-red-first-commit-vs-green-before-commit.md` · blocked by: none
+
+- [ ] 37: Rebuild the scenario sandbox from arkan #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/37-rebuild-the-sandbox-from-arkan.md` · blocked by: 04
+
 ## Todo
 
 - [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
@@ -39,6 +45,9 @@
 
 - [ ] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
+
+- [ ] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
 
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none

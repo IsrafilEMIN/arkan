@@ -14,7 +14,7 @@
 ### what one run does
 
 - **runs on** `pull_request` `opened`, `synchronize` (each push) and `reopened`. a newer push cancels the run on the older head.
-- **skips**, with a pr comment that says why, a pr from a fork (its run gets no secrets, and its token cannot comment, so there the reason is a notice on the check) and a docs-only pr (every changed file matches `DOCS_ONLY_REGEX`). a skipped run passes the check, so a person reviews those prs by hand.
+- **skips**, with a pr comment that says why, a pr from a fork (its run gets no secrets, and its token cannot comment, so there the reason is a notice on the check) and a docs-only pr (every changed file matches `DOCS_ONLY_REGEX`). a pr that touches a file that steers the agent or its reviewer (`NEVER_DOCS_REGEX`: `.claude/`, `.scratch/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, `REVIEW.md`, `SKILL.md`) is always reviewed. a skipped run passes the check, so a person reviews those prs by hand.
 - **reviews** `git diff <base>...<head>`, the full pr diff. narrowing a later push to its new commits is arkan ticket `arkan-flow` 31.
 - **limits** one model (`REVIEW_MODEL`), a turn limit (`MAX_TURNS`), a 30-minute job timeout, and read-only tools: the model reads files and runs read-only `git` commands, and posts nothing itself.
 - **returns** its findings as structured output (a json schema in `claude_args`): `source`, `tag` (`important`, `nit`, `pre-existing`), `file`, `line`, `body`.
@@ -24,4 +24,6 @@
 
 ### change it
 
-the settings are the `env:` lines at the top: `REVIEW_MODEL`, `MAX_TURNS`, `DOCS_ONLY_REGEX`. to move the action to a newer release, replace the commit sha and its `# v1.x.y` comment together, and read that release's inputs in its `action.yml` first.
+the settings are the `env:` lines at the top: `REVIEW_MODEL`, `MAX_TURNS`, `DOCS_ONLY_REGEX`, `NEVER_DOCS_REGEX`.
+
+**on a pro or max plan,** each review uses the plan's usage. when the plan hits its limit, the review returns nothing, the check stays red, and nothing merges until the limit resets: the gate fails closed. if reviews run out often, set `REVIEW_MODEL` to a lighter model (the sandbox uses `claude-sonnet-5-5`). to move the action to a newer release, replace the commit sha and its `# v1.x.y` comment together, and read that release's inputs in its `action.yml` first.
