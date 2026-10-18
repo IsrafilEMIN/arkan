@@ -1,7 +1,6 @@
 ---
 name: handoff
-description: Compact the current conversation into a handoff block of markdown for another agent to pick up.
-disable-model-invocation: true
+description: Compact the current conversation into a handoff block of markdown for another agent to pick up. Use when the user asks for a handoff, or when work pauses mid-task and a fresh session must resume it (the pause-safely playbook).
 ---
 
 Write a handoff summarising the current conversation so a fresh agent can continue the work. Output it in the chat as one fenced markdown block that the user can copy. Do not write a file.

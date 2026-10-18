@@ -1,6 +1,7 @@
 ---
 name: product-brief
 description: Write, review or trim a product brief and keep it separate from specs and ADRs. Use when the user creates or reviews a brief, asks "is this too detailed for a brief", wants to go through a brief line by line, or asks how brief, spec and ADR differ.
+disable-model-invocation: true
 ---
 
 # Product brief

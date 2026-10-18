@@ -1,6 +1,7 @@
 ---
 name: pr
 description: "Use when writing a PR body."
+user-invocable: false
 metadata:
   credits:
     skill: show-me

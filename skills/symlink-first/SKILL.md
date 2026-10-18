@@ -1,6 +1,7 @@
 ---
 name: symlink-first
 description: Keep one canonical copy of shared material and symlink every other location to it. Use when the user adds or installs a skill, an AGENTS.md, a config, a dotfile or a script that more than one tool, agent or project reads, or asks to dedupe copies or fix broken links.
+user-invocable: false
 ---
 
 # Symlink first

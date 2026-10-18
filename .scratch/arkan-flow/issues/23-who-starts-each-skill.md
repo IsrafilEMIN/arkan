@@ -10,15 +10,16 @@
 
 | who | skills |
 |---|---|
-| person only | `grill-with-docs`, `to-spec`, `to-tickets`, `wayfinder`, `product-brief`, `triage`, `pre-setup`, `setup-pre-commit`, `git-guardrails-claude-code`, `freeze`, `wait-what`, `improve-codebase-architecture`, `handoff` |
-| both | `arkan-mode`, `code-review`, `diagnosing-bugs`, `prototype`, `grilling`, `assess`, `simplest-path`, `wizard`, `retro` |
+| person only | `grill-with-docs`, `to-spec`, `to-tickets`, `wayfinder`, `product-brief`, `triage`, `pre-setup`, `setup-pre-commit`, `git-guardrails-claude-code`, `freeze`, `wait-what`, `improve-codebase-architecture`, `post-merge` |
+| both | `arkan-mode`, `code-review`, `diagnosing-bugs`, `prototype`, `grilling`, `assess`, `simplest-path`, `wizard`, `retro`, `handoff`, `security-review` |
 | agent only | `tdd`, `test-to-break`, `codebase-design`, `domain-modeling`, `writing-for-agents`, `good-css`, `symlink-first`, `pr` |
 
 harness facts (sources in ticket 17): only claude code can hide a skill from the menu; codex, pi and omp ignore `user-invocable`, so agent-only skills still show there. `triage` stays person only because `#ready-for-agent` is the person's go (ticket 26).
 
-- [ ] every `skills/*/SKILL.md` frontmatter matches the table, and `agents/openai.yaml` matches where it exists
+- [x] every `skills/*/SKILL.md` frontmatter matches the table, and `agents/openai.yaml` matches where it exists
 - [ ] proof: in claude code, the agent-only skills are not in the `/` menu and the person-only ones are not in the agent's skill list
 
 ## Comments
 
 - 2026-10-18, owner: agreed in session. `retro` as both, `setup-pre-commit` and `handoff` as person only were proposed last and not yet confirmed: confirm before merge.
+- 2026-10-18, owner: confirmed `retro` as both and `setup-pre-commit` as person only. `handoff` is both, since `arkan-mode`'s `pause-safely` playbook calls it. `security-review` is both, since `arkan-mode` section 2 calls it. the proof needs a local claude code session, so this ticket stays open until the owner runs it.
