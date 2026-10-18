@@ -44,6 +44,8 @@ it skips docs-only prs and prs from forks, and says so on the pr. the details ar
 
 [`ci/github/check.yml`](ci/github/check.yml) runs the repo's check command (`bash scripts/check.sh` by default) on each push and pr, as a `check` job; `check` and `arkan-review` are the two checks a branch rule requires. see [`ci/README.md`](ci/README.md#check).
 
+[`ci/github/arkan-merge.yml`](ci/github/arkan-merge.yml) is the merge gate a person installs once: it merges a pr when every check on the head passed and a review on that head, from a reviewer with write access, begins with `PASS`, so the agent never merges. install steps and branch rules: [`ci/README.md`](ci/README.md#arkan-merge).
+
 ## where the skills come from
 
 | source | skills in arkan |
