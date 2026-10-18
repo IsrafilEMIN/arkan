@@ -15,7 +15,7 @@
   `.scratch/arkan-flow/issues/17-name-clashes.md` · blocked by: 04
 
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: 08, 05
+  `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: 05
 
 - [ ] Review and ci, parked (was 09, 10, 11, 12, 13, 14, 16, 18) #review-ci #spec
   `.scratch/review-ci/spec.md` · blocked by: none
@@ -39,9 +39,6 @@
 
 - [ ] 23: Who starts each skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/23-who-starts-each-skill.md` · blocked by: none
-
-- [ ] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: none
 
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
@@ -86,3 +83,6 @@
 
 - [x] 03: Decide which core skills to merge, if any #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/03-decide-core-skill-merges.md` · blocked by: none
+
+- [x] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: none
