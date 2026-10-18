@@ -11,7 +11,7 @@
 | who | skills |
 |---|---|
 | person only | `grill-with-docs`, `to-spec`, `to-tickets`, `wayfinder`, `product-brief`, `triage`, `pre-setup`, `setup-pre-commit`, `git-guardrails-claude-code`, `freeze`, `wait-what`, `improve-codebase-architecture`, `handoff` |
-| both | `arkan-mode`, `code-review`, `diagnosing-bugs`, `prototype`, `grilling`, `assess`, `simplest-path`, `wizard`, `implement-spec` (until ticket 26), `retro` |
+| both | `arkan-mode`, `code-review`, `diagnosing-bugs`, `prototype`, `grilling`, `assess`, `simplest-path`, `wizard`, `retro` |
 | agent only | `tdd`, `test-to-break`, `codebase-design`, `domain-modeling`, `writing-for-agents`, `good-css`, `symlink-first`, `pr` |
 
 harness facts (sources in ticket 17): only claude code can hide a skill from the menu; codex, pi and omp ignore `user-invocable`, so agent-only skills still show there. `triage` stays person only because `#ready-for-agent` is the person's go (ticket 26).

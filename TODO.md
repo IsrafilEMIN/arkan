@@ -37,9 +37,6 @@
 - [ ] 24: Catch a hidden dependency before the work is wasted #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/24-hidden-dependencies.md` · blocked by: none
 
-- [ ] 26: Spec mode in arkan-mode #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/26-spec-mode-in-arkan-mode.md` · blocked by: none
-
 - [ ] 23: Who starts each skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/23-who-starts-each-skill.md` · blocked by: none
 
@@ -62,6 +59,9 @@
 
 - [x] 02: Build the board from the tickets #board #ready-for-agent
   `.scratch/board/issues/02-build-board-from-tickets.md` · blocked by: none
+
+- [x] 26: Spec mode in arkan-mode #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/26-spec-mode-in-arkan-mode.md` · blocked by: none
 
 - [x] 01: Port poteto-mode to all agents (drop cursor-only mechanics) #completion-loop #wontfix
   `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none

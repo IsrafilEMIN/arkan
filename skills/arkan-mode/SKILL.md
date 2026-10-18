@@ -13,12 +13,19 @@ other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, 
 
 a **task** is the smallest piece of work you can finish alone, from start to a merged and checked change, with no more decisions from a person (see `GLOSSARY.md` in the arkan repo). a ticket is a task. a small, clear request is a task.
 
+pick the mode from what you were given:
+
+- one ticket, or a small, clear request → one task loop, from section 1 on.
+- a spec with tickets → the spec playbook (`playbooks/spec.md`): one task loop per ready ticket, in parallel where the blocking edges allow, then one review and one pr.
+
 arkan mode runs tasks only. the work before a task is **shaping**, and a person starts each shaping step:
 
 - the idea or its words are still fuzzy → stop and tell the user to run `/grill-with-docs`.
-- the work needs more than one pr or more than one session → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
+- the work needs more than one pr or more than one session, and has no tickets yet → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
+
+**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the person sets the role with `/triage`, so the role is the person's go.
 
 when the task is a ticket:
 
@@ -149,5 +156,6 @@ open the file at `playbooks/<file>`. where a step names a tool your harness does
 - **opening a pr** (`opening-a-pr.md`). the end of every other code playbook.
 - **babysit** (`babysit.md`). drive an open pr to merge-ready: conflicts, review threads, ci.
 - **shipping** (`shipping.md`). land a green pr that a verifier, not its author, has checked.
+- **spec** (`spec.md`). a spec with tickets: one task loop per ready ticket on an integration branch, then one review and one pr.
 
-pstack's other playbooks (perf, hillclimb, forensics, visual parity, eval, orchestrate, autopilot, worktree cleanup) are not part of arkan yet. multi-phase plans are shaping, not a task: see step 0.
+pstack's other playbooks (perf, hillclimb, forensics, visual parity, eval, orchestrate, autopilot, worktree cleanup) are not part of arkan yet. a multi-phase plan with no tickets yet is shaping, not a task: see step 0.
