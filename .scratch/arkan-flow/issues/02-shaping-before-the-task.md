@@ -1,5 +1,9 @@
 # 02: shaping happens before the task
 
+**Role:** ready-for-agent
+**Closed:** yes
+**Priority:** 21
+
 **What to build:** the docs and `arkan-mode` show that grill, to-spec, to-tickets and wayfinder are shaping steps that run before a task exists, and a person starts each one. a task is the smallest piece of work an agent can finish alone, so `arkan-mode` takes a task and closes the loop by itself.
 
 **Blocked by:** None (can start immediately).

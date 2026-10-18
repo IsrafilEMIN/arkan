@@ -1,5 +1,9 @@
 # 23: who starts each skill
 
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** 7
+
 **What to build:** each skill's frontmatter says who starts it: only the person (`disable-model-invocation: true`, and `agents/openai.yaml` `allow_implicit_invocation: false`), both (default), or only the agent (`user-invocable: false`, which hides it from the `/` menu). rule: a skill that shapes the work, has side effects on the repo or harness, or looks back is the person's; one the person wants on demand and the agent needs mid-task is both; a policy or vocabulary the agent applies is the agent's.
 
 **Blocked by:** None (can start immediately).

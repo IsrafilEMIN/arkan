@@ -1,5 +1,9 @@
 # 01: arkan-mode replaces poteto-mode
 
+**Role:** ready-for-agent
+**Closed:** yes
+**Priority:** 23
+
 **What to build:** `arkan-mode` is the only engineering mode. it carries pstack's playbooks in its own folder, ported for every harness, and `poteto-mode` is removed from the bundle. an agent that starts a task in any harness gets playbook steps it can follow with that harness's own tools.
 
 **Blocked by:** None (can start immediately).
