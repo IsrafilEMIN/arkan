@@ -2,6 +2,12 @@
 
 ## Backlog
 
+- [ ] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: 30
+
+- [ ] 32: Log how each review finding ends #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/32-log-how-each-finding-ends.md` · blocked by: 31
+
 - [ ] 02: Install the remaining pstack skills (later) #completion-loop #needs-triage
   `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: none
 
@@ -17,7 +23,7 @@
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: 05
 
-- [ ] Review and ci, parked (was 09, 10, 11, 12, 13, 14, 16, 18) #review-ci #spec
+- [ ] Review and ci, parked (was 11, 12, 13, 14, 16) #review-ci #spec
   `.scratch/review-ci/spec.md` · blocked by: none
 
 - [ ] 25: A claim that agents can check #arkan-flow #needs-info
@@ -30,6 +36,12 @@
 
 - [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
+
+- [ ] 30: Review each pull request push in ci #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/30-review-each-push-in-ci.md` · blocked by: none
+
+- [ ] 33: The sandbox runs the whole flow by itself #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/33-sandbox-runs-the-whole-flow.md` · blocked by: none
 
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none

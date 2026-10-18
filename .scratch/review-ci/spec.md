@@ -1,47 +1,13 @@
-# review and ci, parked (was 09, 10, 11, 12, 13, 14, 16, 18)
+# review and ci, parked (was 11, 12, 13, 14, 16)
 
 **Closed:** no
 **Priority:** 17
 
 **status:** parked by the owner on 2026-10-18. nothing here is built. it needs a ci review runner, a guard repo and repo host settings, which live outside this repo. when it comes back, split it into tickets again with `/to-tickets`.
 
-these were tickets `arkan-flow` 09, 10, 11, 12, 13, 14, 16 and 18. their text is below as it was, one section each. a "blocked by" line that names one of these numbers now points at a section of this file.
+these were tickets `arkan-flow` 09, 10, 11, 12, 13, 14, 16 and 18. on 2026-10-18 the owner took 09, 10 and 18 out of the park as tickets 30, 31 and 32; their sections are removed here. a line below that names 09 or 10 now points at ticket 30 or 31. their text is below as it was, one section each. a "blocked by" line that names one of these numbers now points at a section of this file.
 
-## 09: run review on each pr push, outside the author's session
 
-**What to build:** on every push to an open pr, a ci job starts a fresh agent that runs the review skill (code and security lenses) on the diff and posts its findings, so the review does not depend on the author's own session.
-
-**Blocked by:** 03
-
-what "runner" means: before the pr (node 4), the author's agent runs review in a subagent. that is the author checking its own work. at node 6, review must run again on each push, started by something the author does not control. that something is the runner: a ci job.
-
-- [ ] a ci workflow (written or proposed by `pre-setup`, per ticket 05) runs on pr open and on each push
-- [ ] it starts a fresh agent with the review skill and posts findings as pr comments with `file:line`
-- [ ] it reports a required status check, so a pr with an open `important` or security finding cannot merge
-- [ ] it works on prs from forks without leaking secrets, or skips them and says so
-- [ ] proof: a push to a test pr gets review comments with no session open
-
-## 10: store the review round count in the pr
-
-**What to build:** the reviewer knows which round it is on, which commit it last reviewed, and which findings it already posted, even in a fresh session. on round 4 it stops and asks the author to step back.
-
-**Blocked by:** 09
-
-proposal: one review comment per pr that the reviewer edits in place (a "sticky" comment). it holds a hidden marker, for example:
-
-`<!-- arkan:code-review round=2 head=<sha> findings=<id>:<state>,... -->`
-
-- **round** goes up by one only when the head commit changed since the last review.
-- **head** is the last reviewed commit; the next round reviews only `git diff <head>..<new head>`.
-- **findings** holds an id per finding (from the bug class, the file and the symbol, not the line number, so a moved line keeps its id) and its state (open, fixed, dismissed). a finding whose id is already there is never posted again.
-- on round 4: post the "step back and rethink the approach" message, add a label such as `arkan:rethink`, and stop reviewing until a person removes the label.
-
-the same marker feeds the noise log (ticket 18). the pr is the only place that every session can read, so no extra store is needed.
-
-- [ ] the reviewer reads and writes the marker on each run
-- [ ] re-review covers only the new diff
-- [ ] a finding is never posted twice
-- [ ] proof: a fourth round on a test pr gets the "step back" message and the label
 
 ## 11: risk tier from fixed rules and a vote of classifiers
 
@@ -119,13 +85,3 @@ options to offer when there is one person (recommended first):
 - [ ] pre-setup asks the question and records the answer where ticket 05 decides
 - [ ] the approval step (node 7) reads the recorded rule
 - [ ] the github self-approval limit from ticket 14 is handled
-
-## 18: log how each review finding ends
-
-**What to build:** for each finding the reviewer posts, the repo keeps how it ended: fixed, wrong, intended, or did not matter. the owner can see the noise rate per repo and per tag, and a change to the reviewer is judged against it.
-
-**Blocked by:** 03
-
-- [ ] each finding's end state is recorded (the round marker from ticket 10 is the first place to try)
-- [ ] a short report gives the noise rate per tag (`important`, `nit`, `pre-existing`)
-- [ ] `retro` reads the report when it changes `REVIEW.md` or the reviewer prompt
