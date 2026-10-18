@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] 01: Reconstruct skills for the tern board #skills #needs-info
-  `.scratch/skills/issues/01-reconstruct-skills-for-the-board.md` · blocked by: none
-
 - [ ] 02: Install the remaining pstack skills (later) #completion-loop
   `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: arkan-flow 01
 
@@ -20,37 +17,13 @@
 - [ ] 08: Post-merge skill and what starts it #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: 03
 
-- [ ] 09: Run review on each pr push, outside the author's session #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/09-review-runner-on-each-push.md` · blocked by: 03
-
-- [ ] 10: Store the review round count in the pr #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/10-review-round-count.md` · blocked by: 09
-
-- [ ] 12: One sensitive-path list per repo, set up by pre-setup #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/12-sensitive-path-list.md` · blocked by: 05
-
-- [ ] 11: Risk tier from fixed rules and a vote of classifiers #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/11-risk-tier-rules-and-vote.md` · blocked by: 09, 12
-
-- [ ] 13: Protect the review rules from the agent #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/13-protect-review-rules.md` · blocked by: 05, 12
-
-- [ ] 14: Repo host settings checked and offered by pre-setup #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/14-repo-host-settings.md` · blocked by: 05
-
-- [ ] 16: Approval rule for high-tier prs in a repo with one person #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/16-high-tier-with-one-person.md` · blocked by: 05
-
 - [ ] 17: No two skills or commands share a name #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/17-name-clashes.md` · blocked by: 03
 
-- [ ] 18: Log how each review finding ends #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/18-review-noise-log.md` · blocked by: 03
+- [ ] Review and ci, parked (was 09, 10, 11, 12, 13, 14, 16, 18) #review-ci #spec
+  `.scratch/review-ci/spec.md` · blocked by: none
 
 ## Todo
-
-- [ ] 01: arkan-mode replaces poteto-mode #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/01-arkan-mode-replaces-poteto-mode.md` · blocked by: none
 
 - [ ] 04: Install and update command #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
@@ -74,3 +47,9 @@
 
 - [x] 15: A person starts create-verification #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/15-create-verification-is-human-started.md` · blocked by: none
+
+- [x] 01: arkan-mode replaces poteto-mode #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/01-arkan-mode-replaces-poteto-mode.md` · blocked by: none
+
+- [x] 01: Reconstruct skills for the tern board #skills #needs-info
+  `.scratch/skills/issues/01-reconstruct-skills-for-the-board.md` · blocked by: none

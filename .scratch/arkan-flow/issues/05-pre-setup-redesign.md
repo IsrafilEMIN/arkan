@@ -1,6 +1,6 @@
 # 05: grill the pre-setup redesign
 
-**What to build:** a grilled design for `pre-setup` as an interactive checklist (a playbook it runs with the user) that sets up the machine and each repo for the whole arkan flow, safe to run again at any time. the result updates `skills/pre-setup/` and unblocks tickets 06, 12, 13, 14 and 16.
+**What to build:** a grilled design for `pre-setup` as an interactive checklist (a playbook it runs with the user) that sets up the machine and each repo for the whole arkan flow, safe to run again at any time. the result updates `skills/pre-setup/` and unblocks ticket 06. numbers 09 to 18 below are sections of the parked spec `.scratch/review-ci/spec.md`.
 
 **Blocked by:** None (can start immediately). a person must take part (grilling).
 
@@ -24,4 +24,4 @@ questions for the grill:
 
 - [ ] each question above has an answer recorded here
 - [ ] the section list, their order, and each section's shape are agreed
-- [ ] follow-up tickets 06, 12, 13, 14 and 16 are updated to match
+- [ ] ticket 06, and sections 12, 13, 14 and 16 of the parked spec, are updated to match

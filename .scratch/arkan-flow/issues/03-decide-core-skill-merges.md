@@ -14,7 +14,7 @@ proposal (rule: merge only when two skills start at the same moment and do the s
 | tdd | keep `tdd` (+ `test-to-break` as its policy) | already one engine and one policy. do not install pstack's `tdd` (name clash) |
 | debug | keep `diagnosing-bugs` | does the job; renaming costs more than it gives |
 | review + security-review | **decided: two separate skills**, `code-review` and `security-review` | the owner rejected one merged skill (2026-10-18). each runs in fresh-context subagents. the clash with the harness's built-in commands of the same names is ticket 17 |
-| ship | no new skill | the `pr` skill plus the opening-a-pr, babysit and shipping playbooks; tier and approval live in ci (tickets 09, 11) |
+| ship | no new skill | the `pr` skill plus the opening-a-pr, babysit and shipping playbooks; tier and approval live in ci (parked: `.scratch/review-ci/spec.md`, sections 09 and 11) |
 | learn | open. **keep `retro`** (revised) | `retro` is a person-started look back over a whole session that proposes changes to the agent's environment. `learn` would start by itself on one miss (a correction, or a hand-off from `post-merge`) and make the fix. they start at different moments, so by the rule above they do not merge. option: no `learn` skill; `post-merge` and `arkan-mode` call `retro` on the one miss |
 | post-merge | **one new skill** | nothing does it today (ticket 08) |
 | write | no new skill for now | `arkan-mode` holds the reply rules; `writing-for-agents` covers agent text. revisit after pstack `unslop` is installed |
