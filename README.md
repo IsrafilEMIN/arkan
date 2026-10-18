@@ -21,6 +21,9 @@ idea
  2  prove ─────────────── tests, build, lint, and the repo's verify skill
  3  code-review ───────── in a fresh context, before the pr
  4  pr ────────────────── the opening-a-pr, babysit and shipping playbooks
+
+ a spec with tickets: arkan-mode's spec playbook runs one task loop per
+ #ready-for-agent ticket, in parallel, then one review and one pr
 ```
 
 above the task line, a person decides what to build. below it, the agent works alone and comes back to the person for approval and for any action that cannot be undone.
@@ -34,7 +37,7 @@ not built yet: review on each pr push in ci, merge approval by risk tier, and st
 | source | skills in arkan |
 |---|---|
 | [pstack](https://github.com/cursor/plugins/tree/182f2ce/pstack) by lauren tan, at commit `182f2ce` | `arkan-mode`: its playbooks are pstack's, with the cursor-only parts removed; its `SKILL.md` and `principles/` are rewrites of `poteto-mode` and the 24 principle skills |
-| [mattpocock/skills](https://github.com/mattpocock/skills) by matt pocock, main branch | `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `git-guardrails-claude-code`, `grill-with-docs`, `grilling`, `handoff`, `implement-spec`, `improve-codebase-architecture`, `pr`, `prototype`, `retro`, `setup-pre-commit`, `tdd`, `to-spec`, `to-tickets`, `triage`, `wait-what`, `wayfinder`, `wizard`, `writing-for-agents`, and `pre-setup` (from `setup-matt-pocock-skills`). some of them are changed. |
+| [mattpocock/skills](https://github.com/mattpocock/skills) by matt pocock, main branch | `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `git-guardrails-claude-code`, `grill-with-docs`, `grilling`, `handoff`, `improve-codebase-architecture`, `pr`, `prototype`, `retro`, `setup-pre-commit`, `tdd`, `to-spec`, `to-tickets`, `triage`, `wait-what`, `wayfinder`, `wizard`, `writing-for-agents`, `pre-setup` (from `setup-matt-pocock-skills`), and `arkan-mode`'s spec playbook (from `implement-spec`). some of them are changed. |
 | [claude-code-security-review](https://github.com/anthropics/claude-code-security-review/tree/0c6a49f) by anthropic, at commit `0c6a49f` | `security-review`: a copy of `.claude/commands/security-review.md`, with the claude-code-only parts ported |
 | written for arkan | `post-merge`, with parts from pstack's babysit and shipping playbooks |
 | not recorded | `assess`, `freeze`, `good-css`, `product-brief`, `simplest-path`, `symlink-first`, `test-to-break` |

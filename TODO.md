@@ -34,9 +34,6 @@
 - [ ] 24: Catch a hidden dependency before the work is wasted #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/24-hidden-dependencies.md` · blocked by: none
 
-- [ ] 26: Spec mode in arkan-mode #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/26-spec-mode-in-arkan-mode.md` · blocked by: none
-
 - [ ] 23: Who starts each skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/23-who-starts-each-skill.md` · blocked by: none
 
@@ -59,6 +56,9 @@
 
 - [x] 03: Card shows only open blockers #board #ready-for-agent
   `.scratch/board/issues/03-card-shows-only-open-blockers.md` · blocked by: none
+
+- [x] 26: Spec mode in arkan-mode #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/26-spec-mode-in-arkan-mode.md` · blocked by: none
 
 - [x] 22: Retro turns repeated review findings into rules #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/22-retro-turns-repeat-findings-into-rules.md` · blocked by: none
