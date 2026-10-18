@@ -42,6 +42,8 @@ not built yet: merge approval by risk tier, and starting `post-merge` by itself 
 
 it skips docs-only prs and prs from forks, and says so on the pr. the details are in [`ci/README.md`](ci/README.md).
 
+[`ci/github/check.yml`](ci/github/check.yml) runs the repo's check command (`bash scripts/check.sh` by default) on each push and pr, as a `check` job; `check` and `arkan-review` are the two checks a branch rule requires. see [`ci/README.md`](ci/README.md#check).
+
 ## where the skills come from
 
 | source | skills in arkan |
