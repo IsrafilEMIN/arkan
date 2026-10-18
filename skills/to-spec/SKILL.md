@@ -18,7 +18,7 @@ The issue tracker and triage label vocabulary should have been provided to you. 
 
 Check with the user that these seams match their expectations.
 
-4. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage. Then apply the board **Add** operation for the spec with a `#spec` tag (see the `## Board` section of the issue tracker doc).
+4. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
 
 <spec-template>
 

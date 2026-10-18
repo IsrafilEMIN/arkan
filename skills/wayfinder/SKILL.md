@@ -24,8 +24,6 @@ The map is an **index**, not a store. It lists the decisions made and points at 
 
 **Where the map, its child tickets, blocking, and frontier queries physically live is tracker-specific.** The issue tracker should have been provided to you. If not, tell the user to run `/pre-setup`. Consult the tracker doc's "Wayfinding operations" section for how _this_ repo expresses them. If no tracker has been provided, default to the local-markdown tracker.
 
-Every ticket you create, resolve, or rule out of scope also updates its card in `TODO.md`: the board **Add** or **Resolve** operation, with a `#wontfix` tag for an out-of-scope close, in the same branch as the work (see the `## Board` section of the tracker doc). A claim does not move the card.
-
 ### The map body
 
 The whole map at low resolution, loaded once per session. Open tickets are **not** listed: they are open child issues, found by query.

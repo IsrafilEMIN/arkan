@@ -1,6 +1,6 @@
 ---
 name: pre-setup
-description: "Configure this repo for the engineering skills: set up its issue tracker, triage label vocabulary, domain doc layout, a Tern kanban board, and a change log. Run once before first use of the other engineering skills."
+description: "Configure this repo for the engineering skills: set up its issue tracker, triage label vocabulary, domain doc layout, and a Tern kanban board. Run once before first use of the other engineering skills."
 disable-model-invocation: true
 ---
 
@@ -12,7 +12,6 @@ Scaffold the per-repo configuration that the engineering skills assume:
 - **Triage labels**: the strings used for the five canonical triage roles
 - **Domain docs**: where `GLOSSARY.md` and ADRs live, and the consumer rules for reading them
 - **Todo board**: one `TODO.md` per repo at the repo root, in the Markdown checklist form that Tern reads as a kanban board
-- **Change log**: one `LOGS.md` per repo at the repo root, plus an "append to LOGS.md per change action" rule in the repo's `AGENTS.md`
 
 This is a prompt-driven skill, not a deterministic script. Explore, present what you found, confirm with the user, then write.
 
@@ -29,7 +28,7 @@ Look at the current repo to understand its starting state. Read whatever exists;
 - `GLOSSARY.md` and `GLOSSARY-MAP.md` at the repo root
 - `docs/adr/` and any `src/*/docs/adr/` directories
 - `docs/agents/`: does this skill's prior output already exist?
-- `TODO.md` and `LOGS.md` at the repo root: does this skill's prior output already exist?
+- `TODO.md` at the repo root: does this skill's prior output already exist?
 - `.scratch/`: a sign that a local-markdown issue tracker convention is already in use
 - Is the `triage` skill installed? (a `triage` skill folder alongside this one, or `triage` in your available skills.) This decides whether Section B runs at all.
 - Monorepo signals: a `pnpm-workspace.yaml`, a `workspaces` field in `package.json`, or a populated `packages/*` with its own `src/`. These are present only in a genuinely large multi-package repo; their absence means single-context, which is almost every repo.
@@ -65,7 +64,7 @@ The defaults are the five canonical roles, each label string equal to its name: 
 
 Offer **multi-context** (a root `GLOSSARY-MAP.md` pointing to per-context `GLOSSARY.md` files) only when exploration found monorepo signals. Then confirm which layout they want.
 
-**Section D: Todo board.** No question. Always write `TODO.md` at the repo root (if it doesn't exist yet) as a Markdown checklist that Tern reads as a kanban board, and make sure the repo's `.gitignore` does not list `TODO.md`. Git tracks the board, and the copy on `main` is the only board: a card change goes in the same PR as its work and reaches `main` only after the PR checks pass and the merge is verified:
+**Section D: Todo board.** No question. Always write `TODO.md` at the repo root (if it doesn't exist yet) as a Markdown checklist that Tern reads as a kanban board, and make sure the repo's `.gitignore` does not list `TODO.md`, because git tracks the board. The board shows one card per ticket; the details stay in the ticket. The format Tern reads:
 
 - `##` headings are lanes. Seed these three, in this order: `Backlog`, `Todo`, `Done`.
 - `- [ ]` items are cards. A card may carry `#tags`, a due date as `📅 YYYY-MM-DD`, subtask progress and notes.
@@ -74,10 +73,6 @@ Offer **multi-context** (a root `GLOSSARY-MAP.md` pointing to per-context `GLOSS
 
 Use [todo.md](./todo.md) as the seed. The card format, the lane rule and the board operations live in the `## Board` section of each issue-tracker seed.
 
-**Section E: Change log.** No question. Always write `LOGS.md` at the repo root (if it doesn't exist yet) and the "append to LOGS.md per change action" rule in the repo-root `AGENTS.md`.
-
-Use [change-log.md](./change-log.md) as the seed.
-
 ### 3. Confirm and edit
 
 Show the user a draft of:
@@ -85,7 +80,6 @@ Show the user a draft of:
 - The `## Agent skills` block to add to the repo-root `AGENTS.md`
 - The contents of `docs/agents/issue-tracker.md`, `docs/agents/domain.md`, and `docs/agents/triage-labels.md` (the last only when `triage` is installed)
 - The initial `TODO.md` (only when it doesn't exist yet), and the removal of any `TODO.md` line from `.gitignore`
-- The initial `LOGS.md` (only when it doesn't exist yet)
 
 Let them edit before writing.
 
@@ -114,11 +108,7 @@ The block:
 
 ### Board
 
-Every ticket state change also updates its card in `TODO.md` (the Tern board), in the same branch and PR as the work. The change reaches `main` only after the PR checks pass and the merge is verified. See the `## Board` section of `docs/agents/issue-tracker.md`.
-
-### Change log
-
-Append to LOGS.md per change action: after every change, append a dated entry to `LOGS.md`.
+`TODO.md` (the Tern board) shows one card per ticket; the details stay in the ticket. See the `## Board` section of `docs/agents/issue-tracker.md`.
 ```
 
 Include the `### Triage labels` sub-block, and write `docs/agents/triage-labels.md`, only when `triage` is installed and Section B ran. When it isn't, both are omitted.
@@ -135,8 +125,6 @@ For "other" issue trackers, write `docs/agents/issue-tracker.md` from scratch us
 
 If `TODO.md` doesn't exist, create it from [todo.md](./todo.md). If it exists, keep its lanes and cards and add only the seed lanes that are missing. If it has a `Doing` lane, move each of its cards by the lane rule, then remove the lane. In both cases, make sure `.gitignore` does not list `TODO.md`.
 
-If `LOGS.md` doesn't exist, create it from [change-log.md](./change-log.md), with `{{DATE}}` set to today. The seed already holds the setup entry, so add no second one. If `LOGS.md` exists, keep its contents and append the seed's dated setup entry.
-
 ### 5. Done
 
-Tell the user the setup is complete and which engineering skills will now read from these files. Mention they can edit `docs/agents/*.md`, `TODO.md` and `LOGS.md` directly later; re-running this skill is only necessary if they want to switch issue trackers or restart from scratch. Mention that agents now append to `LOGS.md` after every change, and that `TODO.md` opens as a board in Tern (New board block).
+Tell the user the setup is complete and which engineering skills will now read from these files. Mention they can edit `docs/agents/*.md` and `TODO.md` directly later; re-running this skill is only necessary if they want to switch issue trackers or restart from scratch. Mention that `TODO.md` opens as a board in Tern (New board block).

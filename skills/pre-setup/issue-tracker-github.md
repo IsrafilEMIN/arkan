@@ -27,7 +27,7 @@ GitHub shares one number space across issues and PRs, so a bare `#42` may be eit
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue.
+Create a GitHub issue. Then apply the board **Add** operation (see [Board](#board)).
 
 ## When a skill says "fetch the relevant ticket"
 
@@ -48,7 +48,7 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 
 `TODO.md` at the repo root is this repo's Tern board. Tern reads `##` headings as lanes and `- [ ]` items as cards, writes every change to the file at once, and shows edits from other programs live. Git tracks `TODO.md`, and the copy on `main` is the only board. A card change goes in the same branch and PR as the work that causes it, and reaches `main` only after that PR's checks pass and the merge is verified. Nobody commits `TODO.md` straight to `main`, and an edit made in Tern goes through a PR too. When a skill changes a ticket's state, it also applies the matching board operation below, in that branch. If no work branch exists, for example for a ticket published outside a PR, open a branch and PR for the board change alone.
 
-The GitHub issue is the source of truth; the card mirrors it. If a card and its issue disagree (for example, someone edited the issue on the web or ticked a card in Tern), fix the card from the issue and tell the user.
+The GitHub issue is the source of truth; the card mirrors it. A card holds only its title, its tags and one note line. Every detail lives in the issue. If a card and its issue disagree (for example, someone edited the issue on the web or ticked a card in Tern), fix the card from the issue and tell the user.
 
 - **Lanes**: `## Backlog`, `## Todo`, `## Done`, in that order. If a lane is missing, add it.
 - **Card**: `- [ ] <n>: <title> #<feature-slug>`, then `#<role>` when triage labels are configured, `#<type>` for a wayfinder ticket, `#spec` for a spec, and `📅 YYYY-MM-DD` only when the ticket has a due date. Under the card, one indented note line: `<issue url> · blocked by: <refs, or none>`. `<n>` is the issue number without `#`, because Tern reads `#…` as a tag.

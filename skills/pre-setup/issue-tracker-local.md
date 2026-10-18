@@ -12,7 +12,7 @@ Issues and specs for this repo live as markdown files in `.scratch/`.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed), then apply the board **Add** operation (see [Board](#board)).
 
 ## When a skill says "fetch the relevant ticket"
 
@@ -33,7 +33,7 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
 
 `TODO.md` at the repo root is this repo's Tern board. Tern reads `##` headings as lanes and `- [ ]` items as cards, writes every change to the file at once, and shows edits from other programs live. Git tracks `TODO.md`, and the copy on `main` is the only board. A card change goes in the same branch and PR as the work that causes it, and reaches `main` only after that PR's checks pass and the merge is verified. Nobody commits `TODO.md` straight to `main`, and an edit made in Tern goes through a PR too. When a skill changes a ticket's state, it also applies the matching board operation below, in that branch. If no work branch exists, for example for a ticket published outside a PR, open a branch and PR for the board change alone.
 
-The card's lane and its `#<role>` tag are the ticket's status. Ticket files carry no `Status:` line.
+The ticket file is the source of truth; the card mirrors it. A card holds only its title, its tags and one note line. Every detail lives in the ticket file. The card's lane and its `#<role>` tag are the ticket's status. Ticket files carry no `Status:` line.
 
 - **Lanes**: `## Backlog`, `## Todo`, `## Done`, in that order. If a lane is missing, add it.
 - **Card**: `- [ ] <NN>: <title> #<feature-slug>`, then `#<role>` when triage labels are configured, `#<type>` for a wayfinder ticket, `#spec` for a spec, and `📅 YYYY-MM-DD` only when the ticket has a due date. Under the card, one indented note line: `<path to the ticket file> · blocked by: <refs, or none>`. `<feature-slug>` is the `.scratch/` directory name.
