@@ -1,7 +1,7 @@
 # 19: test arkan on real scenarios
 
-**Role:** ready-for-human
-**Closed:** no
+**Role:** wontfix
+**Closed:** yes
 **Priority:** 2
 
 **What to build:** the owner runs the arkan flow on varied real scenarios (a bug, a feature, a security hole, a sensitive-path change, a style nit, a long unattended run) and records what each node did against its gate in this ticket's comments.
@@ -19,3 +19,4 @@
   - review loop, hidden dependency, post-merge, long run: not run. the owner stopped the sandbox mid review-loop.
   - reading: the pipeline works end to end, but the toy repo is too easy: every planted trap was avoided, so the gates that catch a mistake (security catch, nit tagging, round cap, hidden-dependency stop) were not exercised. the owner moved testing to a real project, with a person merging until the merge gate (ticket 34) and risk tiers (spec 11, 12, 16) exist.
   - cost per run, in this environment's tokens: about $2 to $4.
+- 2026-10-18, owner: dropped. no testing on a real project either. what the sandbox found is in tickets 34 to 38; the kit stays in `eval/scenarios/`.
