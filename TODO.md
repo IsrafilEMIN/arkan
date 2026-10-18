@@ -31,9 +31,6 @@
 - [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
 
-- [ ] 27: Review that converges #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/27-review-converges.md` · blocked by: none
-
 - [ ] 24: Catch a hidden dependency before the work is wasted #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/24-hidden-dependencies.md` · blocked by: none
 
@@ -59,6 +56,9 @@
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
+
+- [x] 27: Review that converges #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/27-review-converges.md` · blocked by: none
 
 - [x] 02: Build the board from the tickets #board #ready-for-agent
   `.scratch/board/issues/02-build-board-from-tickets.md` · blocked by: none
