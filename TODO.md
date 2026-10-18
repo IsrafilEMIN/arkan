@@ -22,6 +22,9 @@
 
 ## Todo
 
+- [ ] 02: Build the board from the tickets #board #ready-for-agent
+  `.scratch/board/issues/02-build-board-from-tickets.md` · blocked by: none
+
 - [ ] 20: Security-review skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
 
