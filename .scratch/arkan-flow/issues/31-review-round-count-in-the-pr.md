@@ -1,7 +1,7 @@
 # 31: keep the review round count in the pull request
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 5
 
 **What to build:** the ci reviewer knows which round it is on, which commit it last reviewed, and which findings it already posted, even in a fresh run. it keeps one review comment per pr and edits it in place; the comment holds a hidden marker, for example `<!-- arkan:code-review round=2 head=<sha> findings=<id>:<state>,... -->`. the round goes up only when the head commit changed. the next round reviews only `git diff <head>..<new head>`. a finding id comes from the bug class, the file and the symbol, not the line number, and a finding already in the marker is never posted again. on round 4 it posts "step back and rethink the approach", adds the label `arkan:rethink`, and stops reviewing until a person removes the label. this was section 10 of `.scratch/review-ci/spec.md`.
@@ -10,6 +10,17 @@
 
 **Touches:** the workflow from ticket 30 in `ci/`, `skills/code-review/`.
 
-- [ ] the reviewer reads and writes the marker on each run
-- [ ] re-review covers only the new diff, and a finding is never posted twice
-- [ ] proof: a fourth push to a sandbox pr gets the "step back" message and the label
+- [x] the reviewer reads and writes the marker on each run
+- [x] re-review covers only the new diff, and a finding is never posted twice
+- [x] proof: a fourth push to a sandbox pr gets the "step back" message and the label
+
+## Comments
+
+- 2026-10-18: built in `ci/github/arkan-review.yml`, documented in `ci/README.md`. the summary is now one sticky comment per pr, found by its first line and only when `github-actions[bot]` wrote it, and edited in place: `<!-- arkan:review round=<n> head=<sha> reviewed=<sha> findings=<id>:<state>,... blocking=<id>,... -->`. `reviewed` (the last commit a review ran on) is there because round 4 reviews nothing, so round 5 must start from round 3's head; `blocking` lists the `important` and security-review ids, so the check can be decided from the marker alone. state is `open` or `fixed` for now; ticket 32 adds its end states as more state words. rules: the round goes up only when the head differs from the marker's `head`; a rerun of an already reviewed head calls no model and decides the check from the marker; a run that returns nothing leaves the marker alone. round 1 reviews `git diff <base>...<head>`, a later round `git diff <reviewed>..<head>`, or the full pr diff (and says so) when `reviewed` is not an ancestor of the head. the model returns `class` and `symbol` per finding; the id is the first 8 hex of `sha256("class|file|symbol")`, worked out in shell. earlier findings go into the prompt with their ids, and a returned id already in the marker is dropped. the model also returns `fixed`, the ids of earlier `open` findings it checked are gone at the head; the shell marks only those `fixed`. the check fails while any `blocking` id is `open`. round 4 writes "step back and rethink the approach", adds `arkan:rethink` (created if missing), and fails; while the label is on, each run fails at once with no model call. inline comments stay as a review, for each round's new findings only. the action and checkout are unchanged, so `.claude/` still comes from the base branch. `skills/code-review/` needed no change: its re-review already reviews only the new diff and never repeats an earlier finding. a local harness (a fake `gh`, a throwaway repo) ran rounds 1 to 4, a paused run, a rerun, the label removed (round 5), a force-push (full diff) and a run with no output.
+- 2026-10-18, proof in `IsrafilEMIN/arkan-sandbox`, on the sandbox's lighter model, pr https://github.com/IsrafilEMIN/arkan-sandbox/pull/18 from `ci-r31-proof` to `ci-r31-base` (`pre-break` plus this workflow, with `auto-merge.yml` removed). sticky comment https://github.com/IsrafilEMIN/arkan-sandbox/pull/18#issuecomment-6256527686, edited in place each round.
+  - round 1, `923af00` (`discounted_value_cents` keeps `percent` instead of taking it off): check run 117821100559 `failure`. reviewed the full pr diff; 2 `important`. marker `round=1 head=923af00… reviewed=923af00… findings=bc8d888d:open,a9218f67:open blocking=bc8d888d,a9218f67`.
+  - round 2, `82d04d3` (fixes both, adds `low_stock` with `qty > threshold`): check run 117821334176 `failure`. reviewed `git diff 923af00..82d04d3` only; "2 new, 2 fixed, 0 already posted"; the round 2 review has inline comments for the 2 new findings only. marker `round=2 head=82d04d3… findings=bc8d888d:fixed,a9218f67:fixed,25ff51de:open,c791262e:open blocking=bc8d888d,a9218f67,25ff51de,c791262e`.
+  - round 3, `e2d0153` (fixes `low_stock`, adds its test): check run 117821583228 `success`. reviewed `git diff 82d04d3..e2d0153`; "0 new, 2 fixed". marker `round=3 … findings=bc8d888d:fixed,a9218f67:fixed,25ff51de:fixed,c791262e:fixed`.
+  - round 4, `97bc27e` (a docstring change): check run 117821795043 `failure` in 9 seconds, the review step skipped. the comment says "step back and rethink the approach", and the pr got `arkan:rethink`. marker `round=4 head=97bc27e… reviewed=e2d0153…`.
+  - one more push, `e7bef8a`: check run 117821942126 `failure` in 8 seconds, review step skipped, annotation "paused: the pr has the label arkan:rethink. a person removes it to resume."; the comment was not touched.
+  - not run in ci: removing the label (round 5), a force-push, a rerun of a reviewed head; those ran only in the local harness. after the proof, the round 4 text was reworded (it said three rounds "did not end the loop", which is wrong when round 3 passed) and the sandbox base updated; that text change did not run in ci. pr 18 is closed, unmerged; the owner can delete the branches `ci-r31-base` and `ci-r31-proof` and the label `arkan:rethink`.

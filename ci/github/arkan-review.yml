@@ -244,7 +244,7 @@ jobs:
               write_sticky "<!-- arkan:review round=$ROUND head=$HEAD_SHA reviewed=$OLD_REVIEWED findings=$OLD_FINDINGS blocking=$OLD_BLOCKING -->
           ### arkan-review round $ROUND on \`$short\`: step back and rethink the approach
 
-          Three rounds of review did not end the loop, so this round reviews nothing and the check stays red. Look at which findings keep coming back, and rethink the approach rather than patch it again. While the label \`$RETHINK_LABEL\` is on this pr, arkan-review skips every run. A person removes the label to resume; the next run reviews everything since \`${OLD_REVIEWED:0:7}\`, and the round count goes on.
+          This pr has had three rounds of review, so round $ROUND reviews nothing and the check stays red. Look at which findings kept coming back, and rethink the approach rather than patch it again. While the label \`$RETHINK_LABEL\` is on this pr, arkan-review skips every run. A person removes the label to resume; the next run reviews everything since \`${OLD_REVIEWED:0:7}\`, and the round count goes on.
 
           #### findings, all rounds
           ${old_lines:-none}"
