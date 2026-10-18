@@ -6,7 +6,7 @@
 
 proposal: one review comment per pr that the reviewer edits in place (a "sticky" comment). it holds a hidden marker, for example:
 
-`<!-- arkan-review round=2 head=<sha> findings=<id>:<state>,... -->`
+`<!-- arkan:code-review round=2 head=<sha> findings=<id>:<state>,... -->`
 
 - **round** goes up by one only when the head commit changed since the last review.
 - **head** is the last reviewed commit; the next round reviews only `git diff <head>..<new head>`.
