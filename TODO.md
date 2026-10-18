@@ -46,6 +46,9 @@
 - [ ] 34: Ship the merge gate a person installs #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/34-ship-the-merge-gate.md` · blocked by: none
 
+- [ ] 38: Ship a ci test job a repo can copy #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/38-ship-a-ci-test-job.md` · blocked by: none
+
 - [ ] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
 
