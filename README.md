@@ -30,7 +30,17 @@ above the task line, a person decides what to build. below it, the agent works a
 
 after a merge breaks main, a person starts `post-merge`: it finds the first bad merge, reverts or fixes forward on a branch, and opens a ticket for the miss.
 
-not built yet: review on each pr push in ci, merge approval by risk tier, and starting `post-merge` by itself when main breaks. they are parked in [`.scratch/review-ci/spec.md`](.scratch/review-ci/spec.md) and ticket `arkan-flow` 21.
+not built yet: merge approval by risk tier, and starting `post-merge` by itself when main breaks. they are parked in [`.scratch/review-ci/spec.md`](.scratch/review-ci/spec.md) and ticket `arkan-flow` 21.
+
+## review in ci
+
+[`ci/github/arkan-review.yml`](ci/github/arkan-review.yml) runs `code-review` and `security-review` on each push to an open pr, posts the findings on the pr, and sets an `arkan-review` check that fails while an `important` or security finding is open. to add it to a repo:
+
+1. put arkan's skills in the repo's `.claude/skills/` on the default branch.
+2. add the repo secret `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`), or `ANTHROPIC_API_KEY`.
+3. copy the file to `.github/workflows/arkan-review.yml`, and make `arkan-review` a required check.
+
+it skips docs-only prs and prs from forks, and says so on the pr. the details are in [`ci/README.md`](ci/README.md).
 
 ## where the skills come from
 
