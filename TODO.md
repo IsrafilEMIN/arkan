@@ -28,9 +28,6 @@
 
 ## Todo
 
-- [ ] 20: Security-review skill #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
-
 - [ ] 19: Test arkan on real scenarios #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/19-scenario-tests.md` · blocked by: none
 
@@ -83,3 +80,6 @@
 
 - [x] 03: Decide which core skills to merge, if any #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/03-decide-core-skill-merges.md` · blocked by: none
+
+- [x] 20: Security-review skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/20-security-review-skill.md` · blocked by: none
