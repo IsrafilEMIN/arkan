@@ -77,21 +77,23 @@ lookup() {
 	printf '%s' "${by_ref[$ref]:-}"
 }
 
-# pass 2: the lane rule, and each ticket's blockers as ticket indexes
+# pass 2: the lane rule, and each ticket's blockers as ticket indexes;
+# the card note keeps only the open blockers (the ticket's line is history)
 t_lane=() t_block=()
 for k in "${!t_path[@]}"; do
 	refs="${t_refs[$k]}" ready=1 block=""
 	if [ "$refs" != none ]; then
 		IFS=, read -ra parts <<<"$refs"
-		norm=()
+		open=()
 		for r in "${parts[@]}"; do
 			r="$(trim "$r")" b="$(lookup "$r" "${t_feat[$k]}")"
-			norm+=("$r")
 			if [ -z "$b" ]; then fail "${t_path[$k]}" "blocker '$r' is not a ticket"; continue; fi
 			block+=" $b"
-			[ "${t_closed[$b]}" = yes ] || ready=0
+			[ "${t_closed[$b]}" = yes ] && continue
+			ready=0 open+=("$r")
 		done
-		t_refs[$k]="$(printf '%s\n' "${norm[@]}" | paste -sd, - | sed 's/,/, /g')"
+		t_refs[$k]=none
+		[ ${#open[@]} = 0 ] || t_refs[$k]="$(printf '%s\n' "${open[@]}" | paste -sd, - | sed 's/,/, /g')"
 	fi
 	t_block+=("$block ")
 	# lane rule: Done if closed; else Todo if ready; else Backlog
