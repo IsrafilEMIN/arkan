@@ -87,13 +87,10 @@ jobs:
           a revert landed in that push"
             fi
           else
-            since=""
-            if [ "$EVENT" = schedule ]; then
-              since=$(gh run list --workflow arkan-post-merge.yml --limit 20 \
-                --json databaseId,createdAt,status \
-                --jq --arg id "$THIS_RUN" '[.[] | select(.databaseId != ($id | tonumber) and .status == "completed")] | sort_by(.createdAt) | last | .createdAt // ""' \
-                2>/dev/null || true)
-            fi
+            since=$(gh run list --workflow arkan-post-merge.yml --limit 20 \
+              --json databaseId,createdAt,status \
+              --jq --arg id "$THIS_RUN" '[.[] | select(.databaseId != ($id | tonumber) and .status == "completed")] | sort_by(.createdAt) | last | .createdAt // ""' \
+              2>/dev/null || true)
             if [ -z "$since" ]; then
               since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
             fi
@@ -114,7 +111,7 @@ jobs:
               slow="${slow:+${slow}
           }${issues}"
             fi
-            signals="the daily run found:"
+            signals="the run found:"
             if [ -n "$slow" ]; then
               signals="${signals}
           ${slow}"
