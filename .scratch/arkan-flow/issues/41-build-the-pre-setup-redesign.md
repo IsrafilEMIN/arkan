@@ -1,7 +1,7 @@
 # 41: build the pre-setup redesign
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 10
 
 **What to build:** `skills/pre-setup/` as ticket 05's `## Answer` lays it out: a routing `SKILL.md`, `scripts/setup.sh` with `check` and `apply <item>`, and the seeds moved to `references/`. the repo sections (4 to 14) come first; the machine sections (1 to 3) belong to tickets 04, 06 and 17 and plug into the same script.
@@ -15,7 +15,7 @@
 - [x] the domain-docs section writes `GLOSSARY.md merge=union` to `.gitattributes`
 - [x] `docs/agents/sensitive-paths.md` and `docs/agents/approvals.md` are written, each with a one-line entry in the `AGENTS.md` block
 - [x] a re-run in a set-up repo changes nothing; a ci workflow file older than arkan's copy is offered as an update, with its diff
-- [ ] after the repo sections, the skill shows the diff and commits only after a yes
+- [x] after the repo sections, the skill shows the diff and commits only after a yes
 - [x] proof: run in a fresh scratch repo, then again; the second run reports every item `ok` and leaves `git status` clean
 
 ## Comments
@@ -27,3 +27,4 @@
 - 2026-10-19, owner (underground, live session, its pr 33): the updated skill skipped the six `ok` items (git, tracker, labels, domain, agents-block, board) without a question, set up every missing item, asked the owner to approve the sensitive-path list (approved with `install.sh`, `bootstrap.sh`, `parts/**`, the srt settings, `VERSIONS` and `THREAT-MODEL.md` added), and asked about the branch rule (owner: not now). the broker refused its push of the workflow files (the broker token has no `workflow` scope, on purpose); the owner pushed from tab 2. pr 33 then merged through underground's new gate on the owner's `PASS` (`github-actions[bot]`, `975f170`).
 - 2026-10-19, agent: two bugs from that run, fixed here. (1) the skill copied `arkan-review.yml` without the `CLAUDE_CODE_OAUTH_TOKEN` secret, so `arkan-review` failed and would have blocked every merge; `SKILL.md` now offers `ci-review` only when the secret and `.claude/skills/` exist. (2) the session uncommented `check.yml`'s example `setup-python` pin, which github could not resolve (`Unable to resolve action actions/setup-python@2499707…`); the example pins in `check.yml` are now placeholders that say to copy a real release sha. both workflow files were removed from underground's pr 33 before it merged.
 - 2026-10-19, agent: arkan's own items set up the same way (`setup.sh apply approvals`, `apply review-md`, plus `docs/agents/sensitive-paths.md`, `.github/CODEOWNERS`, `REVIEW.md` and the `AGENTS.md` pointers); `setup.sh check` now reads every item `ok` except `ci-review` (deferred with 42), `verify` (`hint`) and `hooks` (`skip`).
+- 2026-10-19, owner: in the underground session the skill waited for the owner's yes before it committed ("it did wait for me i think"; from memory, not a transcript). every box is ticked; closed. the machine items stay with 04, 06 and 17.
