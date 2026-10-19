@@ -5,9 +5,6 @@
 - [ ] 02: Install the remaining pstack skills (later) #completion-loop #needs-triage
   `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: none
 
-- [ ] 06: Pre-setup sets up each harness the user has #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/06-pre-setup-harness-setup.md` · blocked by: 41
-
 - [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/07-readme-run-pre-setup-first.md` · blocked by: 04, 06
 
@@ -31,11 +28,11 @@
 
 ## Todo
 
-- [ ] 41: Build the pre-setup redesign #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/41-build-the-pre-setup-redesign.md` · blocked by: none
-
 - [ ] 04: Install and update command #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
+
+- [ ] 06: Pre-setup sets up each harness the user has #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/06-pre-setup-harness-setup.md` · blocked by: none
 
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: none
@@ -104,6 +101,9 @@
 
 - [x] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
+
+- [x] 41: Build the pre-setup redesign #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/41-build-the-pre-setup-redesign.md` · blocked by: none
 
 - [x] 36: Red-first commits clash with "checks green before each commit" #arkan-flow #needs-triage
   `.scratch/arkan-flow/issues/36-red-first-commit-vs-green-before-commit.md` · blocked by: none
