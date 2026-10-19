@@ -14,7 +14,7 @@
 ### what one run does
 
 - **runs on** `pull_request` `opened`, `synchronize` (each push) and `reopened`. a newer push cancels the run on the older head. it also runs on a pr comment (`issue_comment`, only when the comment has `arkan:` in it) and on an inline reply (`pull_request_review_comment`, each one: a skipped job would pass the check), to apply a person's command (below) with no model call. a comment run waits for the run in progress on the pr, and never starts a round. github runs an `issue_comment` run from the default branch's copy of this file, and its own check lands there, so it posts the `arkan-review` check run on the pr head itself; an inline reply runs the pr's copy, and its job is the check.
-- **skips**, with a pr comment that says why, a pr from a fork (its run gets no secrets, and its token cannot comment, so there the reason is a notice on the check) and a docs-only pr (every changed file matches `DOCS_ONLY_REGEX`). a pr that touches a file that steers the agent or its reviewer (`NEVER_DOCS_REGEX`: `.claude/`, `.scratch/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, `REVIEW.md`, `SKILL.md`) is always reviewed. a skipped run passes the check, so a person reviews those prs by hand.
+- **skips**, with a pr comment that says why, a pr from a fork (its run gets no secrets, and its token cannot comment, so there the reason is a notice on the check) and a docs-only pr (every changed file matches `DOCS_ONLY_REGEX`). a pr that touches a file that steers the agent or its reviewer (`NEVER_DOCS_REGEX`: `.claude/`, `.scratch/`, `.github/`, `docs/agents/review-evals/`, `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, `REVIEW.md`, `SKILL.md`, `review-prompt.md`) is always reviewed. a skipped run passes the check, so a person reviews those prs by hand.
 - **counts rounds** in one sticky pr comment, which it edits in place. the comment's first line is a hidden marker, the only state a fresh run reads:
 
   ```
@@ -64,6 +64,20 @@ important        0      5      1         1               0           7    14%
 ```
 
 a finding nobody closed stays `open`, so the report is only as good as the commands people leave. judge a change to the reviewer or to `CODING_STANDARDS.md` against the noise rate per tag, before and after.
+
+## review evals
+
+A merged change that broke main becomes a case under the repo's `docs/agents/review-evals/`, so a change to the reviewer is scored on the misses it must not repeat. [`review-eval.sh`](review-eval.sh) runs the reviewer on each case's `bad.diff` and prints `<case> caught` or `<case> missed`:
+
+```sh
+ci/review-eval.sh --compare
+```
+
+The default reviewer is `omp -p --no-session --tools=read,grep,glob`; set `REVIEW_CMD` to another command that reads the prompt on stdin. The default prompt is [`review-prompt.md`](review-prompt.md); `--prompt FILE` tests a weaker one. `--update-baseline` records the cases caught now in `docs/agents/review-evals/baseline.txt`; `--compare` exits 1 when a baseline case is now missed. The case format and the full command list are in [the cases doc](../docs/agents/review-evals/README.md).
+
+A change to `github/arkan-review.yml`, `review-prompt.md`, `skills/code-review/` or `skills/security-review/` is kept only when `--compare` misses no case caught before. No ci job runs this: it needs a model, and a github actions runner has no model. The person or agent that changes the reviewer runs it locally before the change lands. The `post-merge` skill adds the case.
+
+A repo that installs `arkan-review` copies `review-eval.sh` and `review-prompt.md` into its own `ci/` and keeps its cases in its own `docs/agents/review-evals/`.
 
 ## check
 
