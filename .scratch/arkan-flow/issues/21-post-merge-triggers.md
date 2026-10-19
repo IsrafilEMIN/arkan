@@ -25,7 +25,7 @@ pushing ci files and changing repo settings are outward actions: show the exact 
 - 2026-10-19, agent: proof for box 1. in a fresh scratch repo with no `.github/`:
   - `setup.sh check` -> `ci-post-merge missing .github/workflows/arkan-post-merge.yml` and `ci-post-merge-daily missing .github/workflows/arkan-post-merge-daily.yml`.
   - `apply ci-post-merge` -> `ok`; `apply ci-post-merge-daily` -> `ok`; `check` -> both `ok`; `cmp` says both copies are identical to arkan's files.
-  - a second apply leaves the files byte-identical (`d1283418016ec75a9528f35d65781e61d6b1b4e3` over both files).
+  - a second apply changed no bytes: the shasum over both scratch copies was the same before and after. their concatenated content hashes `f97cfb089182aff6a77399dd3e812256587f371d`.
   - after appending one line to the daily copy: `ci-post-merge ok`, `ci-post-merge-daily out-of-date .github/workflows/arkan-post-merge-daily.yml differs from <arkan>/ci/github/arkan-post-merge-daily.yml`.
   - `ruby -ryaml` parses both workflow files, and every embedded `run:` block passes `bash -n`.
   - the event publish step, run with a stub `gh` against a local bare origin, pushed the code branch, opened the pull request, committed and pushed the ticket (`docs: ticket the post-merge miss`), and patched the pull request body where `{{ticket}}` was. a github-tracker case created the issue with `needs-triage` and patched the body too. a revert case with no code pull request opened the ticket-only `post-merge/ticket-<run id>` pull request. two bugs found and fixed this way: the pull request body patch lost its `{{ticket}}` placeholder, and the daily run read failures from every workflow instead of only `check`.
