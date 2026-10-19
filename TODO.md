@@ -66,6 +66,9 @@
 - [x] 03: Card shows only open blockers #board #ready-for-agent
   `.scratch/board/issues/03-card-shows-only-open-blockers.md` · blocked by: none
 
+- [x] 04: One bash-3.2-safe entry point for the board #board #ready-for-agent
+  `.scratch/board/issues/04-one-bash-3-2-safe-board-entry-point.md` · blocked by: none
+
 - [x] 24: Catch a hidden dependency before the work is wasted #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/24-hidden-dependencies.md` · blocked by: none
 

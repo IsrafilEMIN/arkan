@@ -35,7 +35,7 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
 
 The ticket file is the source of truth; the card mirrors it. A card holds only its title, its tags and one note line. Every detail lives in the ticket file. Ticket files carry no `Status:` line.
 
-The board is generated. `scripts/build-board.sh` writes `TODO.md` from the ticket files, so nobody edits `TODO.md` by hand. To change a card, change its ticket and run the script. A merge conflict in `TODO.md` is fixed by running the script again.
+The board is generated. `scripts/board.sh build` writes `TODO.md` from the ticket files, so nobody edits `TODO.md` by hand. To change a card, change its ticket and run the script. A merge conflict in `TODO.md` is fixed by running the script again.
 
 - **Fields**: each ticket file holds these lines between its `# <NN>: <title>` heading and its first `##` heading: `**Role:**` (the triage role), `**Closed:**` (`yes` or `no`), `**Priority:**` (a number), and `**Blocked by:**`. A wayfinder ticket has `**Type:**` in place of `**Role:**`. A ticket with a due date has `**Due:** YYYY-MM-DD`. A spec has no role and no number; its heading is its card title.
 - **Order**: in each lane, cards go by `**Priority:**`, lowest number first; a tie goes by feature slug, then number. A card whose blocker is in the same lane goes below that blocker. To move a card up, give it a lower number.
