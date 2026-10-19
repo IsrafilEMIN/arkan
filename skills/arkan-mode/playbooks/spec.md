@@ -9,7 +9,7 @@ Talk to subagents through context pointers: the spec, the ticket paths, the note
 1. Read the spec and its tickets, and write down the task graph: each ticket, its blockers, its role. Name the first frontier, and each ticket that waits and why.
 2. (optional) Send an **exploration subagent** to read what the tickets need: codebase files, external docs. It saves its notes as markdown in a folder outside the repo that every later subagent can read, so the implementers build instead of explore.
 3. Create the integration branch from the main branch. If the issue tracker closes work through PRs, or the user asks for one, open a draft PR after the first merge in step 5 (a branch with no commits ahead of main cannot open one), marked as closing the spec and its tickets.
-4. Start one **implementer subagent** per frontier ticket, each in its own worktree on its own branch, all at once. Do not build a ticket in this chat, however small: this chat runs the playbook. Each implementer:
+4. Start one **implementer subagent** per frontier ticket, each in its own worktree on its own branch, placed by step 6 in `SKILL.md`, all at once. Do not build a ticket in this chat, however small: this chat runs the playbook. Each implementer:
    - confirms its worktree is based on the integration branch tip, and resets onto it if not;
    - reads `SKILL.md` and runs the task loop on its one ticket: claim it, check it in step 0, match a playbook, build with `tdd`, prove it. It skips the code review and the PR: the spec has one of each, in steps 7 and 8;
    - merges the integration branch tip into its own branch, and proves it again, before it reports done.
