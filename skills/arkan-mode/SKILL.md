@@ -7,7 +7,7 @@ description: "the default way to do engineering work on one task: check that it 
 
 arkan mode is how you work on one task. it comes from pstack's `poteto-mode` and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
-other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, and so on). call them with the Skill tool when a step names them.
+other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). call them with the Skill tool when a step names them.
 
 ## 0. check that the work is a task
 
@@ -48,7 +48,7 @@ each line names the skill to call today. a ticket in brackets is a planned arkan
 
 - a term or a domain rule is unclear inside the task → `grilling` and `domain-modeling`. if the answer changes what to build, stop: the work is not a task (step 0).
 - code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook).
-- a behavior to build, or a bug with a cheap test path → `tdd`.
+- a behavior to build, or a bug with a cheap test path → write the failing test first, then the code, per `principle-test-behavior-not-implementation`.
 - something is broken, flaky or slow → `diagnosing-bugs`.
 - a design question you can settle by running code → `prototype`, or the prototype playbook.
 - a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one as a ticket. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
@@ -165,7 +165,7 @@ the full text is in `principles/`. one file per group.
 - **prove it works.** before you say done. check the real thing.
 - **fix root causes.** debugging. reproduce first, then ask "why" until you reach the cause.
 - **sequence verifiable units.** multi-step work. each unit ends green before the next starts.
-- **test behavior, not implementation.** writing or keeping a test. assert the exact result a user sees.
+- **test behavior, not implementation.** writing, changing or keeping a test. assert what the code's users can see. the full text is the `principle-test-behavior-not-implementation` skill.
 - **explain the number.** before you trust a number you measured. find what limits it.
 
 **working with agents** (`principles/agents.md`)

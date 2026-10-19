@@ -31,17 +31,7 @@ order work as small units. each unit ends in a state you can check. do not start
 
 ## test behavior, not implementation
 
-a test calls the code the way its users do, and asserts the exact result they see. rewrite or delete any test that would still pass if every function it calls returned nothing.
-
-these shapes fail that check:
-
-- a loose assertion: `toBeDefined`, `toBeTruthy`, `not.toThrow`, `toBeGreaterThan(0)`.
-- only "was it called": `toHaveBeenCalled` with no check of what it received.
-- an expected value computed the same way the code computes it: `expect(add(a, b)).toBe(a + b)`.
-- a test that restates a constant, a default or a prompt string.
-- assertions on data the test built itself, with no call to the code under test.
-
-**the fix:** call the code with one concrete input and assert the literal output or effect. for a mock, assert the payload it received. for "x does not happen", also assert that x happens on another input.
+the full text is the `principle-test-behavior-not-implementation` skill (`../../principle-test-behavior-not-implementation/SKILL.md`). read it before you write, change or keep a test.
 
 ## explain the number
 
