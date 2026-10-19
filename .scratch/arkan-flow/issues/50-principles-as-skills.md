@@ -1,7 +1,7 @@
 # 50: make the 24 principles skills, pstack-shaped
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 34
 **Blocked by:** None — starts after ticket 49 merges, because both edit `skills/arkan-mode/SKILL.md`.
 
