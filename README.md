@@ -34,7 +34,7 @@ not built yet: merge approval by risk tier, and starting `post-merge` by itself 
 
 ## review in ci
 
-[`ci/github/arkan-review.yml`](ci/github/arkan-review.yml) runs `code-review` and `security-review` on each push to an open pr, posts the findings on the pr, and sets an `arkan-review` check that fails while an `important` or security finding is open. to add it to a repo:
+[`ci/github/arkan-review.yml`](ci/github/arkan-review.yml) runs `code-review` and `security-review` on each push to an open pr, keeps the findings and the round count in one comment on the pr (a later push gets only its new commits reviewed, and round 4 asks for a rethink), and sets an `arkan-review` check that fails while an `important` or security finding is open. to add it to a repo:
 
 1. put arkan's skills in the repo's `.claude/skills/` on the default branch.
 2. add the repo secret `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`), or `ANTHROPIC_API_KEY`.
