@@ -12,7 +12,7 @@ The commit hook runs the language's formatter and linter. Tests and type checks 
 
 | language | manifest | hook runs |
 | --- | --- | --- |
-| rust | `Cargo.toml` | `cargo fmt --check`, `cargo clippy` |
+| rust | `Cargo.toml` | `cargo fmt --check`, `cargo clippy --workspace -- -D warnings` |
 | python | `pyproject.toml` | `ruff format --check`, `ruff check` |
 | go | `go.mod` | `gofmt -l`, `go vet` |
 | js/ts | `package.json` | husky + lint-staged + prettier |
@@ -33,11 +33,11 @@ Run the installer from this skill:
 scripts/install-hook.sh <language> [repo-root]
 ```
 
-The script writes the repo's plain git hook. It asks git for the hooks directory with `git rev-parse --git-path hooks`, so a configured `core.hooksPath` is respected. It writes `hook written: <path>` or `hook unchanged: <path>`, so rerunning it is safe. It refuses js/ts.
+The script writes only the repo's own plain git hook. It reads the repo's local `core.hooksPath` (expanding `~/` and resolving a relative path against the repo root); with no local value it uses the hooks directory under `git rev-parse --git-common-dir`. It never writes a global hooks path. If the resolved directory is outside the repo, it warns that the hook runs for every repo that shares it. It writes `hook written: <path>` or `hook unchanged: <path>`, so rerunning it is safe. It refuses js/ts.
 
-The hook checks the staged file names before it does anything: with no staged file of the language, the commit proceeds. Python and go pass the staged paths to their tools. Rust runs the workspace commands from the table, because cargo has no file scope.
+The hook checks the staged file names before it does anything: with no staged file of the language, the commit proceeds. It refuses a staged file whose worktree copy has unstaged changes, so the tools see what is committed. Python and go pass the staged paths to their tools, and ruff uses `--force-exclude` so the repo's excludes apply. Rust runs both cargo commands from the table because cargo has no file scope.
 
-If the script stops with `exists and arkan did not write it`, show the existing hook to the user and ask before replacing it. Delete it only after the user agrees, then rerun the script.
+If the script stops with `exists and arkan did not write it` or `was edited after arkan wrote it`, show the hook to the user and ask before replacing it. Move or reconcile the existing hook, then rerun the script. The installer never writes a global hooks path.
 
 ## 3. js/ts
 

@@ -99,6 +99,38 @@ check_merge() {
 	esac
 }
 
+repo_hooks_dir() {
+	local path
+	if path="$(git -C "$root" config --local --get core.hooksPath 2>/dev/null)"; then
+		case "$path" in
+			"~") path="$HOME" ;;
+			"~/"*) path="$HOME/${path#\~/}" ;;
+		esac
+		case "$path" in
+			/*) ;;
+			*) path="$root/$path" ;;
+		esac
+	else
+		path="$(git -C "$root" rev-parse --git-common-dir)"
+		case "$path" in
+			/*) ;;
+			*) path="$root/$path" ;;
+		esac
+		path="$path/hooks"
+	fi
+	printf '%s\n' "$path"
+}
+
+hook_covers() { # language hook-file: the hook names that language's tool
+	case "$1" in
+		rust) grep -qE 'cargo[[:space:]]+(fmt|clippy)' "$2" ;;
+		python) grep -q 'ruff' "$2" ;;
+		go) grep -qE 'gofmt|go[[:space:]]+vet' "$2" ;;
+		js/ts) grep -q 'lint-staged' "$2" ;;
+		*) return 1 ;;
+	esac
+}
+
 check() {
 	if in_git; then say git ok; else say git missing "not a git repo"; fi
 	check_file tracker docs/agents/issue-tracker.md
@@ -138,7 +170,7 @@ check() {
 	else
 		say verify hint "no verify skill: run create-verification"
 	fi
-	local langs="" hook_dir="" generic=0 husky=0 missing="" lang
+	local langs="" hook_file="" husky=0 missing="" lang covered=0
 	has Cargo.toml && langs="$langs rust"
 	has pyproject.toml && langs="$langs python"
 	has go.mod && langs="$langs go"
@@ -147,18 +179,15 @@ check() {
 		say hooks skip "no Cargo.toml, pyproject.toml, go.mod or package.json"
 	else
 		if in_git; then
-			hook_dir="$(git -C "$root" rev-parse --git-path hooks)"
-			case "$hook_dir" in /*) ;; *) hook_dir="$root/$hook_dir" ;; esac
-			if [ -x "$hook_dir/pre-commit" ]; then generic=1; fi
-			if git -C "$root" config core.hooksPath >/dev/null; then generic=1; fi
+			hook_file="$(repo_hooks_dir)/pre-commit"
+			if [ ! -x "$hook_file" ]; then hook_file=""; fi
 		fi
 		if [ -f "$root/.husky/pre-commit" ]; then husky=1; fi
 		for lang in $langs; do
-			if [ "$lang" = js/ts ]; then
-				if [ "$generic" = 0 ] && [ "$husky" = 0 ]; then missing="$missing js/ts"; fi
-			elif [ "$generic" = 0 ]; then
-				missing="$missing $lang"
-			fi
+			covered=0
+			if [ -n "$hook_file" ] && hook_covers "$lang" "$hook_file"; then covered=1; fi
+			if [ "$lang" = js/ts ] && [ "$husky" = 1 ]; then covered=1; fi
+			if [ "$covered" = 0 ]; then missing="$missing $lang"; fi
 		done
 		if [ -z "$missing" ]; then
 			say hooks ok

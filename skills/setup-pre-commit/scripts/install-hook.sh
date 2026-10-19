@@ -32,14 +32,33 @@ git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
 	exit 2
 }
 
-hooks=$(git -C "$root" rev-parse --git-path hooks)
-case "$hooks" in
-	/*) ;;
-	*) hooks="$root/$hooks" ;;
-esac
-hook="$hooks/pre-commit"
+if local_hooks=$(git -C "$root" config --local --get core.hooksPath 2>/dev/null); then
+	case "$local_hooks" in
+		"~") local_hooks="$HOME" ;;
+		"~/"*) local_hooks="$HOME/${local_hooks#\~/}" ;;
+	esac
+	case "$local_hooks" in
+		/*) ;;
+		*) local_hooks="$root/$local_hooks" ;;
+	esac
+else
+	local_hooks=$(git -C "$root" rev-parse --git-common-dir)
+	case "$local_hooks" in
+		/*) ;;
+		*) local_hooks="$root/$local_hooks" ;;
+	esac
+	local_hooks="$local_hooks/hooks"
+fi
+hooks=$local_hooks
 
-tmp=$(mktemp "${TMPDIR:-/tmp}/arkan-hook.XXXXXX")
+case "$hooks" in
+	"$root" | "$root"/*) ;;
+	*) printf 'install-hook: warning: %s is outside %s, so this hook runs for every repo that shares it\n' "$hooks" "$root" >&2 ;;
+esac
+
+hook="$hooks/pre-commit"
+mkdir -p "$hooks"
+tmp=$(mktemp "$hooks/.pre-commit.XXXXXX")
 trap 'rm -f "$tmp"' 0
 
 case "$lang" in
@@ -49,10 +68,21 @@ case "$lang" in
 # arkan setup-pre-commit
 set -eu
 cd "$(git rev-parse --show-toplevel)"
-staged="$(git diff --cached --name-only --diff-filter=ACMR -- '*.rs')"
+staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.rs')"
 [ -n "$staged" ] || exit 0
+status=0
+while IFS= read -r f; do
+	[ -n "$f" ] || continue
+	if ! git diff --quiet -- "$f"; then
+		printf 'pre-commit: %s has unstaged changes; stage the whole file first\n' "$f" >&2
+		status=1
+	fi
+done <<EOF
+$staged
+EOF
+[ "$status" = 0 ] || exit 1
 cargo fmt --check
-cargo clippy
+cargo clippy --workspace -- -D warnings
 HOOK
 		;;
 	python)
@@ -61,17 +91,22 @@ HOOK
 # arkan setup-pre-commit
 set -eu
 cd "$(git rev-parse --show-toplevel)"
-staged="$(git diff --cached --name-only --diff-filter=ACMR -- '*.py')"
+staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.py')"
 [ -n "$staged" ] || exit 0
-printf '%s\n' "$staged" | {
-	status=0
-	while IFS= read -r f; do
-		[ -n "$f" ] || continue
-		ruff format --check "$f" || status=1
-		ruff check "$f" || status=1
-	done
-	exit "$status"
-}
+status=0
+while IFS= read -r f; do
+	[ -n "$f" ] || continue
+	if ! git diff --quiet -- "$f"; then
+		printf 'pre-commit: %s has unstaged changes; stage the whole file first\n' "$f" >&2
+		status=1
+		continue
+	fi
+	ruff format --check --force-exclude -- "./$f" || status=1
+	ruff check --force-exclude -- "./$f" || status=1
+done <<EOF
+$staged
+EOF
+[ "$status" = 0 ]
 HOOK
 		;;
 	go)
@@ -80,55 +115,61 @@ HOOK
 # arkan setup-pre-commit
 set -eu
 cd "$(git rev-parse --show-toplevel)"
-staged="$(git diff --cached --name-only --diff-filter=ACMR -- '*.go')"
+staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.go')"
 [ -n "$staged" ] || exit 0
-unformatted="$(printf '%s\n' "$staged" | {
-	while IFS= read -r f; do
-		[ -n "$f" ] || continue
-		gofmt -l "$f"
-	done
-})"
-if [ -n "$unformatted" ]; then
-	printf 'gofmt -l:\n%s\n' "$unformatted" >&2
-	exit 1
-fi
-dirs="$(printf '%s\n' "$staged" | {
-	while IFS= read -r f; do
-		[ -n "$f" ] || continue
-		dirname "$f"
-	done
-} | sort -u)"
-set --
-for d in $dirs; do
-	if [ "$d" = . ]; then
-		set -- "$@" .
-	else
-		set -- "$@" "./$d"
+status=0
+while IFS= read -r f; do
+	[ -n "$f" ] || continue
+	if ! git diff --quiet -- "$f"; then
+		printf 'pre-commit: %s has unstaged changes; stage the whole file first\n' "$f" >&2
+		status=1
+		continue
 	fi
-done
+	if [ -n "$(gofmt -l "./$f")" ]; then
+		printf 'gofmt needs to format %s\n' "$f" >&2
+		status=1
+	fi
+done <<EOF
+$staged
+EOF
+[ "$status" = 0 ] || exit 1
+set --
+seen=""
+while IFS= read -r f; do
+	[ -n "$f" ] || continue
+	d=$(dirname "./$f")
+	case "$seen" in
+		*" $d"*) continue ;;
+	esac
+	seen="$seen $d"
+	set -- "$@" "$d"
+done <<EOF
+$staged
+EOF
 go vet "$@"
 HOOK
 		;;
 esac
 
-if [ -e "$hook" ]; then
-	if grep -qxF "$marker" "$hook" 2>/dev/null; then
-		if cmp -s "$tmp" "$hook"; then
-			chmod +x "$hook"
-			printf 'hook unchanged: %s\n' "$hook"
-			exit 0
-		fi
-	else
-		printf 'install-hook: %s exists and arkan did not write it\n' "$hook" >&2
-		printf -- '--- %s ---\n' "$hook" >&2
-		cat "$hook" >&2
-		printf -- '--- end ---\n' >&2
-		printf 'install-hook: show it to the user and ask before replacing it; nothing changed\n' >&2
-		exit 1
-	fi
+if [ -e "$hook" ] && cmp -s "$tmp" "$hook"; then
+	chmod +x "$hook"
+	printf 'hook unchanged: %s\n' "$hook"
+	exit 0
 fi
 
-mkdir -p "$hooks"
+if [ -e "$hook" ]; then
+	if grep -qxF "$marker" "$hook" 2>/dev/null; then
+		printf 'install-hook: %s was edited after arkan wrote it\n' "$hook" >&2
+	else
+		printf 'install-hook: %s exists and arkan did not write it\n' "$hook" >&2
+	fi
+	printf -- '--- %s ---\n' "$hook" >&2
+	cat "$hook" >&2
+	printf -- '--- end ---\n' >&2
+	printf 'install-hook: show it to the user and ask before replacing it; nothing changed\n' >&2
+	exit 1
+fi
+
 chmod 755 "$tmp"
 mv "$tmp" "$hook"
 printf 'hook written: %s\n' "$hook"
