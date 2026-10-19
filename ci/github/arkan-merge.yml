@@ -33,6 +33,9 @@ jobs:
       REVIEWED: ${{ github.event.review.commit_id }}
       # the hidden mark the broker adds to every verdict an agent posts.
       AGENT_MARK: "<!-- arkan:verifier -->"
+      # how the pr lands: merge (keeps every commit, the default), squash or rebase.
+      # the repo settings must allow the method.
+      MERGE_METHOD: merge
     steps:
       - name: The reviewer has write access
         run: |
@@ -86,4 +89,4 @@ jobs:
         env:
           HEAD: ${{ steps.head.outputs.sha }}
         # github refuses the merge if the head moved since the verdict.
-        run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --match-head-commit "$HEAD"
+        run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" "--$MERGE_METHOD" --match-head-commit "$HEAD"
