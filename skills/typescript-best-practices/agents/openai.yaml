@@ -1,0 +1,5 @@
+interface:
+  display_name: "TypeScript Best Practices"
+  short_description: "Type rules for any .ts or .tsx edit"
+policy:
+  allow_implicit_invocation: true
