@@ -14,7 +14,7 @@
 ### what one run does
 
 - **runs on** `pull_request` `opened`, `synchronize` (each push) and `reopened`. a newer push cancels the run on the older head. it also runs on a pr comment (`issue_comment`, only when the comment has `arkan:` in it) and on an inline reply (`pull_request_review_comment`, each one: a skipped job would pass the check), to apply a person's command (below) with no model call. a comment run waits for the run in progress on the pr, and never starts a round. github runs an `issue_comment` run from the default branch's copy of this file, and its own check lands there, so it posts the `arkan-review` check run on the pr head itself; an inline reply runs the pr's copy, and its job is the check.
-- **skips**, with a pr comment that says why, a pr from a fork (its run gets no secrets, and its token cannot comment, so there the reason is a notice on the check) and a docs-only pr (every changed file matches `DOCS_ONLY_REGEX`). a pr that touches a file that steers the agent or its reviewer (`NEVER_DOCS_REGEX`: `.claude/`, `.scratch/`, `.github/`, `docs/agents/review-evals/`, `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, `REVIEW.md`, `SKILL.md`, `review-prompt.md`) is always reviewed. a skipped run passes the check, so a person reviews those prs by hand.
+- **skips**, with a pr comment that says why, a pr from a fork (its run gets no secrets, and its token cannot comment, so there the reason is a notice on the check) and a docs-only pr (every changed file matches `DOCS_ONLY_REGEX`). a pr that touches a file that steers the agent or its reviewer (`NEVER_DOCS_REGEX`: `.claude/`, `.scratch/`, `.github/`, `docs/agents/review-evals/`, `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, `REVIEW.md`, `SKILL.md`) is always reviewed. a skipped run passes the check, so a person reviews those prs by hand.
 - **counts rounds** in one sticky pr comment, which it edits in place. the comment's first line is a hidden marker, the only state a fresh run reads:
 
   ```
@@ -73,11 +73,11 @@ A merged change that broke main becomes a case under the repo's `docs/agents/rev
 ci/review-eval.sh --compare
 ```
 
-The default reviewer is `omp -p --no-session --tools=read,grep,glob`; set `REVIEW_CMD` to another command that reads the prompt on stdin. The default prompt is [`review-prompt.md`](review-prompt.md); `--prompt FILE` tests a weaker one. `--update-baseline` records the cases caught now in `docs/agents/review-evals/baseline.txt`; `--compare` exits 1 when a baseline case is now missed. The case format and the full command list are in [the cases doc](../docs/agents/review-evals/README.md).
+The default reviewer is `claude -p` with the workflow's `REVIEW_MODEL` and `--allowedTools`: the reviewer ci runs. The script reads all three from [`github/arkan-review.yml`](github/arkan-review.yml), so a change there changes the eval. Set `REVIEW_CMD` to another command that reads the prompt on stdin; a swapped harness is a weaker proof. `--prompt FILE` replaces the workflow's prompt, to test a weaker one. `--update-baseline` adds the cases caught now to `docs/agents/review-evals/baseline.txt` and never drops one; `--compare` exits 1 when a baseline case is now missed. The case format and the full command list are in [the cases doc](../docs/agents/review-evals/README.md).
 
-A change to `github/arkan-review.yml`, `review-prompt.md`, `skills/code-review/` or `skills/security-review/` is kept only when `--compare` misses no case caught before. No ci job runs this: it needs a model, and a github actions runner has no model. The person or agent that changes the reviewer runs it locally before the change lands. The `post-merge` skill adds the case.
+A change to `github/arkan-review.yml`, `skills/code-review/` or `skills/security-review/` is kept only when `--compare` misses no case caught before. No ci job runs a model: `scripts/check.sh` runs `--check`, which validates the case files and reads the workflow without one. The person or agent that changes the reviewer runs `--compare` locally before the change lands. The `post-merge` skill adds the case.
 
-A repo that installs `arkan-review` copies `review-eval.sh` and `review-prompt.md` into its own `ci/` and keeps its cases in its own `docs/agents/review-evals/`.
+A repo that installs `arkan-review` copies `review-eval.sh` into its own `ci/` and keeps its cases in its own `docs/agents/review-evals/`. The script reads `.github/workflows/arkan-review.yml` when `ci/github/arkan-review.yml` is absent.
 
 ## check
 

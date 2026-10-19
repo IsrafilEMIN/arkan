@@ -40,7 +40,7 @@ env:
   DOCS_ONLY_REGEX: '(\.(md|mdx|txt|rst)$|^docs/|^LICENSE$|^NOTICE$)'
   # files that steer the agent or its reviewer are never docs, even as markdown:
   # a pr that touches one is always reviewed.
-  NEVER_DOCS_REGEX: '(^\.claude/|^\.scratch/|^\.github/|^docs/agents/review-evals/|(^|/)(AGENTS|CLAUDE|CODING_STANDARDS|REVIEW)\.md$|(^|/)SKILL\.md$|(^|/)review-prompt\.md$)'
+  NEVER_DOCS_REGEX: '(^\.claude/|^\.scratch/|^\.github/|^docs/agents/review-evals/|(^|/)(AGENTS|CLAUDE|CODING_STANDARDS|REVIEW)\.md$|(^|/)SKILL\.md$)'
 
 jobs:
   arkan-review:
@@ -208,6 +208,8 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # or, billed per token: anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
+          # ci/review-eval.sh reads this prompt block, REVIEW_MODEL and the
+          # --allowedTools line. keep their shape when you change this file.
           prompt: |
             You are the arkan-review ci reviewer for pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}, review round ${{ steps.round.outputs.round }}. No person is watching this run: where a skill says to ask the user, take the default written here and go on.
 

@@ -8,7 +8,7 @@ fail=0
 bad() { printf 'check-seam: %s\n' "$1" >&2; fail=1; }
 
 # this script is skipped too: its patterns name what they look for.
-files=$(git ls-files | grep -v '^\.scratch/' | grep -v '^docs/agents/review-evals/' | grep -vxF -e "$seam" -e scripts/check-seam.sh || true)
+files=$(git ls-files | grep -v '^\.scratch/' | grep -vE '^docs/agents/review-evals/[^/]+/bad\.diff$' | grep -vxF -e "$seam" -e scripts/check-seam.sh || true)
 
 # 1. every agent-gh verb a file names is in row 2's list.
 verbs=$(grep "^Row 2's verbs" "$seam" | grep -oE '`[a-z-]+`' | tr -d '`')
