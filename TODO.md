@@ -43,9 +43,6 @@
 - [ ] 46: Commit hooks for any language #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/46-commit-hooks-for-any-language.md` · blocked by: none
 
-- [ ] 48: Pre-setup checks what a file says, not only that it exists #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/48-pre-setup-checks-content.md` · blocked by: none
-
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
 
@@ -152,3 +149,6 @@
 
 - [x] 40: Arkan's own pull requests need a merge path #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/40-arkan-own-prs-need-a-merge-path.md` · blocked by: none
+
+- [x] 48: Pre-setup checks what a file says, not only that it exists #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/48-pre-setup-checks-content.md` · blocked by: none

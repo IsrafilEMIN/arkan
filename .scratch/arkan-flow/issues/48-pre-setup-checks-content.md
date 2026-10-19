@@ -1,7 +1,7 @@
 # 48: pre-setup checks what a file says, not only that it exists
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 32
 
 **What to build:** `skills/pre-setup/scripts/setup.sh check` reads the content of the `tracker`, `board` and `agents-block` items, not only whether the file or heading is there. A repo whose files exist but break the tracker contract (seam row 5) reads `out of date`, with the reason and the step that fixes it, and not `ok`.
@@ -21,3 +21,4 @@ Found in underground on 2026-10-19. All three items read `ok` there. But `board.
 ## Comments
 
 - 2026-10-19, owner: capture this in a ticket for each repo. arkan fixes the check; underground moves its tickets to the contract.
+- 2026-10-19: closed. `setup.sh check` in arkan reads `tracker ok`, `board ok`, `agents-block ok`; against underground `main` all three read `out-of-date` (tracker 60 of 60 tickets, 238 problems; board 238 problems with `fields` also failing; agents-block missing the `board.sh build`/`board.sh check` line). Adding `**Role:**`, `**Closed:**` and `**Priority:**` to one ticket dropped the field problem count 238 to 235. Seam row 5 records that a local tracker's checks stay local.
