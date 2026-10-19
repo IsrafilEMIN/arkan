@@ -24,6 +24,12 @@ A merged change broke something. You make main safe, then turn the **miss** (the
 
 6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket, then start `retro` (proposals only). _Done when_ the ticket exists and its link or path is in your reply.
 
+7. **Save the miss as a review eval.** Write one case under `docs/agents/review-evals/<NN>-<slug>/`, numbered from `01` with the next free number. It holds:
+   - `bad.diff`: the change that shipped the bug. Use the bad commit from step 3 and its first parent: `git diff <bad>^ <bad> -- <path>`, or the whole `git diff <bad>^ <bad>` when the cause crosses files.
+   - `case.md`: the format in the repo's `docs/agents/review-evals/README.md`. With no such doc, use these lines: `# <NN>: <one-line bug>`, then `**Bug:**` (one sentence), `**Path:**` (one path in backticks), `**Lines:**` (the defect's range in the new side of the diff), `**Fix PR:**` (step 4's fix, or its commit when there was no pull request), and `**Broke main:**` (the merge or commit that shipped it).
+
+   Then run `ci/review-eval.sh` from the repo root. If the repo has no script, save the case and say the eval is not installed. _Done when_ the case is saved and the script prints `<case> caught` or `<case> missed`. A caught case goes into `docs/agents/review-evals/baseline.txt` (`ci/review-eval.sh --update-baseline`). A missed case stays out: it is a known gap, not a regression.
+
 ## Reply
 
-The signal, the first bad commit, the revert or fix PR, the node that should have caught it, and the ticket.
+The signal, the first bad commit, the revert or fix PR, the node that should have caught it, the ticket, and the eval case with what the script reported.
