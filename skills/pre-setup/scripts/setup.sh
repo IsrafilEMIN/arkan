@@ -62,7 +62,7 @@ tracker_kind() {
 }
 
 check_tracker() {
-	local out line rel bad=0 total=0 problems=0 seen=" " shown=0 first=""
+	local out line rel bad=0 total=0 problems=0 seen=" " shown=0 first="" detail=""
 	if ! has docs/agents/issue-tracker.md; then
 		say tracker missing docs/agents/issue-tracker.md
 		return
@@ -97,7 +97,10 @@ check_tracker() {
 		fi
 	done <<<"$out"
 	if [ $problems = 0 ]; then
-		say tracker out-of-date "$(printf '%s\n' "$out" | head -n1)"
+		detail="$(printf '%s\n' "$out" | head -n1)"
+		detail="${detail#fields: }"
+		[ -n "$detail" ] || detail="board.sh fields failed"
+		say tracker out-of-date "$detail; fix the tickets first"
 		return
 	fi
 	say tracker out-of-date "$bad of $total files break the contract: $problems problem(s)"
@@ -268,7 +271,7 @@ apply() {
 		git) in_git || git -C "$root" init -q ;;
 		gitattributes) append_line .gitattributes 'GLOSSARY.md merge=union' ;;
 		board)
-			mkdir -p "$root/.scratch"
+			if [ "$(tracker_kind)" = local ]; then mkdir -p "$root/.scratch"; fi
 			seed TODO.md todo.md
 			if has .gitignore; then
 				local tmp
