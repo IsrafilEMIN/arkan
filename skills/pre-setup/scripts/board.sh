@@ -22,7 +22,14 @@ trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; printf '%s' "${s%"${s##*[
 roles=" needs-triage needs-info ready-for-agent ready-for-human wontfix "
 types=" research prototype grilling task "
 
-[ -d "$root/.scratch" ] || { printf '%s: no .scratch/ in %s\n' "$prefix" "$root" >&2; exit 2; }
+if [ ! -d "$root/.scratch" ]; then
+	if [ "$verb" = fields ]; then
+		printf 'fields: ok (0 cards)\n'
+		exit 0
+	fi
+	printf '%s: no .scratch/ in %s\n' "$prefix" "$root" >&2
+	exit 2
+fi
 if [ "$verb" = check ]; then
 	[ -f "$board" ] || { printf '%s: no TODO.md in %s\n' "$prefix" "$root" >&2; exit 2; }
 fi
@@ -98,7 +105,7 @@ while IFS= read -r f; do
 	t_path+=("$rel"); t_feat+=("$feat"); t_nn+=("$nn"); t_id+=("$feat $nn"); t_title+=("$title")
 	t_role+=("$role"); t_type+=("$type"); t_due+=("$due"); t_closed+=("$closed")
 	t_prio+=("${prio:-0}"); t_refs+=("$refs"); t_spec+=("$spec")
-done < <(find "$root/.scratch" -path '*/issues/*.md' -o -name spec.md 2>/dev/null | sort)
+done < <(find "$root/.scratch" -type f \( -path '*/issues/*.md' -o -name spec.md \) 2>/dev/null | sort)
 
 lookup() {
 	local ref="$1" home="$2" k=0
@@ -152,20 +159,6 @@ while [ $k -lt ${#t_path[@]} ]; do
 	fi
 	k=$((k + 1))
 done
-
-if [ $problems -gt 0 ]; then
-	if [ "$verb" = build ]; then
-		printf '%s: %s problem(s), TODO.md not written\n' "$prefix" "$problems" >&2
-	else
-		printf '%s: %s problem(s)\n' "$prefix" "$problems" >&2
-	fi
-	exit 1
-fi
-
-if [ "$verb" = fields ]; then
-	printf 'fields: ok (%s cards)\n' "${#t_path[@]}"
-	exit 0
-fi
 
 card() {
 	local k="$1" tick=" " head="" tags="#${t_feat[$1]}"
@@ -226,6 +219,21 @@ generate() {
 		done
 	done
 }
+
+if [ $problems -gt 0 ]; then
+	if [ "$verb" = build ]; then
+		printf '%s: %s problem(s), TODO.md not written\n' "$prefix" "$problems" >&2
+	else
+		printf '%s: %s problem(s)\n' "$prefix" "$problems" >&2
+	fi
+	exit 1
+fi
+
+if [ "$verb" = fields ]; then
+	generate >/dev/null
+	printf 'fields: ok (%s cards)\n' "${#t_path[@]}"
+	exit 0
+fi
 
 out="$(mktemp)"
 trap 'rm -f "$out"' EXIT

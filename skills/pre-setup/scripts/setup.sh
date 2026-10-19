@@ -71,11 +71,15 @@ check_tracker() {
 		say tracker ok docs/agents/issue-tracker.md
 		return
 	fi
+	if [ ! -d "$root/.scratch" ]; then
+		say tracker out-of-date "no .scratch/; run setup.sh apply board"
+		return
+	fi
 	if out="$("$skill/scripts/board.sh" fields "$root" 2>&1)"; then
 		say tracker ok docs/agents/issue-tracker.md
 		return
 	fi
-	total="$(find "$root/.scratch" -path '*/issues/*.md' -o -name spec.md 2>/dev/null | wc -l | tr -d ' ')"
+	total="$(find "$root/.scratch" -type f \( -path '*/issues/*.md' -o -name spec.md \) 2>/dev/null | wc -l | tr -d ' ')"
 	while IFS= read -r line; do
 		case "$line" in
 			.scratch/*) ;;
@@ -96,14 +100,14 @@ check_tracker() {
 		say tracker out-of-date "$(printf '%s\n' "$out" | head -n1)"
 		return
 	fi
-	say tracker out-of-date "$bad of $total tickets break the contract: $problems problem(s)"
+	say tracker out-of-date "$bad of $total files break the contract: $problems problem(s)"
 	while IFS= read -r line; do
 		if [ -n "$line" ]; then printf '  %s\n' "$line"; fi
 	done <<<"$first"
 }
 
 check_board() {
-	local out count
+	local out count detail
 	if ! has TODO.md; then
 		say board missing TODO.md
 		return
@@ -116,6 +120,10 @@ check_board() {
 		say board ok TODO.md
 		return
 	fi
+	if [ ! -d "$root/.scratch" ]; then
+		say board out-of-date "no .scratch/; run setup.sh apply board"
+		return
+	fi
 	if out="$("$skill/scripts/board.sh" check "$root" 2>&1)"; then
 		case "$out" in
 			*"check-board: ok"*) say board ok TODO.md ;;
@@ -124,11 +132,17 @@ check_board() {
 		return
 	fi
 	count="$(printf '%s\n' "$out" | sed -n 's/^check-board: \([0-9][0-9]*\) problem(s)$/\1/p' | head -n1)"
-	[ -n "$count" ] || count=1
-	if "$skill/scripts/board.sh" fields "$root" >/dev/null 2>&1; then
-		say board out-of-date "$count problem(s); run board.sh build"
+	if [ -n "$count" ]; then
+		detail="$count problem(s)"
 	else
-		say board out-of-date "$count problem(s); fix the tickets first, then run board.sh build"
+		detail="$(printf '%s\n' "$out" | sed -n 's/^check-board: //p' | head -n1)"
+		detail="${detail%:}"
+		[ -n "$detail" ] || detail="board.sh check failed"
+	fi
+	if "$skill/scripts/board.sh" fields "$root" >/dev/null 2>&1; then
+		say board out-of-date "$detail; run board.sh build"
+	else
+		say board out-of-date "$detail; fix the tickets first, then run board.sh build"
 	fi
 }
 
@@ -204,7 +218,7 @@ check() {
 	if ! has AGENTS.md || ! grep -qx '## Agent skills' "$root/AGENTS.md"; then
 		say agents-block missing "## Agent skills in AGENTS.md"
 	elif [ "$(tracker_kind)" = local ] && ! agents_board_line; then
-		say agents-block out-of-date "add this line under ## Agent skills:"
+		say agents-block out-of-date "add this line under ### Board in ## Agent skills:"
 		printf '  %s\n' "Do not edit \`TODO.md\` by hand: run the \`pre-setup\` skill's \`scripts/board.sh build\` from the repo root, then \`scripts/board.sh check\`; it must print \`ok\`."
 	else
 		say agents-block ok AGENTS.md
@@ -254,6 +268,7 @@ apply() {
 		git) in_git || git -C "$root" init -q ;;
 		gitattributes) append_line .gitattributes 'GLOSSARY.md merge=union' ;;
 		board)
+			mkdir -p "$root/.scratch"
 			seed TODO.md todo.md
 			if has .gitignore; then
 				local tmp
