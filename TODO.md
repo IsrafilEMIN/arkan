@@ -32,6 +32,9 @@
 - [ ] 37: Rebuild the scenario sandbox from arkan #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/37-rebuild-the-sandbox-from-arkan.md` · blocked by: 04
 
+- [ ] 40: Arkan's own pull requests need a merge path #arkan-flow #needs-triage
+  `.scratch/arkan-flow/issues/40-arkan-own-prs-need-a-merge-path.md` · blocked by: none
+
 ## Todo
 
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
