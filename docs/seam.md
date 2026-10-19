@@ -24,7 +24,7 @@ The merge path is a local `pre-setup` choice recorded in `docs/agents/approvals.
 
 ## Drift check
 
-`scripts/check-seam.sh` runs in `scripts/check.sh`, so ci fails on drift. it skips `.scratch/` and each case's `bad.diff` under `docs/agents/review-evals/` in every check below, and this page in the last one.
+`scripts/check-seam.sh` runs in `scripts/check.sh`, so ci fails on drift. it skips `.scratch/`, this page, `scripts/check-seam.sh` itself, and each case's `bad.diff` under `docs/agents/review-evals/`, in all three checks below.
 
 - a file names `agent-gh <verb>` with a verb that is not in row 2's list above;
 - `ci/github/arkan-merge.yml`, `ci/github/arkan-risk.yml` or their copies in `.github/workflows/` do not carry row 6's agent mark and risk marker exactly as written here;

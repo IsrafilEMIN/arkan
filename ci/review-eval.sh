@@ -96,22 +96,40 @@ workflow_tools() {
 	sed -n 's/^[[:space:]]*--allowedTools[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$1" | head -n1
 }
 
+workflow_turns() {
+	sed -n 's/^[[:space:]]*MAX_TURNS:[[:space:]]*//p' "$1" | head -n1 | sed 's/[[:space:]]*$//' | tr -d '"'
+}
+
 prompt_text=$(workflow_prompt "$workflow")
 [ -n "$prompt_text" ] || die "$workflow has no prompt block"
 model=$(workflow_model "$workflow")
 [ -n "$model" ] || die "$workflow has no REVIEW_MODEL"
 tools=$(workflow_tools "$workflow")
 [ -n "$tools" ] || die "$workflow has no --allowedTools line"
+turns=$(workflow_turns "$workflow")
+[ -n "$turns" ] || die "$workflow has no MAX_TURNS"
+
+read_envs="REVIEW_MODEL MAX_TURNS"
+for name in $(grep -oE '\$\{\{[[:space:]]*env\.[A-Za-z_][A-Za-z0-9_]*' "$workflow" | sed 's/.*env\.//' | sort -u || true); do
+	case " $read_envs " in
+		*" $name "*) ;;
+		*) die "$workflow uses \${{ env.$name }}, which the eval does not read" ;;
+	esac
+done
 if [ -n "$prompt" ]; then
 	[ -f "$prompt" ] || die "no prompt file: $prompt"
 	prompt_text=$(cat "$prompt")
 fi
 
-repo_slug=$(git remote get-url origin 2>/dev/null || true)
-repo_slug=${repo_slug#https://github.com/}
-repo_slug=${repo_slug#git@github.com:}
+origin=$(git remote get-url origin 2>/dev/null || true)
+repo_slug=
+case "$origin" in
+	https://github.com/*) repo_slug=${origin#https://github.com/} ;;
+	git@github.com:*) repo_slug=${origin#git@github.com:} ;;
+	ssh://git@github.com/*) repo_slug=${origin#ssh://git@github.com/} ;;
+esac
 repo_slug=${repo_slug%.git}
-[ -n "$repo_slug" ] || repo_slug=case
+printf '%s' "$repo_slug" | grep -Eq '^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$' || repo_slug=owner/repo
 
 trim() { local s=$1; s=${s#"${s%%[![:space:]]*}"}; printf '%s' "${s%"${s##*[![:space:]]}"}"; }
 
@@ -132,6 +150,7 @@ read_case() {
 	done
 	grep -q '^\*\*Fix PR:\*\*' "$file" || die "$file has no **Fix PR:** line"
 	grep -q '^\*\*Broke main:\*\*' "$file" || die "$file has no **Broke main:** line"
+	grep -q '^\*\*Bad PR:\*\*' "$file" || die "$file has no **Bad PR:** line"
 	case_path=$(sed -n 's/^\*\*Path:\*\*[[:space:]]*`\([^`]*\)`.*$/\1/p' "$file" | head -n1)
 	case_range=$(sed -n 's/^\*\*Lines:\*\*[[:space:]]*\([0-9][0-9]*\(-[0-9][0-9]*\)\{0,1\}\)[[:space:]]*$/\1/p' "$file" | head -n1)
 	[ -n "$case_path" ] || die "$file: **Path:** needs one path in backticks"
@@ -142,7 +161,10 @@ read_case() {
 	[ "$case_first" -le "$case_last" ] || die "$file: **Lines:** starts after it ends: $case_range"
 	case_commit=$(sed -n 's/^\*\*Broke main:\*\*//p' "$file" | grep -oE '[0-9a-f]{7,40}' | head -n1)
 	[ -n "$case_commit" ] || die "$file: **Broke main:** needs a commit"
-	case_pr=$(sed -n 's/^\*\*Fix PR:\*\*//p' "$file" | grep -oE '#[0-9]+|/pull/[0-9]+' | head -n1 | tr -dc '0-9')
+	case_pr=$(sed -n 's/^\*\*Bad PR:\*\*//p' "$file" | grep -oE '#[0-9]+|/pull/[0-9]+' | head -n1 | tr -dc '0-9')
+	if [ -z "$case_pr" ]; then
+		case_pr=$(sed -n 's/^\*\*Broke main:\*\*//p' "$file" | grep -oE '#[0-9]+|/pull/[0-9]+' | head -n1 | tr -dc '0-9')
+	fi
 	[ -n "$case_pr" ] || case_pr=0
 	[ -s "$dir/bad.diff" ] || die "$dir has no bad.diff"
 	grep -q '^diff --git ' "$dir/bad.diff" || die "$dir/bad.diff is not a git diff"
@@ -199,7 +221,7 @@ if [ -n "$reviewer" ]; then
 	read -r -a reviewer_cmd <<<"$reviewer"
 else
 	command -v claude >/dev/null || die "claude is not on PATH; set REVIEW_CMD to a headless reviewer"
-	reviewer_cmd=(claude -p --model "$model" --allowedTools "$tools")
+	reviewer_cmd=(claude -p --model "$model" --allowedTools "$tools" --max-turns "$turns")
 fi
 
 tmp=$(mktemp -d)
@@ -234,32 +256,33 @@ grade() {
 }
 
 make_work() {
-	local dir=$1 zero=$2 message
+	local dir=$1 zero=$2 message name src
 	mkdir -p "$zero"
 	git -C "$zero" init -q
 	git -C "$zero" config user.email review-eval@localhost
 	git -C "$zero" config user.name review-eval
 	git archive "$case_commit^" | tar -x -C "$zero"
 	rm -rf "$zero/docs/agents/review-evals"
-	if [ -d skills/code-review ] || [ -d skills/security-review ]; then
+	for name in code-review security-review; do
+		src=
+		if [ -d "skills/$name" ]; then
+			src=skills/$name
+		elif [ -d ".claude/skills/$name" ]; then
+			src=.claude/skills/$name
+		fi
+		[ -n "$src" ] || continue
 		mkdir -p "$zero/.claude/skills"
-		if [ -d skills/code-review ]; then
-			mkdir -p "$zero/.claude/skills/code-review"
-			cp -R skills/code-review/. "$zero/.claude/skills/code-review/"
-		fi
-		if [ -d skills/security-review ]; then
-			mkdir -p "$zero/.claude/skills/security-review"
-			cp -R skills/security-review/. "$zero/.claude/skills/security-review/"
-		fi
-	fi
+		rm -rf "$zero/.claude/skills/$name"
+		cp -RL "$src" "$zero/.claude/skills/$name"
+	done
 	message=$(git log -1 --format=%B "$case_commit^")
-	git -C "$zero" add -A
+	git -C "$zero" add -A -f
 	git -C "$zero" commit -qm "$message"
 	if ! git -C "$zero" apply --binary "$dir/bad.diff"; then
 		die "$dir: bad.diff does not apply at $case_commit^"
 	fi
 	message=$(git log -1 --format=%B "$case_commit")
-	git -C "$zero" add -A
+	git -C "$zero" add -A -f
 	git -C "$zero" commit -qm "$message"
 	run_base=$(git -C "$zero" rev-parse HEAD^)
 	run_head=$(git -C "$zero" rev-parse HEAD)
