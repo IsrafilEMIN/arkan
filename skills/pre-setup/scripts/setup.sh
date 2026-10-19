@@ -26,7 +26,7 @@ root=${1:-$(pwd -P)}
 root="$(cd "$root" && pwd -P)"
 
 # the ci workflow files pre-setup copies in: <item> <arkan file> <repo file>
-ci_items="ci-review:arkan-review.yml ci-check:check.yml ci-merge:arkan-merge.yml"
+ci_items="ci-review:arkan-review.yml ci-check:check.yml ci-risk:arkan-risk.yml ci-merge:arkan-merge.yml"
 
 say() { printf '%-16s %s%s\n' "$1" "$2" "${3:+  $3}"; }
 has() { [ -f "$root/$1" ]; }
@@ -118,7 +118,7 @@ apply() {
 			;;
 		approvals) seed docs/agents/approvals.md approvals.md ;;
 		review-md) seed REVIEW.md review.md ;;
-		ci-review | ci-check | ci-merge)
+		ci-review | ci-check | ci-risk | ci-merge)
 			local pair src=""
 			for pair in $ci_items; do [ "${pair%%:*}" = "$item" ] && src="${pair#*:}"; done
 			[ -f "$ci/$src" ] || { printf 'setup: %s not found\n' "$ci/$src" >&2; exit 1; }
@@ -126,7 +126,7 @@ apply() {
 			cp "$ci/$src" "$root/.github/workflows/$src"
 			;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, ci-review, ci-check, ci-merge\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, ci-review, ci-check, ci-risk, ci-merge\n' "$item" >&2
 			exit 2
 			;;
 	esac
