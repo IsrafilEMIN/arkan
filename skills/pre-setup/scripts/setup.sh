@@ -92,10 +92,8 @@ check_merge() {
 		*)
 			if has "$dst"; then
 				check_ci ci-merge arkan-merge.yml
-			elif [ -f "$ci/arkan-merge.yml" ]; then
-				say ci-merge missing "choose gate or broker; record **Merge path:** gate or **Merge path:** broker in docs/agents/approvals.md"
 			else
-				say ci-merge skip "choose gate or broker; arkan's ci/github/arkan-merge.yml not found next to this skill"
+				say ci-merge missing "choose gate or broker; record **Merge path:** gate or **Merge path:** broker in docs/agents/approvals.md"
 			fi
 			;;
 	esac

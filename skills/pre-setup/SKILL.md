@@ -55,7 +55,7 @@ Offer `ci-review` only when the person has added the `CLAUDE_CODE_OAUTH_TOKEN` s
 - broker: `**Merge path:** broker`. The broker on the person's machine merges. Install no gate; the check reads `ci-merge ok broker (docs/agents/approvals.md)`. If `.github/workflows/arkan-merge.yml` is present, the check reads `out-of-date`: show the conflict, and remove the file only after the person says yes. Broker availability is the person's call, not a probe: do not claim a broker loop runs unless they say it is deployed. Until it is, the agent calls `agent-merge <pr> <sha>` after the person's `PASS`.
 - gate: `**Merge path:** gate`. Run `apply ci-merge`, then follow its steps in `ci/README.md`. The check compares the copy as before.
 
-`apply ci-merge` reads that record. Under broker it prints the broker state and copies nothing. With no record, or with both lines, it refuses and says which line to keep. A gate that is already installed with no record is checked as before, so an existing gate keeps working until the person picks a path.
+`apply ci-merge` reads that record. Under broker it prints the broker state and copies nothing. With both lines it refuses and says which line to keep. With no record it refuses and asks for a line, because a copy would otherwise leave the path ambiguous. A gate that is already installed with no record counts as the gate: the check reports that copy, and shipping uses it, so an existing gate needs no record to keep working.
 
 An `out-of-date` line is a ci file that differs from arkan's copy, or a gate installed where `docs/agents/approvals.md` records broker. Show the diff or conflict and ask before you change it: the person may have changed a setting (`CHECK_COMMAND`, the `env:` lines). Keep their settings in the new copy.
 

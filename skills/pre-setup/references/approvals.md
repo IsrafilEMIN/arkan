@@ -11,7 +11,7 @@ A repo records one path here. `pre-setup` asks which path the repo uses and writ
 - `broker`: a broker on the person's machine merges the pull request. The repo installs no gate; arkan records `broker`.
 - `gate`: `.github/workflows/arkan-merge.yml` merges the pull request, after `pre-setup`'s `ci-merge` apply.
 
-With no line, `pre-setup` asks. An installed gate with no line keeps working until the person chooses.
+With no line and no installed gate, `pre-setup` asks which path. An installed `.github/workflows/arkan-merge.yml` with no line is recognized as the `gate` path: shipping uses it, and the person may record the line later.
 
 ## Labels
 
