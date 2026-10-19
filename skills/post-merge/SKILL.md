@@ -26,21 +26,29 @@ A merged change broke something. You make main safe, then turn the **miss** (the
 
 ## In ci
 
-[`ci/github/arkan-post-merge.yml`](../../ci/github/arkan-post-merge.yml) starts this skill with no person: a `workflow_run` on the `check` workflow, when a push to main fails or a revert lands on main. [`ci/github/arkan-post-merge-daily.yml`](../../ci/github/arkan-post-merge-daily.yml) starts it once a day for slow signals. Both run [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action) with the `CLAUDE_CODE_OAUTH_TOKEN` secret and read this file from `.claude/skills/` on the default branch. A merge whose commit message carries `post-merge` starts neither workflow again.
+[`ci/github/arkan-post-merge.yml`](../../ci/github/arkan-post-merge.yml) starts this skill with no person. It runs:
+
+- on a `workflow_run` of `check` finishing on the default branch, for any conclusion from a push to that branch. The run checks main, then reads the merged commits to see whether a revert landed. A revert merged with `--merge` keeps "Merge pull request ..." as its head message, so the workflow reads `<sha>^1..<sha>` instead of the head subject.
+- once a day (`schedule`, 06:17 utc) and on `workflow_dispatch`, for slow signals. The run checks main first, so a red main is a signal on its own, and reads `SIGNAL_COMMAND`, the reverts since the last completed run of this workflow, and open `incident` issues. That lookback is what keeps the daily run from ticketing a revert the event run already ticketed.
+
+A merge whose commit message carries `post-merge` starts neither job again, including a failed one. The daily run catches a red main. The work is in two jobs:
+
+- `diagnose` has the model and read-only permissions. It runs the check, detects the revert, and returns the structured output and a `git bundle` of the fix branch.
+- `publish` has no model and the write permissions. It applies the bundle, pushes the branch, opens the pull request, and publishes the ticket.
 
 The run gives you:
 
 - `CHECK_COMMAND`: the check to run, from the workflow's `env:`. The same command runs on main and while bisecting.
-- the signal: the failed run's url and head, a revert commit, or the daily signals (`SIGNAL_COMMAND`, a recent failed run, a revert, an `incident` issue).
+- the signal: the check run and its head, a revert, or the slow signals above.
 - no person. Take each "ask the person" as the repo's default: the tracker from `docs/agents/issue-tracker.md`, the check above, and the branch you create.
-- no tracker, pull request or push access. Return the structured output. The workflow pushes the branch, opens the pull request, and publishes the ticket.
+- no push, merge, issue or pull request access. The `diagnose` job has read-only permissions, and its checkout stores no credential. Return the structured output. The `publish` job pushes the branch, opens the pull request, and publishes the ticket.
 
 So in ci:
 
 - do not push, merge, create a pull request, create or edit an issue, or change repo settings.
-- do not write the ticket file either. Return its path, title and body, with `{{pr}}` where the pull request url goes. The workflow fills it after it opens the pull request.
+- do not write the ticket file either. Return its path, title and body, with `{{pr}}` where the pull request url goes. The body carries the fields `board.sh` reads, including `**Blocked by:** none` when nothing blocks. The `publish` job fills the url and rebuilds the board for a local tracker.
 - title the pull request `post-merge: ...`, and start the commit `post-merge: revert ...` or `post-merge: fix ...`. That word keeps the landed merge from starting the workflow again.
-- when the trigger is a revert and main is green, open no pull request: the revert already made main safe. Return the ticket for the miss.
+- when the trigger is a revert and main is green, open no branch: the revert already made main safe. Return the ticket for the miss.
 - when nothing is broken, return `broken` false and `action` none with the signals you read, and stop.
 
 ## Reply

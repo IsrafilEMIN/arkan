@@ -39,7 +39,7 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | `sensitive-paths` | start from `references/sensitive-paths.md` and add what the repo has: installer scripts, auth, billing, release workflows. Show the list | yes, the person approves or edits the list |
 | `approvals` | `apply approvals` (the fixed rule: `auto` and `manual`) | no |
 | `review-md` | `apply review-md` (seeds `REVIEW.md`). Fill in the failure line from what the repo is, if it is plain | no |
-| `ci-review`, `ci-check`, `ci-risk`, `ci-post-merge`, `ci-post-merge-daily` | `apply <item>` copies arkan's file into `.github/workflows/`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
+| `ci-review`, `ci-check`, `ci-risk`, `ci-post-merge` | `apply <item>` copies arkan's file into `.github/workflows/`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
 | `ci-merge` | ask gate or broker. Record the answer as the exact line in `docs/agents/approvals.md`: broker installs no gate; gate does. See [Merge path](#merge-path) | yes, which path |
 | `codeowners` | write `.github/CODEOWNERS`: each sensitive path, owned by the repo owner. With the gate path, then offer the branch rule from `ci/README.md` (`arkan-merge`): require a pull request, require `check` and `arkan-review`, dismiss stale approvals, empty bypass list | before the branch rule |
 | `verify`, `hooks` (`hint`) | tell the person once: "no verify skill: run `create-verification`", or "this js/ts repo has no commit hooks: run `setup-pre-commit`". Change nothing | no |
@@ -48,7 +48,9 @@ A `hint` on `ci-check` means the repo already runs its own ci: keep it, and copy
 
 Offer `ci-review` only when the person has added the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`) and arkan's skills in `.claude/skills/` on the default branch. Without them `arkan-review` fails on every pull request, and the gate refuses every merge. Otherwise skip it and say why.
 
-Offer `ci-post-merge` and `ci-post-merge-daily` under the same conditions. `ci-post-merge` runs the `post-merge` skill when main's `check` fails or a revert lands; a repo whose own ci workflow has another name edits the copy's `workflows:` line before the push. `ci-post-merge-daily` reads slow signals once a day and calls no model on a day with none; set its `CHECK_WORKFLOW` to the same name. Both read `CHECK_COMMAND`; the daily file also takes an optional `SIGNAL_COMMAND`. A github tracker needs no extra setting: the files create the ticket as an issue, and a local tracker gets it committed on the branch. Neither file merges the pull request it opens; the repo's merge path still lands it.
+Offer `ci-post-merge` under the same conditions. It runs the `post-merge` skill when main's `check` fails or a revert lands, and once a day for slow signals. A repo whose own ci workflow has another name edits the copy's `workflows:` line before the push. The file takes `CHECK_COMMAND`, `MAIN`, and an optional `SIGNAL_COMMAND`. A github tracker needs no extra setting: the run creates the ticket as an issue, and a local tracker gets it committed on the branch. The run never merges the pull request it opens; the repo's merge path still lands it.
+
+The pull request the run opens starts no `check`, `arkan-review` or `arkan-risk` run when it uses `github.token`. To get those runs, add the optional `POST_MERGE_TOKEN` secret as `ci/README.md` says. A run that uses `github.token` also needs the setting "Allow GitHub Actions to create and approve pull requests" before it can open the pull request at all. On the gate path, a merge made with `github.token` starts no `check` run on main, so the event trigger never fires; the daily run still runs the check and catches a red main.
 
 #### Merge path
 
