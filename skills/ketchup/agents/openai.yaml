@@ -1,0 +1,5 @@
+interface:
+  display_name: "Ketchup"
+  short_description: "Catch the person up on this chat and their pending calls"
+policy:
+  allow_implicit_invocation: false

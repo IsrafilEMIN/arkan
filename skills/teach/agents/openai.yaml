@@ -1,0 +1,5 @@
+interface:
+  display_name: "Teach"
+  short_description: "Explain a body of work plainly until it clicks"
+policy:
+  allow_implicit_invocation: true

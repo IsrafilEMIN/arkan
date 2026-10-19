@@ -56,12 +56,13 @@ each line names the skill to call today. a ticket in brackets is a planned arkan
 - a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
 - push, pr, review, reply, diff, retarget, merge or cleanup → [the forge](#the-forge) for the route: the broker clients when the run offers them, `gh` and REST otherwise.
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [ticket `arkan-flow` 08]
-- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last.
+- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. a whole pass over repeated mistakes is `correct`; lessons from one chat into skill edits is `reflect`. a person starts both.
 - any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply), then `unslop`. a doc, readme or rfc → `technical-writing`. text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
 - a repo has no scripted way to prove the app works → tell the user. a person starts `create-verification`; you do not.
 - a design that is a one-way door (a public api, a data schema, a seam row) → `architect`, which runs `arena`. a contested design, or a change on a sensitive path → `interrogate` before you ship.
 - a small diff you don't trust, or a change that reaches past its diff → `blast-radius`.
 - you are about to report a performance number → `benchmark-checklist`.
+- "how does x work", or where code should live → `how`. why it is built that way → `why`. the person wants to really understand it → `teach`, which runs both.
 - work that no playbook fits (a large migration, a multi-part change) → `figure-it-out`. wide parallel coverage or a race → `swarm`.
 
 more triggers:
@@ -69,6 +70,7 @@ more triggers:
 - **a fork you are about to ask about.** if the answer is a fact you can see by running something (behavior, timing, layout, output, speed), it is not a question for the user. sketch it with the prototype playbook and let the result decide. ask only for a product or taste call that no experiment can settle, and give your recommended answer.
 - **review bots and security bots.** they find real bugs and they also file noise. check each claim against the code. fix the real ones, and dismiss the rest with a concrete reason. never change code only to quiet a bot.
 - **a broken skill in the middle of a task.** fix it in its own pr. do not block on it, and do not work around it in silence.
+- **the person comes back.** they ask where things stand across recent chats → `recall`; what changed in this chat → `ketchup`. the person starts both, as well as `sharpen` (frame a task before starting) and `in-your-own-words` (restate their goal).
 - **long or unattended work** ("going to bed", "run until done", "trust it when i'm back"). keep a decision trail with `show-me-your-work`: what you chose, why, and the evidence.
 
 ## the forge

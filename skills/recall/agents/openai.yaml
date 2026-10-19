@@ -1,0 +1,5 @@
+interface:
+  display_name: "Recall"
+  short_description: "Rebuild recent working context into a short brief"
+policy:
+  allow_implicit_invocation: false
