@@ -1,0 +1,5 @@
+interface:
+  display_name: "Sharpen"
+  short_description: "Frame a task the way an expert would before starting"
+policy:
+  allow_implicit_invocation: false
