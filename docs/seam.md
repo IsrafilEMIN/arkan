@@ -28,7 +28,7 @@ The merge path is a local `pre-setup` choice recorded in `docs/agents/approvals.
 
 - a file names `agent-gh <verb>` with a verb that is not in row 2's list above;
 - `ci/github/arkan-merge.yml`, `ci/github/arkan-risk.yml` or their copies in `.github/workflows/` do not carry row 6's agent mark and risk marker exactly as written here;
-- a file outside `.scratch/` and this page names a path inside underground (its broker sources, staged copies, probes, threat model or adr).
+- a file outside `.scratch/`, `docs/agents/review-evals/` and this page names a path inside underground (its broker sources, staged copies, probes, threat model or adr).
 
 ## Change rule
 
