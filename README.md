@@ -28,9 +28,9 @@ idea
 
 above the task line, a person decides what to build. below it, the agent works alone and comes back to the person for approval and for any action that cannot be undone.
 
-after a merge breaks main, a person starts `post-merge`: it finds the first bad merge, reverts or fixes forward on a branch, and opens a ticket for the miss.
+after a merge breaks main, `post-merge` finds the first bad merge, reverts or fixes forward on a branch, and opens a ticket for the miss. a person can start it, or [`ci/github/arkan-post-merge.yml`](ci/github/arkan-post-merge.yml) starts it when main's check fails or a revert lands, and [`ci/github/arkan-post-merge-daily.yml`](ci/github/arkan-post-merge-daily.yml) runs it daily for slow signals. see [`ci/README.md`](ci/README.md#arkan-post-merge).
 
-not built yet: merge approval by risk tier, and starting `post-merge` by itself when main breaks. they are parked in [`.scratch/review-ci/spec.md`](.scratch/review-ci/spec.md) and ticket `arkan-flow` 21.
+not built yet: merge approval by risk tier, parked in [`.scratch/review-ci/spec.md`](.scratch/review-ci/spec.md) and ticket `arkan-flow` 42.
 
 ## review in ci
 

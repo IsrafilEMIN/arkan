@@ -65,6 +65,37 @@ important        0      5      1         1               0           7    14%
 
 a finding nobody closed stays `open`, so the report is only as good as the commands people leave. judge a change to the reviewer or to `CODING_STANDARDS.md` against the noise rate per tag, before and after.
 
+## arkan-post-merge
+
+[`github/arkan-post-merge.yml`](github/arkan-post-merge.yml) and [`github/arkan-post-merge-daily.yml`](github/arkan-post-merge-daily.yml) start the [`post-merge` skill](../skills/post-merge/SKILL.md) with no person. When a push to the default branch breaks `check`, or a revert lands there, the event file finds the merge that broke it, opens a revert or fix pull request, and publishes a ticket for the miss. The daily file reads slow signals (a failed run in the last day, a revert, an open `incident` issue, or the repo's own `SIGNAL_COMMAND`) and acts only when one names a confirmed break. Both run [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action), pinned to a release commit, like `arkan-review`.
+
+### add it to a repo
+
+Work through these in order; a change on the host asks first.
+
+1. add `arkan-review` first (above): it puts arkan's skills in `.claude/skills/` and adds the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`). The post-merge files use the same secret and read the skill from the default branch.
+2. copy `arkan-post-merge.yml` to `.github/workflows/`. Set `CHECK_COMMAND` in `env:` to the repo's check command. If the default branch is not `main`, rename `ref: main`, `MAIN`, and the `branches: [main]` trigger. If the repo's own check workflow is not named `check`, change `workflows: [check]` to its name.
+3. copy `arkan-post-merge-daily.yml` to `.github/workflows/` too if the repo wants the daily run. Set the same `CHECK_COMMAND` and `MAIN`, set `CHECK_WORKFLOW` when the check workflow is not named `check`, set `SIGNAL_COMMAND` when the repo has an error log or alert query, and change the `cron` when 06:17 utc is wrong. The daily job calls no model when it finds no signal.
+4. keep the files' `post-merge:` pull request titles and commit subjects. That word is the loop guard (below), so do not rewrite it.
+
+the repo needs a written tracker for the ticket: a local `docs/agents/issue-tracker.md` puts the ticket on the branch, a github one files an issue. Without the file the run leaves a warning and no ticket.
+
+### what one run does
+
+- **runs on** a `workflow_run` of `check` finishing on the default branch, when the conclusion is `failure`, or when the head commit is a revert (`Revert ...` or `This reverts commit ...`). A push to a pull request branch is not on the default branch, so its run does not match. The daily file runs on `schedule` and `workflow_dispatch`.
+- **skips its own landings**: a revert trigger starts nothing when the head commit message carries `post-merge`, so the revert or fix pull request this workflow opens cannot start it again. A failure always runs: a fix that broke main is a new break. Both files share the concurrency group `arkan-post-merge`, so an event run and a daily run never race.
+- **checks first**: the event run runs `CHECK_COMMAND` on main. If main is green and the trigger is not a revert, it stops without a model call. The daily run reads its signals first and stops without a model call when there are none.
+- **runs the skill** headless with `POST_MERGE_MODEL` and `MAX_TURNS`, and only the tools it needs: read, edit and write, `git` (including `bisect`, `revert`, `switch`, `commit`, but not `push`), the check command, and read-only `gh` calls. It follows `.claude/skills/post-merge/SKILL.md`, whose `## In ci` section holds the defaults that replace every question.
+- **returns** structured output (a json schema in `claude_args`): `summary`, `signal`, `broken`, the bad merge and its pull request, the node that should have caught it, `action` (`revert`, `fix`, `none`), `branch`, the pull request title and body, and the ticket's path, title and body.
+- **publishes**, in shell and not the model: pushes `post-merge/<bad merge short sha>` (unless the branch is already on origin, which means a run already opened its pull request), opens a pull request titled `post-merge: ...`, and publishes the ticket. a github tracker gets an issue with the `needs-triage` label; a local tracker gets the ticket file committed on the branch (and `TODO.md` rebuilt when the repo has `scripts/board.sh`). `{{pr}}` in the ticket body becomes the pull request url, and `{{ticket}}` in the pull request body becomes the ticket link.
+- **opens a pull request even on a revert trigger** when the ticket is local: the revert already landed, so the run opens a ticket-only pull request on `post-merge/ticket-<run id>`.
+- **never merges.** The pull request goes through the repo's merge path like any other, so the merge rule in `docs/seam.md` row 6 still decides who may land it.
+- **permissions**: `contents: write` to push the branch, `pull-requests: write` to open the pull request, `issues: write` for a github ticket, and `actions: read` to read recent runs.
+
+### change it
+
+the settings are the `env:` lines at the top of each file: `POST_MERGE_MODEL`, `MAX_TURNS`, `CHECK_COMMAND`, and `MAIN`; the daily file adds `CHECK_WORKFLOW`, `SIGNAL_COMMAND` and the `cron`. the two prompts and their schemas must stay in step: a field added to one goes into the other and into the shell step that reads it. on a pro or max plan the model calls count against the plan; the daily gate is what keeps an idle repo at zero.
+
 ## check
 
 [`github/check.yml`](github/check.yml) runs the repo's check command (its tests, lint and build, the same command the task loop's prove step runs) on each push to the default branch and on each pull request, as a job named `check`. it sets up no language: the command runs with the tools already on github's `ubuntu-latest` runner, and the file has a commented example step for python and node.

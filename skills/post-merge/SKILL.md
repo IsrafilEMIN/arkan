@@ -18,11 +18,30 @@ A merged change broke something. You make main safe, then turn the **miss** (the
    - **revert**: `git revert -m 1 <merge>` (no `-m` for a squash commit). The fallback whenever a fix is unclear.
    - **fix forward**: a small change, red first, through `tdd`, when the cause is plain and a revert would undo more than it saves.
 
-   _Done when_ the check passes on the branch, the repo's other checks still pass, and the branch is pushed. Open the PR with the `pr` skill. Merging is the person's call.
+   _Done when_ the check passes on the branch, the repo's other checks still pass, and the branch is pushed. Open the PR with the `pr` skill. Merging is the person's call. In ci, the workflow pushes the branch and opens the PR from your output; you never push or merge.
 
 5. **Name the node that should have caught it.** Walk the task loop in order: build + `tdd` (a test for this case), prove (tests, build, lint, verify), `code-review`, `security-review`. Pick the first node that had what it needed to catch the bug, and say what it lacked: a missing test, a check that never ran, a rule the reviewer does not hold. _Done when_ the answer cites evidence from the bad diff or the node's own output, not a guess.
 
-6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket, then start `retro` (proposals only). _Done when_ the ticket exists and its link or path is in your reply.
+6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket, then start `retro` (proposals only). In ci, return the ticket content; the workflow publishes it after it opens the PR. _Done when_ the ticket exists and its link or path is in your reply.
+
+## In ci
+
+[`ci/github/arkan-post-merge.yml`](../../ci/github/arkan-post-merge.yml) starts this skill with no person: a `workflow_run` on the `check` workflow, when a push to main fails or a revert lands on main. [`ci/github/arkan-post-merge-daily.yml`](../../ci/github/arkan-post-merge-daily.yml) starts it once a day for slow signals. Both run [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action) with the `CLAUDE_CODE_OAUTH_TOKEN` secret and read this file from `.claude/skills/` on the default branch. A merge whose commit message carries `post-merge` starts neither workflow again.
+
+The run gives you:
+
+- `CHECK_COMMAND`: the check to run, from the workflow's `env:`. The same command runs on main and while bisecting.
+- the signal: the failed run's url and head, a revert commit, or the daily signals (`SIGNAL_COMMAND`, a recent failed run, a revert, an `incident` issue).
+- no person. Take each "ask the person" as the repo's default: the tracker from `docs/agents/issue-tracker.md`, the check above, and the branch you create.
+- no tracker, pull request or push access. Return the structured output. The workflow pushes the branch, opens the pull request, and publishes the ticket.
+
+So in ci:
+
+- do not push, merge, create a pull request, create or edit an issue, or change repo settings.
+- do not write the ticket file either. Return its path, title and body, with `{{pr}}` where the pull request url goes. The workflow fills it after it opens the pull request.
+- title the pull request `post-merge: ...`, and start the commit `post-merge: revert ...` or `post-merge: fix ...`. That word keeps the landed merge from starting the workflow again.
+- when the trigger is a revert and main is green, open no pull request: the revert already made main safe. Return the ticket for the miss.
+- when nothing is broken, return `broken` false and `action` none with the signals you read, and stop.
 
 ## Reply
 
