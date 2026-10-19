@@ -5,7 +5,7 @@ description: "TypeScript rules for arkan repos: discriminated unions, branded ty
 
 # TypeScript best practices
 
-Apply **type system discipline** and **boundary discipline** in `arkan-mode/principles/architecture.md` first. This table is how they look in typescript.
+Apply **type system discipline** and **boundary discipline** first, per `principle-type-system-discipline` and `principle-boundary-discipline`. This table is how they look in typescript.
 
 | Rule | Summary |
 |------|---------|

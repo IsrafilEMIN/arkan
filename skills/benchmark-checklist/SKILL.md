@@ -5,7 +5,7 @@ description: "Vet a performance measurement (limiter, tuning, limits, errors, re
 
 # Benchmark checklist
 
-Use this when you produce a performance number: a pull request's before and after, a regression claim, a harness for repeated tuning, or a choice between libraries or settings. Answer each question with evidence from a run, not a guess about the code. It is the working form of **explain the number** (`arkan-mode/principles/verification.md`).
+Use this when you produce a performance number: a pull request's before and after, a regression claim, a harness for repeated tuning, or a choice between libraries or settings. Answer each question with evidence from a run, not a guess about the code. It is the working form of **explain the number** (`principle-explain-the-number`).
 
 For a quick ballpark the person asked for, one run is enough. Still check questions 4 and 7, and say it is one run. Skip the rest unless that run looks wrong. A choice between options is never a ballpark.
 

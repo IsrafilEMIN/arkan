@@ -18,7 +18,7 @@ Read recent commits, reverts, review comments (the ci reviewer's finding log, `c
 
 1. **Eliminate it with architecture.** Give each piece of state one owner and each task one supported way. Hide internals so the wrong import fails. Replace hand-synced lists with one source of truth. Delete old ways and dead code an agent would copy.
 2. **Enforce it with types,** so the bad state can't be written. If bad code still compiles, add a lint or ci check whose error names the file, type or function to use instead. If the pattern is already common, fail only when a change adds more.
-3. **Test the behavior.** Fix or delete any test that still passes when the behavior it checks breaks, or that fails when only the internals change (`test-to-break`).
+3. **Test the behavior.** Fix or delete any test that still passes when the behavior it checks breaks, or that fails when only the internals change (`principle-test-behavior-not-implementation`).
 4. **Write docs or agent rules last,** only for judgment calls. Nothing fails when an agent skips them.
 
 ## Fix and prove

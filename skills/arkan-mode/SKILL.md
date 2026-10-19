@@ -7,7 +7,7 @@ description: "the default way to do engineering work on one task: check that it 
 
 arkan mode is how you work on one task. it comes from pstack's `poteto-mode` and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
-other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, and so on). call them with the Skill tool when a step names them.
+other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). call them with the Skill tool when a step names them; a `principle-*` leaf is read by path, not invoked.
 
 ## 0. check that the work is a task
 
@@ -37,10 +37,11 @@ when the task is a ticket:
 ## 1. start every task like this
 
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
-2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principles/architecture.md`.
-3. **read the principles you will use.** each entry in [principles](#principles) names when it applies. read its full text in `principles/` before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
+2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principle-model-the-domain` and `principle-type-system-discipline`.
+3. **read the principles you will use.** each entry in [principles](#principles) names when it applies and the `principle-<title>` skill that holds its leaf. read that leaf in full (`../<skill>/SKILL.md`) before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
 4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end. a unit that fails because a piece it needs is another open ticket's work is a missing blocker: stop the way step 0 says, instead of debugging.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
+6. **place the worktree.** work in a git worktree off the base branch, as a direct child of a dedicated worktree root, never inside the repo. on the broker route the root must be one its cleanup accepts: the broker finds the folder by name under an allowed root and refuses a path inside the repo. a worktree outside those roots leaves the local branch behind after the merge. if you do not know an allowed root, ask before you create it.
 
 ## 2. when to reach for another skill
 
@@ -92,12 +93,12 @@ on the broker route the forge is its clients, in any repo the host allow-list ap
 - **review a pr.** `agent-gh pr-review <owner/repo> <number> <head-sha> <body>` posts a comment review bound to that head, with the pr open, which is how a verifier posts its verdict: stdout is the review json, and its `state` reads `COMMENTED` with `commit_id` at that head sha. it is a comment: the review decision, and any approval, stay the user's.
 - **reply on a thread.** `agent-gh pr-reply <owner/repo> <number> <comment-id> <head-sha> <body>` answers one review comment, with the thread's `commentId` as the id; the parent comment has to belong to the same pr, and the pr open at that head. stdout is the reply comment json: cite its `id`. read the thread back with `pr-view` to confirm the reply landed.
 - **retarget a stacked pr.** after the parent merges, `agent-gh pr-retarget <owner/repo> <number> <base> <head-sha>` moves its child onto `main`, `master`, or a parent `agent/*` branch, with the pr open and its head at that sha. the reply line `pr <number> base is now <base> at <sha>` is the proof. this is the single sanctioned move of a base.
-- **merge.** after every check is green, and after the person's unmarked `PASS` on the head where the pr is `manual`, `agent-merge <pr> <head-sha>` merges with the head pinned and the branch deleted. `agent-gh pr-merge <owner/repo> <number> <head-sha>` does the same with the repo spelled out. never call `gh pr merge` or another raw merge api.
+- **merge.** after every check is green, and after the person's unmarked `PASS` on the head where the pr is `manual`, `agent-merge <pr> <head-sha>` merges with the head pinned. it asks the forge to delete the remote branch, which the broker does not verify, then removes the merged local worktree and branch when it can. `agent-gh pr-merge <owner/repo> <number> <head-sha>` does the same with the repo spelled out. never call `gh pr merge` or another raw merge api.
 - **clean up.** `agent-worktree-remove <owner/repo> <worktree-name> <pr> <sha>`, with the sha passed, not defaulted. it removes the verified worktree and then its local ref, non-force: the reply lines `worktree removed: <path>` and `branch deleted: refs/heads/<branch>` are the proof.
 
 a refusal ends that action: the client exits 2 with `refused: <reason>` on stderr, so report that line and stop. any other nonzero exit means the effect was not recorded: report its stderr and stop too. `refused: unknown verb` means the installed broker predates that call: say the host broker needs the current build and stop.
 
-**a merged pr is not a finished task.** cleanup is done when the worktree folder and `refs/heads/<branch>` are both gone, read back from a surviving checkout of the repo (`git worktree list`; `git rev-parse --verify refs/heads/<branch>`). a cleanup that removed the folder and kept the ref answers `partial cleanup: ... refs/heads/<branch>` on stderr: report that line and touch nothing else, and leave a ref whose folder is already gone to the user's own cleanup.
+**a merged pr is not a finished task.** cleanup is done when the worktree folder and `refs/heads/<branch>` are both gone, read back from a surviving checkout of the repo (`git worktree list`; `git rev-parse --verify refs/heads/<branch>`). an `already merged` reply runs no cleanup: check both, and run `agent-worktree-remove` with the merged head when they remain. a cleanup that removed the folder and kept the ref answers `partial cleanup: ... refs/heads/<branch>` on stderr: report that line and touch nothing else, and leave a ref whose folder is already gone to the user's own cleanup. the broker does not verify remote branch deletion; check the remote ref where the route allows it, and report it as unverified otherwise.
 
 ## autonomy
 
@@ -136,43 +137,43 @@ comments follow the same rules as the reply. keep a comment only for a "why" tha
 
 ## principles
 
-the full text is in `principles/`. one file per group.
+each entry names its `principle-<title>` skill. read that leaf in full before you use it. the entries are grouped by where the principle changes a decision.
 
-**core** (`principles/core.md`)
+**core**
 
-- **laziness protocol.** sizing a diff, or tempted to add a layer. make the smallest change that solves the problem.
-- **subtract before you add.** before an addition or a rewrite. remove dead code and extra checks first.
-- **foundational thinking.** before you write logic. get the data structures right, and do scaffold work first.
-- **redesign from first principles.** a new requirement in an old design. design as if it was there from day one.
-- **attack the premise.** two fixes with the same premise failed. question the premise, not the fix.
-- **minimize reader load.** code that is hard to follow. count layers and hidden state, and cut both.
-- **experience first.** a product or scope trade-off. choose what the user feels over what is easy to build.
-- **exhaust the design space.** a new design with no example in the code. build two or three options and compare.
-- **build the lever.** any non-trivial work. write the script, codemod or check that does it or proves it.
-- **outcome-oriented execution.** a planned rewrite or migration. aim for the end state, not smooth steps between.
+- **laziness protocol** (`principle-laziness-protocol`). sizing a diff, or tempted to add a layer. make the smallest change that solves the problem.
+- **subtract before you add** (`principle-subtract-before-you-add`). before an addition or a rewrite. remove dead code and extra checks first.
+- **foundational thinking** (`principle-foundational-thinking`). before you write logic. get the data structures right, and do scaffold work first.
+- **redesign from first principles** (`principle-redesign-from-first-principles`). a new requirement in an old design. design as if it was there from day one.
+- **attack the premise** (`principle-attack-the-premise`). two fixes with the same premise failed. question the premise, not the fix.
+- **minimize reader load** (`principle-minimize-reader-load`). code that is hard to follow. count layers and hidden state, and cut both.
+- **experience first** (`principle-experience-first`). a product or scope trade-off. choose what the user feels over what is easy to build.
+- **exhaust the design space** (`principle-exhaust-the-design-space`). a new design with no example in the code. build two or three options and compare.
+- **build the lever** (`principle-build-the-lever`). any non-trivial work. write the script, codemod or check that does it or proves it.
+- **outcome-oriented execution** (`principle-outcome-oriented-execution`). a planned rewrite or migration. aim for the end state, not smooth steps between.
 
-**architecture** (`principles/architecture.md`)
+**architecture**
 
-- **model the domain.** stateful logic, or code with many branches. put the domain in a structure, not in scattered conditions.
-- **boundary discipline.** validation, error handling, adapters. check data where it enters, then trust the types.
-- **type system discipline.** designing types or signatures. make bad states impossible to write.
-- **make operations idempotent.** commands or loops that can crash and restart. the same end state after any number of runs.
-- **migrate callers, then delete the old api.** a new internal api with old callers. move them all and delete the old one in one go.
-- **separate before you serialize shared state.** two actors may write the same thing. remove the sharing first.
+- **model the domain** (`principle-model-the-domain`). stateful logic, or code with many branches. put the domain in a structure, not in scattered conditions.
+- **boundary discipline** (`principle-boundary-discipline`). validation, error handling, adapters. check data where it enters, then trust the types.
+- **type system discipline** (`principle-type-system-discipline`). designing types or signatures. make bad states impossible to write.
+- **make operations idempotent** (`principle-make-operations-idempotent`). commands or loops that can crash and restart. the same end state after any number of runs.
+- **migrate callers, then delete the old api** (`principle-migrate-callers-then-delete-legacy-apis`). a new internal api with old callers. move them all and delete the old one in one go.
+- **separate before you serialize shared state** (`principle-separate-before-serializing-shared-state`). two actors may write the same thing. remove the sharing first.
 
-**verification** (`principles/verification.md`)
+**verification**
 
-- **prove it works.** before you say done. check the real thing.
-- **fix root causes.** debugging. reproduce first, then ask "why" until you reach the cause.
-- **sequence verifiable units.** multi-step work. each unit ends green before the next starts.
-- **test behavior, not implementation.** writing or keeping a test. assert the exact result a user sees.
-- **explain the number.** before you trust a number you measured. find what limits it.
+- **prove it works** (`principle-prove-it-works`). before you say done. check the real thing.
+- **fix root causes** (`principle-fix-root-causes`). debugging. reproduce first, then ask "why" until you reach the cause.
+- **sequence verifiable units** (`principle-sequence-verifiable-units`). multi-step work. each unit ends green before the next starts.
+- **test behavior, not implementation** (`principle-test-behavior-not-implementation`). writing, changing or keeping a test. assert what the code's users can see.
+- **explain the number** (`principle-explain-the-number`). before you trust a number you measured. find what limits it.
 
-**working with agents** (`principles/agents.md`)
+**working with agents**
 
-- **guard the context window.** large output, long files, wide searches. send bulk to subagents.
-- **never block on the human.** tempted to ask "should i do x?" on reversible work. do it and show it.
-- **encode lessons in structure.** you write the same instruction twice. make it a lint, type or check.
+- **guard the context window** (`principle-guard-the-context-window`). large output, long files, wide searches. send bulk to subagents.
+- **never block on the human** (`principle-never-block-on-the-human`). tempted to ask "should i do x?" on reversible work. do it and show it.
+- **encode lessons in structure** (`principle-encode-lessons-in-structure`). you write the same instruction twice. make it a lint, type or check.
 
 ## playbooks
 
