@@ -86,7 +86,7 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
 
 1. add `arkan-review` first (above), so each push gets a review check.
 2. copy the file to `.github/workflows/arkan-merge.yml` on the default branch, and on each base branch a pr can target.
-3. allow squash merges in the repo settings: the workflow merges with `--squash`.
+3. allow merge commits in the repo settings: the workflow merges with `--merge`, so main keeps every commit of the pr. to squash instead, set `MERGE_METHOD: squash` and allow squash merges.
 4. add a branch rule (a ruleset or branch protection) on each base branch:
    - require a pull request before merging.
    - require the status checks `check` (the repo's tests) and `arkan-review` to pass.
@@ -104,7 +104,7 @@ required status checks need github pro on a private repo, or a public repo. on t
 - **refuses an agent's verdict**: a review whose body holds `AGENT_MARK` (`<!-- arkan:verifier -->`, which the broker adds to every verdict an agent posts, underground ticket 48) does not merge. until the risk tier labels a pr `auto` (arkan ticket 42), every pr is `manual`, so only a person's `PASS` merges.
 - **refuses** when the review's `commit_id` is not the pr's current head: a push after the verdict needs a new verdict.
 - **waits** up to 35 minutes, longer than `arkan-review`'s 30-minute job limit, for every other check run on the head. it refuses if any check ends other than `success` or `skipped`.
-- **merges** with `gh pr merge --squash --match-head-commit <head>`, so github refuses the merge if the head moved while the run waited. the branch rule still applies: a missing required check stops the merge.
+- **merges** with `gh pr merge --merge --match-head-commit <head>` (`MERGE_METHOD`), so github refuses the merge if the head moved while the run waited. the branch rule still applies: a missing required check stops the merge.
 - **sets the check** `arkan-merge` (the job name). a refusal fails it with the reason in the log.
 - **permissions**: `contents: write` and `pull-requests: write` to merge, `checks: read` to read the check runs.
 

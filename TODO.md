@@ -43,9 +43,6 @@
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
 
-- [ ] 40: Arkan's own pull requests need a merge path #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/40-arkan-own-prs-need-a-merge-path.md` · blocked by: none
-
 ## Done
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
@@ -134,3 +131,6 @@
 
 - [x] 08: Post-merge skill, run by hand #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/08-post-merge-and-its-trigger.md` · blocked by: none
+
+- [x] 40: Arkan's own pull requests need a merge path #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/40-arkan-own-prs-need-a-merge-path.md` · blocked by: none
