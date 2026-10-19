@@ -43,7 +43,7 @@ If the person pushes back on the shape, treat that as phase A evidence: ground a
 
 ## Phase D: implement against the sketch
 
-Replace `not implemented` bodies with code, and pseudocode with logic, test-first per `principle-test-behavior-not-implementation`. The sketch is the contract. A deviation from it is a signal to surface, not friction to absorb in silence: if a function needs a parameter the sketch did not foresee, ask whether the sketch was wrong, the requirement was missed, or the implementation is overreaching.
+Replace `not implemented` bodies with code, and pseudocode with logic, test-first per **sequence verifiable units** (`arkan-mode/principles/verification.md`), with each test per `principle-test-behavior-not-implementation`. The sketch is the contract. A deviation from it is a signal to surface, not friction to absorb in silence: if a function needs a parameter the sketch did not foresee, ask whether the sketch was wrong, the requirement was missed, or the implementation is overreaching.
 
 ## Phase E: scrap when the architecture is wrong
 

@@ -16,7 +16,7 @@ A merged change broke something. You make main safe, then turn the **miss** (the
 
 4. **Make main safe.** On a new branch from main, choose whichever is safer, faster:
    - **revert**: `git revert -m 1 <merge>` (no `-m` for a squash commit). The fallback whenever a fix is unclear.
-   - **fix forward**: a small change, red first, with a test per `principle-test-behavior-not-implementation`, when the cause is plain and a revert would undo more than it saves.
+   - **fix forward**: a small change, red first per **sequence verifiable units** (`arkan-mode/principles/verification.md`), with the test per `principle-test-behavior-not-implementation`, when the cause is plain and a revert would undo more than it saves.
 
    _Done when_ the check passes on the branch, the repo's other checks still pass, and the branch is pushed. Open the PR with the `pr` skill. Merging is the person's call.
 
