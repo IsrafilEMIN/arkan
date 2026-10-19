@@ -74,7 +74,7 @@ jobs:
           slow=""
           if [ "$EVENT" = workflow_run ]; then
             if git rev-parse --verify -q "${SHA}^1" >/dev/null; then
-              messages=$(git log --format=%B "${SHA}^1..${SHA}")
+              messages=$(git log --first-parent --format=%B "${SHA}^1..${SHA}")
             else
               messages=$(git log -1 --format=%B "$SHA")
             fi
@@ -88,8 +88,8 @@ jobs:
             fi
           else
             since=$(gh run list --workflow arkan-post-merge.yml --limit 20 \
-              --json databaseId,createdAt,status \
-              --jq --arg id "$THIS_RUN" '[.[] | select(.databaseId != ($id | tonumber) and .status == "completed")] | sort_by(.createdAt) | last | .createdAt // ""' \
+              --json databaseId,createdAt,conclusion \
+              | jq -r --arg id "$THIS_RUN" '[.[] | select(.databaseId != ($id | tonumber) and .conclusion == "success")] | sort_by(.createdAt) | last | .createdAt // ""' \
               2>/dev/null || true)
             if [ -z "$since" ]; then
               since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
@@ -219,11 +219,11 @@ jobs:
             echo "::error title=arkan-post-merge::HEAD is $current, not $branch"
             exit 1
           fi
-          if [ -n "$(git status --porcelain)" ]; then
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
             echo "::error title=arkan-post-merge::the fix branch has uncommitted changes"
             exit 1
           fi
-          git bundle create "$RUNNER_TEMP/post-merge.bundle" "refs/heads/$branch"
+          git bundle create "$RUNNER_TEMP/post-merge.bundle" "$MAIN..refs/heads/$branch"
           echo "bundle=yes" >>"$GITHUB_OUTPUT"
           echo "branch=$branch" >>"$GITHUB_OUTPUT"
 
@@ -346,6 +346,8 @@ jobs:
                 *"ticket: pending"*)
                   pr_url=$existing
                   code_pr=$existing
+                  git fetch --quiet origin "refs/heads/$BRANCH"
+                  git switch -C "$BRANCH" FETCH_HEAD
                   echo "pull request is open, ticket still pending: $pr_url"
                   ;;
                 *)
@@ -385,8 +387,8 @@ jobs:
           if [ -n "$ticket_body" ]; then
             tracker=docs/agents/issue-tracker.md
             kind=none
-            if [ -f "$tracker" ]; then
-              case "$(head -n1 "$tracker")" in
+            if git cat-file -e "$MAIN:$tracker" 2>/dev/null; then
+              case "$(git show "$MAIN:$tracker" | head -n1)" in
                 "# Issue tracker: GitHub") kind=github ;;
                 "# Issue tracker: Local Markdown") kind=local ;;
               esac
@@ -405,6 +407,7 @@ jobs:
                 ;;
               local)
                 case "$ticket_path" in
+                  *..*) ticket_path=".scratch/post-merge/issues/01-post-merge-$RUN_ID.md" ;;
                   .scratch/*.md) ;;
                   *) ticket_path=".scratch/post-merge/issues/01-post-merge-$RUN_ID.md" ;;
                 esac
@@ -419,14 +422,16 @@ jobs:
                   git commit -m "docs: ticket the post-merge miss"
                 fi
                 board=""
-                if [ -f .claude/skills/pre-setup/scripts/board.sh ]; then
-                  board=.claude/skills/pre-setup/scripts/board.sh
-                elif [ -f scripts/board.sh ]; then
-                  board=scripts/board.sh
-                fi
+                for f in .claude/skills/pre-setup/scripts/board.sh scripts/board.sh; do
+                  if git cat-file -e "$MAIN:$f" 2>/dev/null; then
+                    git show "$MAIN:$f" >"$RUNNER_TEMP/board.sh"
+                    board=$f
+                    break
+                  fi
+                done
                 if [ -n "$board" ]; then
-                  bash "$board" build
-                  bash "$board" check
+                  bash "$RUNNER_TEMP/board.sh" build "$PWD"
+                  bash "$RUNNER_TEMP/board.sh" check "$PWD"
                   if [ -n "$(git status --porcelain -- TODO.md)" ]; then
                     git add TODO.md
                     git commit -m "docs: rebuild the board"
