@@ -15,19 +15,20 @@ One folder per case, `<NN>-<slug>/`, numbered from `01`. It holds:
 **Bug:** one sentence: what is wrong and what it breaks.
 **Path:** `scripts/example.sh`
 **Lines:** 12
+**Bad PR:** the pull request that shipped it, or `none` when a commit went straight to main.
 **Fix PR:** the pull request, or the fix commit when there was no pull request.
 **Broke main:** the merge or commit that shipped it.
 ```
 
-`Lines:` is the defect's range in the new side of `bad.diff`; a one-line defect uses its line. The script grades `**Path:**` and `**Lines:**`, and checks that `**Bug:**`, `**Fix PR:**` and `**Broke main:**` exist. `Broke main:` holds the bad commit, which the script checks out.
+`Lines:` is the defect's range in the new side of `bad.diff`; a one-line defect uses its line. The script grades `**Path:**` and `**Lines:**`, and checks that `**Bug:**`, `**Bad PR:**`, `**Fix PR:**` and `**Broke main:**` exist. `Broke main:` holds the bad commit, which the script checks out. The prompt's pull request number is the bad PR: `Bad PR:` when it names one, else a pull request named in `Broke main:`, else `0`. It is never the fix PR.
 
 ## One reviewer
 
-`ci/review-eval.sh` reads the prompt, `REVIEW_MODEL` and the `--allowedTools` line from `ci/github/arkan-review.yml`, the file ci runs. It fills the workflow's `${{ }}` inputs with the case's values, so a change to that file changes the eval. One file, not a second prompt copy that can drift. The script dies when the prompt holds an input it does not fill.
+`ci/review-eval.sh` reads the prompt, `REVIEW_MODEL`, `MAX_TURNS` and the `--allowedTools` line from `ci/github/arkan-review.yml`, the file ci runs. It fills the workflow's `${{ }}` inputs with the case's values, so a change to that file changes the eval. One file, not a second prompt copy that can drift. The script dies when the prompt holds an input it does not fill, or the workflow uses a `${{ env.* }}` setting it does not read.
 
-The default reviewer is `claude -p` with that model and those tools: the reviewer ci runs. Set `REVIEW_CMD`, or pass `--reviewer`, to use another headless harness. A swapped harness is a weaker proof, because it does not run the command ci runs.
+The default reviewer is `claude -p` with that model, turn limit and tools: the reviewer ci runs. Set `REVIEW_CMD`, or pass `--reviewer`, to use another headless harness. A swapped harness is a weaker proof, because it does not run the command ci runs.
 
-Each case runs in a temp git repo. One commit holds the bad commit's parent tree; the next applies `bad.diff`. The checkout is the bad commit, so the workflow's `git diff <base>...<head>` returns the case's diff. `.claude/skills/` holds the branch's `code-review` and `security-review`. The repo never holds `docs/agents/review-evals/`: no case, baseline or example is in reach.
+Each case runs in a temp git repo. One commit holds the bad commit's parent tree; the next applies `bad.diff`. The checkout is the bad commit, so the workflow's `git diff <base>...<head>` returns the case's diff. `.claude/skills/` holds the branch's `code-review` and `security-review`: each replaces the parent tree's copy as a whole, from `skills/<name>` when present, else `.claude/skills/<name>`. The repo never holds `docs/agents/review-evals/`: no case, baseline or example is in reach.
 
 ## Run the cases
 
