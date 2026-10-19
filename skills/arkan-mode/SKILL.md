@@ -5,9 +5,9 @@ description: "the default way to do engineering work on one task: check that it 
 
 # arkan mode
 
-arkan mode is how you work on one task. it comes from pstack's own mode skill and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
+arkan mode is how you work on one task. it comes from pstack's `poteto-mode` and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
-other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). call them with the Skill tool when a step names them.
+other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). call them with the Skill tool when a step names them; a `principle-*` leaf is read by path, not invoked.
 
 ## 0. check that the work is a task
 
