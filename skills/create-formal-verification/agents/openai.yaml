@@ -1,0 +1,5 @@
+interface:
+  display_name: "Create Formal Verification"
+  short_description: "Verify one property in every case, as a repo skill"
+policy:
+  allow_implicit_invocation: false

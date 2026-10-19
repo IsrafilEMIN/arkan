@@ -1,0 +1,5 @@
+interface:
+  display_name: "Make Bot UI"
+  short_description: "Build a page whose buttons wake an agent by webhook"
+policy:
+  allow_implicit_invocation: false
