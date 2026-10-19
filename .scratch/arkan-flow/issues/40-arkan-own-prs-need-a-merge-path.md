@@ -1,6 +1,6 @@
 # 40: arkan's own pull requests need a merge path
 
-**Role:** needs-triage
+**Role:** ready-for-agent
 **Closed:** no
 **Priority:** 28
 
@@ -19,5 +19,11 @@ the question for the owner:
 
 **Blocked by:** None (needs the owner's call first).
 
-- [ ] the owner picks one, and the rule lands where a session reads it (the broker's docs, `AGENTS.md`, or `shipping.md`)
+- [x] the owner picks one, and the rule lands where a session reads it (the broker's docs, `AGENTS.md`, or `shipping.md`)
 - [ ] proof: one agent pull request of arkan lands through the chosen path, with the merge verified against the intended head
+
+## Comments
+
+- 2026-10-19, owner: option 2, so pull requests merge without a manual merge.
+- 2026-10-19, agent: on branch `claude/ticket-40-merge-path`. `scripts/check.sh` runs `scripts/board.sh check`, `bash -n` over every tracked `*.sh`, and checks that each `skills/*/SKILL.md` has front matter whose `name` is its folder. it printed `check: ok`; with a broken script and a wrong skill name it named both and exited 1. `.github/workflows/check.yml` and `.github/workflows/arkan-merge.yml` are arkan's own `ci/github/` files, unchanged (`CHECK_COMMAND` already defaults to `bash scripts/check.sh`). `AGENTS.md` gains `### Merging`. not installed: `arkan-review` (it needs the `CLAUDE_CODE_OAUTH_TOKEN` secret and the skills in `.claude/skills/`); the gate waits only for the checks that exist.
+- 2026-10-19, host steps for the owner: allow squash merges in the repo settings (the gate merges with `--squash`). a branch ruleset that requires `check` needs github pro on a private repo (`ci/README.md`, the plan gate); without it the gate still refuses a red head, but nothing stops a hand merge around it.

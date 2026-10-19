@@ -26,9 +26,6 @@
 - [ ] 37: Rebuild the scenario sandbox from arkan #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/37-rebuild-the-sandbox-from-arkan.md` · blocked by: 04
 
-- [ ] 40: Arkan's own pull requests need a merge path #arkan-flow #needs-triage
-  `.scratch/arkan-flow/issues/40-arkan-own-prs-need-a-merge-path.md` · blocked by: none
-
 ## Todo
 
 - [ ] 41: Build the pre-setup redesign #arkan-flow #ready-for-agent
@@ -45,6 +42,9 @@
 
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
+
+- [ ] 40: Arkan's own pull requests need a merge path #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/40-arkan-own-prs-need-a-merge-path.md` · blocked by: none
 
 ## Done
 
