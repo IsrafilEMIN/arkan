@@ -26,4 +26,4 @@ Do not edit `TODO.md` by hand. Before you commit a change under `.scratch/`, run
 
 ### Merging
 
-A pull request merges through `.github/workflows/arkan-merge.yml`: once every check on the head commit is green (`check` runs `scripts/check.sh`), the owner posts a `COMMENT` review that starts with `PASS` on that commit, and the workflow merges it. Every pull request is `manual` until arkan ticket 42 ships, so an agent never posts that `PASS` here, and never merges.
+A pull request merges through `.github/workflows/arkan-merge.yml`: once every check on the head commit is green (`check` runs `scripts/check.sh`), a `COMMENT` review that starts with `PASS` on that commit makes the workflow merge it. `arkan-risk` labels each pull request `auto` or `manual`; a `manual` one needs the owner's `PASS`. Until the vote is on (arkan ticket 42), every pull request is `manual`, so an agent never posts that `PASS` here, and never merges.

@@ -78,6 +78,23 @@ a finding nobody closed stays `open`, so the report is only as good as the comma
 
 it reads the code with `contents: read` and nothing else, stops after 15 minutes, and pins `actions/checkout` to a release commit. to move it to a newer release, replace the commit sha and its `# v7.x.y` comment together.
 
+## arkan-risk
+
+[`github/arkan-risk.yml`](github/arkan-risk.yml) gives each pull request a risk label, `auto` or `manual`, that its author cannot pick. `arkan-merge` reads it: an `auto` pr merges on the agent verifier's `PASS`, a `manual` pr only on a person's `PASS`. the rules follow the claude code team's review post: the change sets the tier, some paths always need a person, an agent's approval never counts as a person's, and start strict.
+
+### add it to a repo
+
+1. write `docs/agents/sensitive-paths.md` on the default branch (`pre-setup` does it): one glob per line in its first fenced block.
+2. copy the file to `.github/workflows/arkan-risk.yml`.
+
+### what one run does
+
+- **runs on** `pull_request` `opened`, `synchronize` and `reopened`. a newer push cancels the run on the older head.
+- **fixed rules first**, each one makes the pr `manual`: the author is not the repo owner; the base branch has no `PATHS_FILE`; the pr touches a path (or the old name of a renamed path) that matches a glob in it. the list is read from the base branch, so a pr cannot edit its way out. `*` and `**` also match `/`.
+- **the vote** (`RISK_VOTE`) labels the rest. it is `off` until arkan ticket 42 builds it, so every pr is `manual`. with it `on` and no vote step yet, the run still says `manual`: it fails closed.
+- **posts** one sticky pr comment, edited in place. its first line is the marker `arkan-merge` reads: `<!-- arkan:risk head=<sha> label=<auto|manual> -->`. only a comment by `github-actions[bot]` counts. it also sets the pr label `arkan:auto` or `arkan:manual` for people to see; the gate never reads the label.
+- **permissions**: `contents: read`, `pull-requests: write`, `issues: write`.
+
 ## arkan-merge
 
 [`github/arkan-merge.yml`](github/arkan-merge.yml) merges a pull request once its verifier posts a `PASS` verdict on the head commit and every check on that commit passed. the person installs it once in a repo. after that the agent never merges: it opens the pr, its verifier posts the verdict, and the repo merges. it uses no third-party actions, only `gh` on the runner.
@@ -101,7 +118,7 @@ required status checks need github pro on a private repo, or a public repo. on t
 
 - **runs on** `pull_request_review` `submitted`, only for a review whose body begins with `PASS` from an author association of `OWNER`, `MEMBER` or `COLLABORATOR`. this filter only keeps strangers on a public repo from starting runs.
 - **counts the verdict** only when the reviewer's repo permission is `write`, `maintain` or `admin` (`gh api repos/<repo>/collaborators/<login>/permission --jq .permission`). an author association does not prove write access: an org member can have read only.
-- **refuses an agent's verdict**: a review whose body holds `AGENT_MARK` (`<!-- arkan:verifier -->`, which the broker adds to every verdict an agent posts, underground ticket 48) does not merge. until the risk tier labels a pr `auto` (arkan ticket 42), every pr is `manual`, so only a person's `PASS` merges.
+- **refuses an agent's verdict on a manual pr**: after the checks, it reads `arkan-risk`'s marker for the head. a review whose body holds `AGENT_MARK` (`<!-- arkan:verifier -->`, which the broker adds to every verdict an agent posts, underground ticket 48) merges only an `auto` pr. no marker, or a marker for an older head, counts as `manual`.
 - **refuses** when the review's `commit_id` is not the pr's current head: a push after the verdict needs a new verdict.
 - **waits** up to 35 minutes, longer than `arkan-review`'s 30-minute job limit, for every other check run on the head. it refuses if any check ends other than `success` or `skipped`.
 - **merges** with `gh pr merge --merge --match-head-commit <head>` (`MERGE_METHOD`), so github refuses the merge if the head moved while the run waited. the branch rule still applies: a missing required check stops the merge.
