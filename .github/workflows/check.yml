@@ -28,11 +28,12 @@ jobs:
           persist-credentials: false
 
       # no language is set up: the runner's own python3, node and the rest are used.
-      # to pin a version, add a step here, for example:
-      # - uses: actions/setup-python@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      # to pin a version, add a step here. pin each action to the commit sha of a
+      # real release (copy it from the action's releases page), for example:
+      # - uses: actions/setup-python@<full commit sha of a release> # <its version>
       #   with:
       #     python-version: "3.12"
-      # - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      # - uses: actions/setup-node@<full commit sha of a release> # <its version>
       #   with:
       #     node-version: "22"
       # - run: npm ci

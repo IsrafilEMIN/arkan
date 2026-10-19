@@ -40,9 +40,6 @@
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: none
 
-- [ ] 43: Pr skill gets a "how to revert" line #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/43-pr-skill-how-to-revert.md` · blocked by: none
-
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
 
@@ -119,6 +116,9 @@
 
 - [x] 15: A person starts create-verification #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/15-create-verification-is-human-started.md` · blocked by: none
+
+- [x] 43: Pr skill gets a "how to revert" line #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/43-pr-skill-how-to-revert.md` · blocked by: none
 
 - [x] 01: Arkan-mode replaces poteto-mode #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/01-arkan-mode-replaces-poteto-mode.md` · blocked by: none
