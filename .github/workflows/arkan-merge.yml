@@ -31,6 +31,8 @@ jobs:
       PR: ${{ github.event.pull_request.number }}
       REVIEWER: ${{ github.event.review.user.login }}
       REVIEWED: ${{ github.event.review.commit_id }}
+      # the hidden mark the broker adds to every verdict an agent posts.
+      AGENT_MARK: "<!-- arkan:verifier -->"
     steps:
       - name: The reviewer has write access
         run: |
@@ -40,6 +42,17 @@ jobs:
           case "$perm" in
             admin|maintain|write) echo "$REVIEWER has $perm access" ;;
             *) echo "::error title=arkan-merge::not merging: $REVIEWER has ${perm:-no} access; a verdict counts only from write, maintain or admin"; exit 1 ;;
+          esac
+
+      - name: The verdict is a person's
+        env:
+          BODY: ${{ github.event.review.body }}
+        run: |
+          # an agent's verdict carries AGENT_MARK (the broker adds it, underground
+          # ticket 48). until the risk tier labels a pr auto (arkan ticket 42),
+          # every pr is manual: only a person's PASS, with no mark, merges it.
+          case "$BODY" in
+            *"$AGENT_MARK"*) echo "::error title=arkan-merge::not merging: an agent's PASS does not count for a manual pr; the person posts PASS"; exit 1 ;;
           esac
 
       - name: The verdict covers the current head
