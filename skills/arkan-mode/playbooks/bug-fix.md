@@ -9,7 +9,7 @@ Be scientific. Every shipped line traces to runtime evidence. Belt-and-suspender
 3. Plan the fix. If it crosses a function boundary, sketch the types and signatures with empty bodies first. Delegate implementation to a subagent with a specific scope.
 4. Verify on the same surface. The original repro now passes. "Inconclusive" or wrong-surface is not a pass. Flag it. Unit tests show branch behavior, not bug absence.
 5. Stage the commits so the failing repro lands before the fix in git history. A work branch may carry one red-first commit as evidence; the PR head must be green before the PR opens or updates. CI and the merge path check the head, not each commit, so never push a red head. See the `tdd` skill for the failing-test-first cadence when the bug has a cheap local test path. Skip it when the test would be expensive, integration-heavy, or unclear.
-   This is the **sequence verifiable units** principle (`principles/verification.md`): the failing test first and the fix on top.
+   This is the **sequence verifiable units** principle (`principle-sequence-verifiable-units`): the failing test first and the fix on top.
 6. Run **Opening a PR**.
 
 **Reply:** what was broken, root cause, fix, how you verified. Paste failing-then-passing repro output verbatim.

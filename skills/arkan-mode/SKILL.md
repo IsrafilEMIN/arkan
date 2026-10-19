@@ -5,7 +5,7 @@ description: "the default way to do engineering work on one task: check that it 
 
 # arkan mode
 
-arkan mode is how you work on one task. it comes from pstack's `poteto-mode` and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
+arkan mode is how you work on one task. it comes from pstack's own mode skill and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
 other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). call them with the Skill tool when a step names them.
 
@@ -37,8 +37,8 @@ when the task is a ticket:
 ## 1. start every task like this
 
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
-2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principles/architecture.md`.
-3. **read the principles you will use.** each entry in [principles](#principles) names when it applies. read its full text in `principles/` before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
+2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principle-model-the-domain` and `principle-type-system-discipline`.
+3. **read the principles you will use.** each entry in [principles](#principles) names when it applies and the `principle-<title>` skill that holds its leaf. read that leaf in full (`../<skill>/SKILL.md`) before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
 4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end. a unit that fails because a piece it needs is another open ticket's work is a missing blocker: stop the way step 0 says, instead of debugging.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
 
@@ -136,43 +136,43 @@ comments follow the same rules as the reply. keep a comment only for a "why" tha
 
 ## principles
 
-the full text is in `principles/`. one file per group.
+each entry names its `principle-<title>` skill. read that leaf in full before you use it. the entries are grouped by where the principle changes a decision.
 
-**core** (`principles/core.md`)
+**core**
 
-- **laziness protocol.** sizing a diff, or tempted to add a layer. make the smallest change that solves the problem.
-- **subtract before you add.** before an addition or a rewrite. remove dead code and extra checks first.
-- **foundational thinking.** before you write logic. get the data structures right, and do scaffold work first.
-- **redesign from first principles.** a new requirement in an old design. design as if it was there from day one.
-- **attack the premise.** two fixes with the same premise failed. question the premise, not the fix.
-- **minimize reader load.** code that is hard to follow. count layers and hidden state, and cut both.
-- **experience first.** a product or scope trade-off. choose what the user feels over what is easy to build.
-- **exhaust the design space.** a new design with no example in the code. build two or three options and compare.
-- **build the lever.** any non-trivial work. write the script, codemod or check that does it or proves it.
-- **outcome-oriented execution.** a planned rewrite or migration. aim for the end state, not smooth steps between.
+- **laziness protocol** (`principle-laziness-protocol`). sizing a diff, or tempted to add a layer. make the smallest change that solves the problem.
+- **subtract before you add** (`principle-subtract-before-you-add`). before an addition or a rewrite. remove dead code and extra checks first.
+- **foundational thinking** (`principle-foundational-thinking`). before you write logic. get the data structures right, and do scaffold work first.
+- **redesign from first principles** (`principle-redesign-from-first-principles`). a new requirement in an old design. design as if it was there from day one.
+- **attack the premise** (`principle-attack-the-premise`). two fixes with the same premise failed. question the premise, not the fix.
+- **minimize reader load** (`principle-minimize-reader-load`). code that is hard to follow. count layers and hidden state, and cut both.
+- **experience first** (`principle-experience-first`). a product or scope trade-off. choose what the user feels over what is easy to build.
+- **exhaust the design space** (`principle-exhaust-the-design-space`). a new design with no example in the code. build two or three options and compare.
+- **build the lever** (`principle-build-the-lever`). any non-trivial work. write the script, codemod or check that does it or proves it.
+- **outcome-oriented execution** (`principle-outcome-oriented-execution`). a planned rewrite or migration. aim for the end state, not smooth steps between.
 
-**architecture** (`principles/architecture.md`)
+**architecture**
 
-- **model the domain.** stateful logic, or code with many branches. put the domain in a structure, not in scattered conditions.
-- **boundary discipline.** validation, error handling, adapters. check data where it enters, then trust the types.
-- **type system discipline.** designing types or signatures. make bad states impossible to write.
-- **make operations idempotent.** commands or loops that can crash and restart. the same end state after any number of runs.
-- **migrate callers, then delete the old api.** a new internal api with old callers. move them all and delete the old one in one go.
-- **separate before you serialize shared state.** two actors may write the same thing. remove the sharing first.
+- **model the domain** (`principle-model-the-domain`). stateful logic, or code with many branches. put the domain in a structure, not in scattered conditions.
+- **boundary discipline** (`principle-boundary-discipline`). validation, error handling, adapters. check data where it enters, then trust the types.
+- **type system discipline** (`principle-type-system-discipline`). designing types or signatures. make bad states impossible to write.
+- **make operations idempotent** (`principle-make-operations-idempotent`). commands or loops that can crash and restart. the same end state after any number of runs.
+- **migrate callers, then delete the old api** (`principle-migrate-callers-then-delete-legacy-apis`). a new internal api with old callers. move them all and delete the old one in one go.
+- **separate before you serialize shared state** (`principle-separate-before-serializing-shared-state`). two actors may write the same thing. remove the sharing first.
 
-**verification** (`principles/verification.md`)
+**verification**
 
-- **prove it works.** before you say done. check the real thing.
-- **fix root causes.** debugging. reproduce first, then ask "why" until you reach the cause.
-- **sequence verifiable units.** multi-step work. each unit ends green before the next starts.
-- **test behavior, not implementation.** writing, changing or keeping a test. assert what the code's users can see. the full text is the `principle-test-behavior-not-implementation` skill.
-- **explain the number.** before you trust a number you measured. find what limits it.
+- **prove it works** (`principle-prove-it-works`). before you say done. check the real thing.
+- **fix root causes** (`principle-fix-root-causes`). debugging. reproduce first, then ask "why" until you reach the cause.
+- **sequence verifiable units** (`principle-sequence-verifiable-units`). multi-step work. each unit ends green before the next starts.
+- **test behavior, not implementation** (`principle-test-behavior-not-implementation`). writing, changing or keeping a test. assert what the code's users can see.
+- **explain the number** (`principle-explain-the-number`). before you trust a number you measured. find what limits it.
 
-**working with agents** (`principles/agents.md`)
+**working with agents**
 
-- **guard the context window.** large output, long files, wide searches. send bulk to subagents.
-- **never block on the human.** tempted to ask "should i do x?" on reversible work. do it and show it.
-- **encode lessons in structure.** you write the same instruction twice. make it a lint, type or check.
+- **guard the context window** (`principle-guard-the-context-window`). large output, long files, wide searches. send bulk to subagents.
+- **never block on the human** (`principle-never-block-on-the-human`). tempted to ask "should i do x?" on reversible work. do it and show it.
+- **encode lessons in structure** (`principle-encode-lessons-in-structure`). you write the same instruction twice. make it a lint, type or check.
 
 ## playbooks
 
