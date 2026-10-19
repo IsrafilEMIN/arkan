@@ -42,7 +42,7 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | `ci-review`, `ci-check`, `ci-risk` | `apply <item>` copies arkan's file into `.github/workflows/`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
 | `ci-merge` | ask gate or broker. Record the answer as the exact line in `docs/agents/approvals.md`: broker installs no gate; gate does. See [Merge path](#merge-path) | yes, which path |
 | `codeowners` | write `.github/CODEOWNERS`: each sensitive path, owned by the repo owner. With the gate path, then offer the branch rule from `ci/README.md` (`arkan-merge`): require a pull request, require `check` and `arkan-review`, dismiss stale approvals, empty bypass list | before the branch rule |
-| `verify`, `hooks` (`hint`) | tell the person once: "no verify skill: run `create-verification`", or "this js/ts repo has no commit hooks: run `setup-pre-commit`". Change nothing | no |
+| `verify`, `hooks` (`hint`) | tell the person once: "no verify skill: run `create-verification`", or "no commit hook for <languages>: run `setup-pre-commit`". Change nothing | no |
 
 A `hint` on `ci-check` means the repo already runs its own ci: keep it, and copy `check.yml` only if the person wants arkan's `check` job beside it.
 
