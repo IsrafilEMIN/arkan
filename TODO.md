@@ -46,6 +46,12 @@
 - [ ] 48: Pre-setup checks what a file says, not only that it exists #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/48-pre-setup-checks-content.md` · blocked by: none
 
+- [ ] 49: Restore tdd and test-to-break, keep the test principle skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/49-restore-tdd-and-test-to-break.md` · blocked by: none
+
+- [ ] 50: Make the 24 principles skills, pstack-shaped #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/50-principles-as-skills.md` · blocked by: none
+
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
 
