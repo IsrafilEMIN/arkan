@@ -1,7 +1,7 @@
 # 49: restore tdd and test-to-break, keep the test principle skill
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 33
 **Blocked by:** None — can start immediately.
 

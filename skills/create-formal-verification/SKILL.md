@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Create a formal verification skill
 
-The formal sibling of `create-verification`: that one proves the app runs, this one proves a property holds in every case in scope. arkan-mode's **prove it works** (`arkan-mode/principles/verification.md`) applies to both.
+The formal sibling of `create-verification`: that one proves the app runs, this one proves a property holds in every case in scope. arkan-mode's **prove it works** (`principle-prove-it-works`) applies to both.
 
 A test checks the cases that someone thought to write. Formal verification checks every case in a stated scope: every order of steps in a model, every input up to a bound, or every input. This skill finds the part of the repo where that matters most, verifies one property of it, and leaves a project-local skill that lets the next agent check a change against that property. Write that skill for an agent who reads it cold, mid-change, and has never seen your work. The user must be able to trust the result and act on it without learning the verification language.
 
