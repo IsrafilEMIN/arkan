@@ -34,9 +34,6 @@
 
 ## Todo
 
-- [ ] 32: Log how each review finding ends #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/32-log-how-each-finding-ends.md` · blocked by: none
-
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
 
@@ -77,6 +74,9 @@
 
 - [x] 26: Spec mode in arkan-mode #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/26-spec-mode-in-arkan-mode.md` · blocked by: none
+
+- [x] 32: Log how each review finding ends #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/32-log-how-each-finding-ends.md` · blocked by: none
 
 - [x] 23: Who starts each skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/23-who-starts-each-skill.md` · blocked by: none
