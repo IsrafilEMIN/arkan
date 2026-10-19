@@ -10,13 +10,13 @@ Found in underground on 2026-10-19. All three items read `ok` there. But `board.
 
 **Blocked by:** None (can start immediately).
 
-- [ ] `tracker`: with a local tracker, each `.scratch/*/issues/*.md` has the fields `board.sh` reads. If not: `out of date`, the number of tickets and the first few paths and missing fields
-- [ ] `board`: with a local tracker, it runs `board.sh check` and reads `ok` only when that prints `ok`. Otherwise: `out of date`, the problem count, and `run board.sh build` (or, when the tickets are the cause, "fix the tickets first")
-- [ ] `agents-block`: `ok` only when the `## Agent skills` block carries the board line that names `board.sh build` and `board.sh check`. An older block reads `out of date`, and the skill shows the line to add
-- [ ] with a github or gitlab tracker, `board` keeps today's check (the board is hand-kept there, as that tracker's seed says)
-- [ ] `out of date` is a state the skill already knows (ticket 05's answer); `apply` never rewrites tickets on its own. Moving tickets to the contract is the repo's own change, with the person's yes
-- [ ] how the repo's ci runs `board.sh check` when the repo has no copy of the script (seam row 5 says repos get none): decide, and record it in `docs/seam.md` row 5. Options: ci fetches arkan at a pinned commit; or the check stays local only
-- [ ] proof: `setup.sh check` in arkan reads `ok` for all three; against underground's `main` (before its `repo-seam` 02) it reads `out of date` for `tracker`, `board` and `agents-block`, with the reasons; after a scratch fix of one ticket, the count drops by that ticket's problems
+- [x] `tracker`: with a local tracker, each `.scratch/*/issues/*.md` has the fields `board.sh` reads. If not: `out of date`, the number of tickets and the first few paths and missing fields
+- [x] `board`: with a local tracker, it runs `board.sh check` and reads `ok` only when that prints `ok`. Otherwise: `out of date`, the problem count, and `run board.sh build` (or, when the tickets are the cause, "fix the tickets first")
+- [x] `agents-block`: `ok` only when the `## Agent skills` block carries the board line that names `board.sh build` and `board.sh check`. An older block reads `out of date`, and the skill shows the line to add
+- [x] with a github or gitlab tracker, `board` keeps today's check (the board is hand-kept there, as that tracker's seed says)
+- [x] `out of date` is a state the skill already knows (ticket 05's answer); `apply` never rewrites tickets on its own. Moving tickets to the contract is the repo's own change, with the person's yes
+- [x] how the repo's ci runs `board.sh check` when the repo has no copy of the script (seam row 5 says repos get none): decide, and record it in `docs/seam.md` row 5. Options: ci fetches arkan at a pinned commit; or the check stays local only
+- [x] proof: `setup.sh check` in arkan reads `ok` for all three; against underground's `main` (before its `repo-seam` 02) it reads `out of date` for `tracker`, `board` and `agents-block`, with the reasons; after a scratch fix of one ticket, the count drops by that ticket's problems
 
 ## Comments
 
