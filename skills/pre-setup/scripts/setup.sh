@@ -138,12 +138,33 @@ check() {
 	else
 		say verify hint "no verify skill: run create-verification"
 	fi
-	if ! has package.json; then
-		say hooks skip "not a js/ts repo"
-	elif [ -d "$root/.husky" ] || { in_git && git -C "$root" config core.hooksPath >/dev/null; }; then
-		say hooks ok
+	local langs="" hook_dir="" generic=0 husky=0 missing="" lang
+	has Cargo.toml && langs="$langs rust"
+	has pyproject.toml && langs="$langs python"
+	has go.mod && langs="$langs go"
+	has package.json && langs="$langs js/ts"
+	if [ -z "$langs" ]; then
+		say hooks skip "no Cargo.toml, pyproject.toml, go.mod or package.json"
 	else
-		say hooks hint "js/ts repo with no commit hooks: run setup-pre-commit"
+		if in_git; then
+			hook_dir="$(git -C "$root" rev-parse --git-path hooks)"
+			case "$hook_dir" in /*) ;; *) hook_dir="$root/$hook_dir" ;; esac
+			if [ -x "$hook_dir/pre-commit" ]; then generic=1; fi
+			if git -C "$root" config core.hooksPath >/dev/null; then generic=1; fi
+		fi
+		if [ -f "$root/.husky/pre-commit" ]; then husky=1; fi
+		for lang in $langs; do
+			if [ "$lang" = js/ts ]; then
+				if [ "$generic" = 0 ] && [ "$husky" = 0 ]; then missing="$missing js/ts"; fi
+			elif [ "$generic" = 0 ]; then
+				missing="$missing $lang"
+			fi
+		done
+		if [ -z "$missing" ]; then
+			say hooks ok
+		else
+			say hooks hint "no commit hook for${missing}: run setup-pre-commit"
+		fi
 	fi
 }
 
