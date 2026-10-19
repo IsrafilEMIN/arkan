@@ -28,8 +28,8 @@ A merged change broke something. You make main safe, then turn the **miss** (the
 
 [`ci/github/arkan-post-merge.yml`](../../ci/github/arkan-post-merge.yml) starts this skill with no person. It runs:
 
-- on a `workflow_run` of `check` finishing on the default branch, for any conclusion from a push to that branch. The run checks main, then reads the merged commits to see whether a revert landed. A revert merged with `--merge` keeps "Merge pull request ..." as its head message, so the workflow reads `<sha>^1..<sha>` instead of the head subject.
-- once a day (`schedule`, 06:17 utc) and on `workflow_dispatch`, for slow signals. The run checks main first, so a red main is a signal on its own, and reads `SIGNAL_COMMAND`, the reverts since the last completed run of this workflow, and open `incident` issues. That lookback is what keeps the daily run from ticketing a revert the event run already ticketed.
+- on a `workflow_run` of `check` finishing on the default branch, for any conclusion from a push to that branch. The run checks main, then reads the merged commits to see whether a revert landed. A revert merged with `--merge` keeps "Merge pull request ..." as its head message, so the workflow reads the first-parent bodies `<sha>^1..<sha>` with `--first-parent` instead of the head subject; a revert inside the merged pull request does not count.
+- once a day (`schedule`, 06:17 utc) and on `workflow_dispatch`, for slow signals. The run checks main first, so a red main is a signal on its own, and reads `SIGNAL_COMMAND`, the reverts since the last successful run of this workflow, and open `incident` issues. That lookback is what keeps the daily run from ticketing a revert the event run already ticketed.
 
 A merge whose commit message carries `post-merge` starts neither job again, including a failed one. The daily run catches a red main. The work is in two jobs:
 
