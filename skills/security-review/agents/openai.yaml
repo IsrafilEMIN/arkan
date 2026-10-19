@@ -1,0 +1,5 @@
+interface:
+  display_name: "Security Review"
+  short_description: "Security review of the pending changes"
+policy:
+  allow_implicit_invocation: true
