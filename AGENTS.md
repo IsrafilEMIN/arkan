@@ -22,4 +22,4 @@ Single-context: one root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.
 
 `TODO.md` (the Tern board) shows one card per ticket; the details stay in the ticket. See the `## Board` section of `docs/agents/issue-tracker.md`.
 
-Do not edit `TODO.md` by hand. Before each commit that touches `.scratch/`, run `scripts/board.sh build` to write `TODO.md` from the tickets, then run `scripts/board.sh check`; it must print `ok`. If `TODO.md` has a merge conflict, run `scripts/board.sh build` again to fix it.
+Do not edit `TODO.md` by hand. Before you commit a change under `.scratch/`, run `scripts/board.sh build` to write `TODO.md` from the tickets, then run `scripts/board.sh check`; it must print `ok`. If `TODO.md` has a merge conflict, run `scripts/board.sh build` again to fix it.

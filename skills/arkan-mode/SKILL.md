@@ -156,7 +156,7 @@ the full text is in `principles/`. one file per group.
 
 - **prove it works.** before you say done. check the real thing.
 - **fix root causes.** debugging. reproduce first, then ask "why" until you reach the cause.
-- **sequence verifiable units.** multi-step work, and how you order commits. each unit ends green before the next starts.
+- **sequence verifiable units.** multi-step work. each unit ends green before the next starts.
 - **test behavior, not implementation.** writing or keeping a test. assert the exact result a user sees.
 - **explain the number.** before you trust a number you measured. find what limits it.
 
