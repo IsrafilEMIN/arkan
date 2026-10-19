@@ -40,6 +40,9 @@
 - [ ] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: none
 
+- [ ] 39: Merge ownership: the repo gate merges; the broker keeps push, pr, verdict, cleanup #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/39-merge-ownership.md` · blocked by: none
+
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
 
