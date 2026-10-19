@@ -27,5 +27,20 @@ for s in skills/*/SKILL.md; do
 	fi
 done
 
+# every skill has agents/openai.yaml, and its policy agrees with the front matter
+# (the same rule as symlink-first's link-agents.sh --check).
+for d in skills/*/; do
+	y="${d}agents/openai.yaml"
+	if [ ! -f "$y" ]; then
+		printf 'check: %s is missing\n' "$y" >&2; fail=1; continue
+	fi
+	manual=0 implicit_off=0
+	grep -q '^disable-model-invocation:[[:space:]]*true' "${d}SKILL.md" && manual=1
+	grep -q '^[[:space:]]*allow_implicit_invocation:[[:space:]]*false' "$y" && implicit_off=1
+	if [ "$manual" != "$implicit_off" ]; then
+		printf 'check: %s and %sSKILL.md disagree on who starts the skill\n' "$y" "$d" >&2; fail=1
+	fi
+done
+
 [ "$fail" = 0 ] && echo "check: ok"
 exit "$fail"
