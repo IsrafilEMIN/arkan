@@ -115,21 +115,35 @@ canon_dir() {
 }
 
 repo_hooks_dir() {
-	local path
+	local path top common
+	top=$(git -C "$root" rev-parse --show-toplevel)
+	top=$(canon_dir "$top")
 	if path="$(git -C "$root" config --local --path --get core.hooksPath 2>/dev/null)" && [ -n "$path" ]; then
 		case "$path" in
 			/*) ;;
-			*) path="$root/$path" ;;
+			*) path="$top/$path" ;;
 		esac
 	else
-		path="$(git -C "$root" rev-parse --git-common-dir)"
-		case "$path" in
+		common=$(git -C "$root" rev-parse --git-common-dir)
+		case "$common" in
 			/*) ;;
-			*) path="$root/$path" ;;
+			*) common="$top/$common" ;;
 		esac
-		path="$path/hooks"
+		path="$common/hooks"
 	fi
 	canon_dir "$path"
+}
+
+common_hooks_dir() {
+	local top common
+	top=$(git -C "$root" rev-parse --show-toplevel)
+	top=$(canon_dir "$top")
+	common=$(git -C "$root" rev-parse --git-common-dir)
+	case "$common" in
+		/*) ;;
+		*) common="$top/$common" ;;
+	esac
+	canon_dir "$common/hooks"
 }
 
 git_hooks_dir() {
@@ -193,7 +207,7 @@ check() {
 	else
 		say verify hint "no verify skill: run create-verification"
 	fi
-	local langs="" target="" effective="" hook_file="" husky=0 missing="" lang covered=0 covered_any=0
+	local langs="" target="" common="" effective="" hook_file="" husky=0 missing="" lang covered=0 covered_any=0
 	has Cargo.toml && langs="$langs rust"
 	has pyproject.toml && langs="$langs python"
 	has go.mod && langs="$langs go"
@@ -202,8 +216,9 @@ check() {
 		say hooks skip "no Cargo.toml, pyproject.toml, go.mod or package.json"
 	elif in_git; then
 		target="$(repo_hooks_dir)"
+		common="$(common_hooks_dir)"
 		effective="$(git_hooks_dir)"
-		if [ "$target" != "$effective" ] && ! { [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; }; then
+		if [ "$target" != "$effective" ] && ! { [ "$target" = "$common" ] && [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; }; then
 			say hooks out-of-date "git uses $effective, so the repo hook will not run; change the hooks path or add a delegating hook"
 		else
 			hook_file="$target/pre-commit"

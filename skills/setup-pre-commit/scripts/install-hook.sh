@@ -70,8 +70,15 @@ case "$effective" in
 esac
 effective=$(canon_dir "$effective")
 
+common=$(git -C "$root" rev-parse --git-common-dir)
+case "$common" in
+	/*) ;;
+	*) common="$root/$common" ;;
+esac
+common=$(canon_dir "$common/hooks")
+
 if [ "$target" != "$effective" ]; then
-	if [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; then
+	if [ "$target" = "$common" ] && [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; then
 		printf 'install-hook: note: git runs hooks from %s, which delegates to the repo hook\n' "$effective" >&2
 	else
 		printf 'install-hook: warning: git runs hooks from %s, so %s will not run until that path delegates to it\n' "$effective" "$target" >&2
