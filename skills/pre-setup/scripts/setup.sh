@@ -99,13 +99,24 @@ check_merge() {
 	esac
 }
 
+canon_dir() {
+	if [ -d "$1" ]; then
+		cd -- "$1" && pwd -P
+		return
+	fi
+	local parent base
+	parent=$(dirname "$1")
+	base=$(basename "$1")
+	if [ -d "$parent" ]; then
+		printf '%s/%s\n' "$(cd -- "$parent" && pwd -P)" "$base"
+	else
+		printf '%s\n' "$1"
+	fi
+}
+
 repo_hooks_dir() {
 	local path
-	if path="$(git -C "$root" config --local --get core.hooksPath 2>/dev/null)"; then
-		case "$path" in
-			"~") path="$HOME" ;;
-			"~/"*) path="$HOME/${path#\~/}" ;;
-		esac
+	if path="$(git -C "$root" config --local --path --get core.hooksPath 2>/dev/null)" && [ -n "$path" ]; then
 		case "$path" in
 			/*) ;;
 			*) path="$root/$path" ;;
@@ -118,15 +129,27 @@ repo_hooks_dir() {
 		esac
 		path="$path/hooks"
 	fi
-	printf '%s\n' "$path"
+	canon_dir "$path"
 }
 
-hook_covers() { # language hook-file: the hook names that language's tool
+git_hooks_dir() {
+	local path
+	path="$(git -C "$root" rev-parse --git-path hooks)"
+	case "$path" in
+		/*) ;;
+		*) path="$root/$path" ;;
+	esac
+	canon_dir "$path"
+}
+
+hook_covers() { # language hook-file: a non-comment line names that language's tool
+	local lines
+	lines="$(grep -v '^[[:space:]]*#' "$2" 2>/dev/null)" || true
 	case "$1" in
-		rust) grep -qE 'cargo[[:space:]]+(fmt|clippy)' "$2" ;;
-		python) grep -q 'ruff' "$2" ;;
-		go) grep -qE 'gofmt|go[[:space:]]+vet' "$2" ;;
-		js/ts) grep -q 'lint-staged' "$2" ;;
+		rust) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])(cargo[[:space:]]+(fmt|clippy)|rustfmt)([[:space:]]|$)' ;;
+		python) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])ruff([[:space:]]|$)' ;;
+		go) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])(gofmt|go[[:space:]]+vet)([[:space:]]|$)' ;;
+		js/ts) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])lint-staged([[:space:]]|$)' ;;
 		*) return 1 ;;
 	esac
 }
@@ -170,30 +193,38 @@ check() {
 	else
 		say verify hint "no verify skill: run create-verification"
 	fi
-	local langs="" hook_file="" husky=0 missing="" lang covered=0
+	local langs="" target="" effective="" hook_file="" husky=0 missing="" lang covered=0 covered_any=0
 	has Cargo.toml && langs="$langs rust"
 	has pyproject.toml && langs="$langs python"
 	has go.mod && langs="$langs go"
 	has package.json && langs="$langs js/ts"
 	if [ -z "$langs" ]; then
 		say hooks skip "no Cargo.toml, pyproject.toml, go.mod or package.json"
-	else
-		if in_git; then
-			hook_file="$(repo_hooks_dir)/pre-commit"
-			if [ ! -x "$hook_file" ]; then hook_file=""; fi
-		fi
-		if [ -f "$root/.husky/pre-commit" ]; then husky=1; fi
-		for lang in $langs; do
-			covered=0
-			if [ -n "$hook_file" ] && hook_covers "$lang" "$hook_file"; then covered=1; fi
-			if [ "$lang" = js/ts ] && [ "$husky" = 1 ]; then covered=1; fi
-			if [ "$covered" = 0 ]; then missing="$missing $lang"; fi
-		done
-		if [ -z "$missing" ]; then
-			say hooks ok
+	elif in_git; then
+		target="$(repo_hooks_dir)"
+		effective="$(git_hooks_dir)"
+		if [ "$target" != "$effective" ] && ! { [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; }; then
+			say hooks out-of-date "git uses $effective, so the repo hook will not run; change the hooks path or add a delegating hook"
 		else
-			say hooks hint "no commit hook for${missing}: run setup-pre-commit"
+			hook_file="$target/pre-commit"
+			if [ ! -x "$hook_file" ]; then hook_file=""; fi
+			if [ -f "$root/.husky/pre-commit" ]; then husky=1; fi
+			for lang in $langs; do
+				covered=0
+				if [ -n "$hook_file" ] && hook_covers "$lang" "$hook_file"; then covered=1; fi
+				if [ "$lang" = js/ts ] && [ "$husky" = 1 ]; then covered=1; fi
+				if [ "$covered" = 1 ]; then covered_any=1; else missing="$missing $lang"; fi
+			done
+			if [ -z "$missing" ]; then
+				say hooks ok
+			elif [ "$covered_any" = 0 ] && [ -n "$hook_file" ]; then
+				say hooks hint "hook exists but does not name ${langs# }: run setup-pre-commit or check its config"
+			else
+				say hooks hint "no commit hook for${missing}: run setup-pre-commit"
+			fi
 		fi
+	else
+		say hooks hint "no commit hook for${langs}: run setup-pre-commit"
 	fi
 }
 

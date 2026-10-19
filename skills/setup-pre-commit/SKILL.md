@@ -33,7 +33,7 @@ Run the installer from this skill:
 scripts/install-hook.sh <language> [repo-root]
 ```
 
-The script writes only the repo's own plain git hook. It reads the repo's local `core.hooksPath` (expanding `~/` and resolving a relative path against the repo root); with no local value it uses the hooks directory under `git rev-parse --git-common-dir`. It never writes a global hooks path. If the resolved directory is outside the repo, it warns that the hook runs for every repo that shares it. It writes `hook written: <path>` or `hook unchanged: <path>`, so rerunning it is safe. It refuses js/ts.
+The script writes only the repo's own plain git hook. It reads the repo's local `core.hooksPath` (expanding `~/`, resolving a relative path against the repo root); with no local value it uses the hooks directory under `git rev-parse --git-common-dir`. It never writes a global hooks path. It compares that target with git's effective hooks path: when git runs hooks from elsewhere it notes the delegation if that hook chains back to the repo hook, and otherwise warns that the repo hook will not run until the path delegates. If the target is outside the repo, it warns that the hook runs for every repo that shares it. It writes `hook written: <path>` or `hook unchanged: <path>`, so rerunning it is safe. It refuses js/ts.
 
 The hook checks the staged file names before it does anything: with no staged file of the language, the commit proceeds. It refuses a staged file whose worktree copy has unstaged changes, so the tools see what is committed. Python and go pass the staged paths to their tools, and ruff uses `--force-exclude` so the repo's excludes apply. Rust runs both cargo commands from the table because cargo has no file scope.
 

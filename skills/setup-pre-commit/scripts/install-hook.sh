@@ -31,34 +31,62 @@ git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
 	printf 'install-hook: %s is not a git work tree\n' "$root" >&2
 	exit 2
 }
+root=$(git -C "$root" rev-parse --show-toplevel)
+root=$(cd "$root" && pwd -P)
 
-if local_hooks=$(git -C "$root" config --local --get core.hooksPath 2>/dev/null); then
-	case "$local_hooks" in
-		"~") local_hooks="$HOME" ;;
-		"~/"*) local_hooks="$HOME/${local_hooks#\~/}" ;;
-	esac
-	case "$local_hooks" in
+canon_dir() {
+	if [ -d "$1" ]; then
+		cd -- "$1" && pwd -P
+		return
+	fi
+	parent=$(dirname "$1")
+	base=$(basename "$1")
+	if [ -d "$parent" ]; then
+		printf '%s/%s\n' "$(cd -- "$parent" && pwd -P)" "$base"
+	else
+		printf '%s\n' "$1"
+	fi
+}
+
+if target=$(git -C "$root" config --local --path --get core.hooksPath 2>/dev/null) && [ -n "$target" ]; then
+	case "$target" in
 		/*) ;;
-		*) local_hooks="$root/$local_hooks" ;;
+		*) target="$root/$target" ;;
 	esac
 else
-	local_hooks=$(git -C "$root" rev-parse --git-common-dir)
-	case "$local_hooks" in
+	target=$(git -C "$root" rev-parse --git-common-dir)
+	case "$target" in
 		/*) ;;
-		*) local_hooks="$root/$local_hooks" ;;
+		*) target="$root/$target" ;;
 	esac
-	local_hooks="$local_hooks/hooks"
+	target="$target/hooks"
 fi
-hooks=$local_hooks
+target=$(canon_dir "$target")
 
-case "$hooks" in
-	"$root" | "$root"/*) ;;
-	*) printf 'install-hook: warning: %s is outside %s, so this hook runs for every repo that shares it\n' "$hooks" "$root" >&2 ;;
+effective=$(git -C "$root" rev-parse --git-path hooks)
+case "$effective" in
+	/*) ;;
+	*) effective="$root/$effective" ;;
+esac
+effective=$(canon_dir "$effective")
+
+if [ "$target" != "$effective" ]; then
+	if [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; then
+		printf 'install-hook: note: git runs hooks from %s, which delegates to the repo hook\n' "$effective" >&2
+	else
+		printf 'install-hook: warning: git runs hooks from %s, so %s will not run until that path delegates to it\n' "$effective" "$target" >&2
+	fi
+fi
+
+root_c=$(canon_dir "$root")
+case "$target" in
+	"$root_c" | "$root_c"/*) ;;
+	*) printf 'install-hook: warning: %s is outside %s, so this hook runs for every repo that shares it\n' "$target" "$root" >&2 ;;
 esac
 
-hook="$hooks/pre-commit"
-mkdir -p "$hooks"
-tmp=$(mktemp "$hooks/.pre-commit.XXXXXX")
+hook="$target/pre-commit"
+mkdir -p "$target"
+tmp=$(mktemp "$target/.pre-commit.XXXXXX")
 trap 'rm -f "$tmp"' 0
 
 case "$lang" in
@@ -73,7 +101,7 @@ staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=AC
 status=0
 while IFS= read -r f; do
 	[ -n "$f" ] || continue
-	if ! git diff --quiet -- "$f"; then
+	if ! git diff --quiet -- ":(literal)$f"; then
 		printf 'pre-commit: %s has unstaged changes; stage the whole file first\n' "$f" >&2
 		status=1
 	fi
@@ -96,7 +124,7 @@ staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=AC
 status=0
 while IFS= read -r f; do
 	[ -n "$f" ] || continue
-	if ! git diff --quiet -- "$f"; then
+	if ! git diff --quiet -- ":(literal)$f"; then
 		printf 'pre-commit: %s has unstaged changes; stage the whole file first\n' "$f" >&2
 		status=1
 		continue
@@ -120,12 +148,14 @@ staged="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=AC
 status=0
 while IFS= read -r f; do
 	[ -n "$f" ] || continue
-	if ! git diff --quiet -- "$f"; then
+	if ! git diff --quiet -- ":(literal)$f"; then
 		printf 'pre-commit: %s has unstaged changes; stage the whole file first\n' "$f" >&2
 		status=1
 		continue
 	fi
-	if [ -n "$(gofmt -l "./$f")" ]; then
+	if ! out=$(gofmt -l "./$f"); then
+		status=1
+	elif [ -n "$out" ]; then
 		printf 'gofmt needs to format %s\n' "$f" >&2
 		status=1
 	fi
@@ -134,17 +164,14 @@ $staged
 EOF
 [ "$status" = 0 ] || exit 1
 set --
-seen=""
-while IFS= read -r f; do
-	[ -n "$f" ] || continue
-	d=$(dirname "./$f")
-	case "$seen" in
-		*" $d"*) continue ;;
-	esac
-	seen="$seen $d"
+while IFS= read -r d; do
+	[ -n "$d" ] || continue
 	set -- "$@" "$d"
 done <<EOF
-$staged
+$(printf '%s\n' "$staged" | while IFS= read -r f; do
+	[ -n "$f" ] || continue
+	dirname "./$f"
+done | sort -u)
 EOF
 go vet "$@"
 HOOK
