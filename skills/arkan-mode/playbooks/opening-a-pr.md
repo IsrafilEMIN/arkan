@@ -23,7 +23,7 @@ Invoked at the end of every other playbook.
 
 After the sections, attach videos or screenshots when they prove a claim. Full SHAs, lever-correction essays, file-by-file checklists, and "CLEAN" verdicts go in a linked artifact, not the body.
 
-**Forge.** GitHub CLI (`gh`) is the forge. When the run provides GitHub tools or a built-in PR tool, create, edit, retarget, and mark ready through them, never through `gh`, because a CLI-made PR misses what the tool tracks. Use `gh` for everything the tools do not cover. Keep one choice for create, edit, view, watch, and merge.
+**Forge.** GitHub CLI (`gh`) is the forge. When the run provides GitHub tools or a built-in PR tool, create, edit, retarget, and mark ready through them, never through `gh`, because a CLI-made PR misses what the tool tracks. Use `gh` for everything the tools do not cover. Keep one choice for create, edit, view, watch, and merge. On the broker route (see **the forge** in `SKILL.md`) its clients replace `gh` for each step here.
 
 **Forge without GraphQL.** `gh pr` runs on GitHub's GraphQL API. Try it first. If it fails with HTTP 403 or a GraphQL error, GraphQL is blocked: make each call over REST with `gh api`, and keep REST for the rest of the run. Paths start at `repos/<owner>/<repo>`. Pass PR text from a file (`-F body=@<file>`), never inline.
 
@@ -37,7 +37,7 @@ After the sections, attach videos or screenshots when they prove a claim. Full S
 
 REST cannot arm auto-merge (`gh pr merge --auto`) or mark a PR ready (`gh pr ready`). A PR created over REST without `draft` is already ready. For auto-merge, use a route the 403 message names, or report that auto-merge is not available.
 
-**Size and stacks.** Prefer five narrow PRs to one large PR. A stack is a base-branch chain. The root PR targets trunk. Each child branch rebases onto its parent's exact tip and its PR targets the parent branch. As a parent merges, move its child onto trunk per `playbooks/shipping.md` step 4. Create a child with `gh pr create --base <parent-branch>`, and retarget one with `gh pr edit <pr> --base <parent-branch>` (or the run's PR tool). Branch from trunk only for independent work. Rebase on trunk before substantial stack work.
+**Size and stacks.** Prefer five narrow PRs to one large PR. A stack is a base-branch chain. The root PR targets trunk. Each child branch rebases onto its parent's exact tip and its PR targets the parent branch. As a parent merges, move its child onto trunk per `playbooks/shipping.md` step 4. Create a child with `gh pr create --base <parent-branch>`, and retarget one with `gh pr edit <pr> --base <parent-branch>` (or the run's PR tool); on the broker route, `agent-gh pr-create` and `agent-gh pr-retarget <owner/repo> <pr> <parent-branch> <head-sha>` are those calls (**the forge** in `SKILL.md`). Branch from trunk only for independent work. Rebase on trunk before substantial stack work.
 
 **Readiness.** Open every PR ready, never as a draft. A built-in PR tool can default to draft, so set `draft: false` on every creation call through it. With `gh`, omit `--draft`. If a PR still opens as a draft, mark it ready through the PR tool or with `gh pr ready <number>`. Run `gh pr view <number>` (or the PR tool's read) before you refer to PR status.
 

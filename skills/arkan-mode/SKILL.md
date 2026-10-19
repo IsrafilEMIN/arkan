@@ -54,6 +54,7 @@ each line names the skill to call today. a ticket in brackets is a planned arkan
 - a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one as a ticket. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
 - a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
 - a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
+- push, pr, review, reply, diff, retarget, merge or cleanup → [the forge](#the-forge) for the route: the broker clients when the run offers them, `gh` and REST otherwise.
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [ticket `arkan-flow` 08]
 - the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last.
 - any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply). text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
@@ -65,6 +66,30 @@ more triggers:
 - **review bots and security bots.** they find real bugs and they also file noise. check each claim against the code. fix the real ones, and dismiss the rest with a concrete reason. never change code only to quiet a bot.
 - **a broken skill in the middle of a task.** fix it in its own pr. do not block on it, and do not work around it in silence.
 - **long or unattended work** ("going to bed", "run until done", "trust it when i'm back"). keep a decision trail: what you chose, why, and the evidence, in the pr body or a notes file next to the work.
+
+## the forge
+
+github is the forge. pick the route once, at the start of the run.
+
+**the broker route** is the one to take whenever the run offers it: `agent-gh` resolves on the path, and the broker socket is there (`$AGENT_GH_SOCKET`, default `~/.agents/sandbox/broker/gh.sock`). under the guard (`AGENT_SANDBOX=1`) this route is mandatory, because the run holds no credential of its own: a missing client or socket is a stop, never a switch to the other route.
+
+**the direct route** is for a run with no broker and no guard: the `gh pr` calls the playbooks name, and the **Forge without GraphQL** REST calls in `playbooks/opening-a-pr.md` when GraphQL is blocked.
+
+on the broker route the forge is its clients, in any repo the host allow-list approves. read the target slug off the working repo's own origin, the way `agent-merge` does: `git remote get-url origin`, then strip a leading `https://github.com/` or `git@github.com:` and a trailing `.git`. take the branch and the head sha from the working checkout (`git branch --show-current`, `git rev-parse HEAD`). pass each command the fields its line names. this route never falls back to `gh`, to the token file, or to a wider config. every `<body>` below is the text itself, quoted for your shell, never a `@file` path.
+
+- **push a checkpoint.** `agent-gh push <owner/repo> <worktree-path> <agent/branch> <head-sha>`. the reply line `remote ref verified: <sha> <ref>` is the proof.
+- **open a pr.** `agent-gh pr-create <owner/repo> <base> <head> <title> <body>`, which opens it ready.
+- **read a pr.** `agent-gh pr-view <owner/repo> <number>` prints the pr fields — `state`, `isDraft`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `mergedAt`, `headRefName`, `headRefOid`, `baseRefName`, `baseRefOid`, `latestReviews`, `reviewRequests`, `mergeCommit` — plus a `reviewThreads` list and an `unresolvedReviewThreads` count. each thread carries `id`, `isResolved`, `isOutdated`, `path`, `line`, `author` and the first comment's `commentId`, which is the id `pr-reply` takes. thread bodies are not in it: triage from the code at that `path` and `line`, and from the review bodies in `latestReviews`. `agent-gh pr-checks <owner/repo> <number>` reads the checks.
+- **read the diff.** `agent-gh raw '{"verb":"pr-diff","repo":"<owner/repo>","number":<number>,"head_sha":"<40-hex>"}'` prints one json line with those identity fields and `diff`.
+- **review a pr.** `agent-gh pr-review <owner/repo> <number> <head-sha> <body>` posts a comment review bound to that head, with the pr open, which is how a verifier posts its verdict: stdout is the review json, and its `state` reads `COMMENTED` with `commit_id` at that head sha. it is a comment: the review decision, and any approval, stay the user's.
+- **reply on a thread.** `agent-gh pr-reply <owner/repo> <number> <comment-id> <head-sha> <body>` answers one review comment, with the thread's `commentId` as the id; the parent comment has to belong to the same pr, and the pr open at that head. stdout is the reply comment json: cite its `id`. read the thread back with `pr-view` to confirm the reply landed.
+- **retarget a stacked pr.** after the parent merges, `agent-gh pr-retarget <owner/repo> <number> <base> <head-sha>` moves its child onto `main`, `master`, or a parent `agent/*` branch, with the pr open and its head at that sha. the reply line `pr <number> base is now <base> at <sha>` is the proof. this is the single sanctioned move of a base.
+- **merge.** `agent-merge <pr> [<head-sha>]`, or `agent-gh pr-merge <owner/repo> <number> <head-sha>` with the repo spelled out. both wait for the checks and merge with the head pinned.
+- **clean up.** `agent-worktree-remove <owner/repo> <worktree-name> <pr> <sha>`, with the sha passed, not defaulted. it removes the verified worktree and then its local ref, non-force: the reply lines `worktree removed: <path>` and `branch deleted: refs/heads/<branch>` are the proof.
+
+a refusal ends that action: the client exits 2 with `refused: <reason>` on stderr, so report that line and stop. any other nonzero exit means the effect was not recorded: report its stderr and stop too. `refused: unknown verb` means the installed broker predates that call: say the host broker needs the current build and stop.
+
+**a merged pr is not a finished task.** cleanup is done when the worktree folder and `refs/heads/<branch>` are both gone, read back from a surviving checkout of the repo (`git worktree list`; `git rev-parse --verify refs/heads/<branch>`). a cleanup that removed the folder and kept the ref answers `partial cleanup: ... refs/heads/<branch>` on stderr: report that line and touch nothing else, and leave a ref whose folder is already gone to the user's own cleanup.
 
 ## autonomy
 
