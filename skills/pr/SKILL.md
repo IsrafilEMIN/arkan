@@ -31,6 +31,8 @@ Use this template for writing the PR body:
 **Blast Radius:** <one-word description>
 
 <optional: potential ramifications of merge>
+
+**How to revert:** <the command, the flag to turn off, or "one-way door: no clean revert">
 ```
 
 ## Sections
@@ -169,3 +171,5 @@ Execution-based evidence is A-tier. Test results, console output. Show the exact
 Describe whether it's a one-way or two-way door. You can walk back through two-way doors, but not one-way doors. A PR that is cheap to roll back is lower risk. Changes that involve destructive actions or hard-to-reverse decisions are one-way doors.
 
 The blast radius is the potential impact or scope of the changes introduced by this PR. Consider all possibilities. Examples are layout shift, breakages for consumers, mobile responsiveness, etc.
+
+How to revert says how to undo the change once it is merged: the revert command, the flag to turn off, or a plain "one-way door: no clean revert" with what would have to be done by hand.

@@ -45,6 +45,8 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 
 A `hint` on `ci-check` means the repo already runs its own ci: keep it, and copy `check.yml` only if the person wants arkan's `check` job beside it.
 
+Offer `ci-review` only when the person has added the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`) and arkan's skills in `.claude/skills/` on the default branch. Without them `arkan-review` fails on every pull request, and `arkan-merge` refuses every merge. Otherwise skip it and say why.
+
 An `out-of-date` line is a ci file that differs from arkan's copy. Show the diff and ask before you update it: the person may have changed a setting (`CHECK_COMMAND`, the `env:` lines). Keep their settings in the new copy.
 
 Write nothing over a file the person edited, except an `out-of-date` ci file they agreed to update. A doc that exists is `ok`, whatever its wording.
