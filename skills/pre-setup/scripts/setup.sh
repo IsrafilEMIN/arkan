@@ -160,10 +160,10 @@ hook_covers() { # language hook-file: a non-comment line names that language's t
 	local lines
 	lines="$(grep -v '^[[:space:]]*#' "$2" 2>/dev/null)" || true
 	case "$1" in
-		rust) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])(cargo[[:space:]]+(fmt|clippy)|rustfmt)([[:space:]]|$)' ;;
-		python) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])ruff([[:space:]]|$)' ;;
-		go) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])(gofmt|go[[:space:]]+vet)([[:space:]]|$)' ;;
-		js/ts) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(])lint-staged([[:space:]]|$)' ;;
+		rust) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])(cargo[[:space:]]+(fmt|clippy)|rustfmt)([[:space:]]|$)' ;;
+		python) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])ruff([[:space:]]|$)' ;;
+		go) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])(gofmt|go[[:space:]]+vet)([[:space:]]|$)' ;;
+		js/ts) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])lint-staged([[:space:]]|$)' ;;
 		*) return 1 ;;
 	esac
 }
@@ -219,7 +219,7 @@ check() {
 		common="$(common_hooks_dir)"
 		effective="$(git_hooks_dir)"
 		if [ "$target" != "$effective" ] && ! { [ "$target" = "$common" ] && [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; }; then
-			say hooks out-of-date "git uses $effective, so the repo hook will not run; change the hooks path or add a delegating hook"
+			say hooks out-of-date "git uses $effective, so $target/pre-commit will not run; change the hooks path or add a delegating hook"
 		else
 			hook_file="$target/pre-commit"
 			if [ ! -x "$hook_file" ]; then hook_file=""; fi
