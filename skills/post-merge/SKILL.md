@@ -28,7 +28,7 @@ A merged change broke something. You make main safe, then turn the **miss** (the
    - `bad.diff`: the change that shipped the bug. Use the bad commit from step 3 and its first parent: `git diff <bad>^ <bad> -- <path>`, or the whole `git diff <bad>^ <bad>` when the cause crosses files.
    - `case.md`: the format in the repo's `docs/agents/review-evals/README.md`. With no such doc, use these lines: `# <NN>: <one-line bug>`, then `**Bug:**` (one sentence), `**Path:**` (one path in backticks), `**Lines:**` (the defect's range in the new side of the diff), `**Fix PR:**` (step 4's fix, or its commit when there was no pull request), and `**Broke main:**` (the merge or commit that shipped it).
 
-   Then run `ci/review-eval.sh` from the repo root. If the repo has no script, save the case and say the eval is not installed. _Done when_ the case is saved and the script prints `<case> caught` or `<case> missed`. A caught case goes into `docs/agents/review-evals/baseline.txt` (`ci/review-eval.sh --update-baseline`). A missed case stays out: it is a known gap, not a regression.
+   Then run `ci/review-eval.sh` from the repo root. If the repo has no script, save the case and say the eval is not installed. _Done when_ the case is saved and the script prints `<case> caught` or `<case> missed`. A caught case goes into `docs/agents/review-evals/baseline.txt` (`ci/review-eval.sh --update-baseline`); the update adds cases and never drops one. A missed case stays out: it is a known gap, not a regression.
 
 ## Reply
 

@@ -15,6 +15,8 @@ ci/**
 scripts/check.sh
 scripts/check-seam.sh
 docs/seam.md
+# saved reviewer misses, their baseline and the reviewer's workflow
+docs/agents/review-evals/**
 # what pre-setup installs in other repos
 skills/pre-setup/scripts/**
 skills/pre-setup/references/**

@@ -1,6 +1,6 @@
 # Review evals
 
-Each confirmed miss by the ci reviewer becomes one case here. The cases keep a change to the reviewer honest: a change to `ci/github/arkan-review.yml`, `ci/review-prompt.md`, `skills/code-review/` or `skills/security-review/` is kept only when it misses no case caught before.
+Each confirmed miss by the ci reviewer becomes one case here. The cases keep the reviewer honest: a change to `ci/github/arkan-review.yml`, `skills/code-review/` or `skills/security-review/` is kept only when it misses no case caught before.
 
 ## A case
 
@@ -10,29 +10,41 @@ One folder per case, `<NN>-<slug>/`, numbered from `01`. It holds:
 - `case.md`: the bug in one line, where it lived, the fix, and the change that broke main:
 
 ```markdown
-# 01: check-seam fails on its own patterns
+# 01: one line bug title
 
 **Bug:** one sentence: what is wrong and what it breaks.
-**Path:** `scripts/check-seam.sh`
-**Lines:** 10-38
+**Path:** `scripts/example.sh`
+**Lines:** 12
 **Fix PR:** the pull request, or the fix commit when there was no pull request.
 **Broke main:** the merge or commit that shipped it.
 ```
 
-`Lines:` is the defect's range in the new side of `bad.diff`. The script reads `**Path:**` and `**Lines:**`; keep the other lines for the person.
+`Lines:` is the defect's range in the new side of `bad.diff`; a one-line defect uses its line. The script grades `**Path:**` and `**Lines:**`, and checks that `**Bug:**`, `**Fix PR:**` and `**Broke main:**` exist. `Broke main:` holds the bad commit, which the script checks out.
+
+## One reviewer
+
+`ci/review-eval.sh` reads the prompt, `REVIEW_MODEL` and the `--allowedTools` line from `ci/github/arkan-review.yml`, the file ci runs. It fills the workflow's `${{ }}` inputs with the case's values, so a change to that file changes the eval. One file, not a second prompt copy that can drift. The script dies when the prompt holds an input it does not fill.
+
+The default reviewer is `claude -p` with that model and those tools: the reviewer ci runs. Set `REVIEW_CMD`, or pass `--reviewer`, to use another headless harness. A swapped harness is a weaker proof, because it does not run the command ci runs.
+
+Each case runs in a temp git repo. One commit holds the bad commit's parent tree; the next applies `bad.diff`. The checkout is the bad commit, so the workflow's `git diff <base>...<head>` returns the case's diff. `.claude/skills/` holds the branch's `code-review` and `security-review`. The repo never holds `docs/agents/review-evals/`: no case, baseline or example is in reach.
 
 ## Run the cases
 
 ```sh
 ci/review-eval.sh                    # one line per case: <case> caught|missed
 ci/review-eval.sh --compare          # exit 1 when a baseline case is now missed
-ci/review-eval.sh --update-baseline  # record every case caught now
+ci/review-eval.sh --update-baseline  # add every case caught now to the baseline
 ci/review-eval.sh --prompt weak.md   # test another reviewer prompt
-ci/review-eval.sh --check            # check the files and the baseline, no model
+ci/review-eval.sh --check            # check the cases, prompt and baseline, no model
 ```
 
-A case is caught when the review output names the case's path and a line inside its range on the same line. The default reviewer is `omp -p --no-session --tools=read,grep,glob`; set `REVIEW_CMD` to any command that reads the prompt on stdin. The default prompt is [`ci/review-prompt.md`](../../../ci/review-prompt.md). A prompt passed with `--prompt` replaces it; the diff and the output rule are appended either way.
+A finding counts when its line names the case's `Path:` at a line start, or after a character that is not a letter, digit, `.`, `_`, `-` or `/`, and the path is followed by `:`. That `:` must be followed by a line or an `A-B` range. The line or range must sit inside `Lines:`, and a range must be no wider than `Lines:`. So for a case at `Lines: 10`, `scripts/check-seam.sh:10:` counts; `:13`, `1-99999`, `scripts/check-seam.sh.orig:20`, `./scripts/check-seam.sh:10` and prose that names the file without `:<line>` do not. The script appends the one-line output rule, because it grades text.
 
-`baseline.txt` lists the cases caught when it was last written. A new case the reviewer misses stays out of the baseline until a reviewer change catches it. A baseline case that a change misses fails `--compare`.
+`--prompt FILE` replaces the workflow's prompt. The file must name the diff, as the workflow's prompt does: the checkout is at `HEAD`, the bad commit, and `HEAD^` is its parent. A weaker prompt is the proof that a case can go from caught to missed.
 
-No ci job runs this: it needs a model, and arkan's ci has none. The person or agent that changes the reviewer runs it before the change lands. The `post-merge` skill adds a case after a confirmed miss.
+A missed case gets one fresh run before it is reported `missed`, the same rule `post-merge` uses for a flaky check.
+
+`baseline.txt` lists the cases caught when it was last written. `--update-baseline` adds the caught cases and never drops one (`sort -u`). A new case the reviewer misses stays out of the baseline until a reviewer change catches it. A baseline case that a change misses fails `--compare`.
+
+No ci job runs a model. `scripts/check.sh` runs `ci/review-eval.sh --check`, which reads the workflow and validates the case files without one. The person or agent that changes the reviewer runs `--compare` locally before the change lands. The `post-merge` skill adds a case after a confirmed miss.
