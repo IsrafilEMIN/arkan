@@ -57,6 +57,22 @@ while IFS= read -r f; do
 		esac
 	done <"$f"
 
+	if [[ ! $feat =~ ^[a-z0-9-]+$ ]]; then
+		fail "$rel" "feature directory must be lowercase letters, digits or dashes, got '$feat'"
+	fi
+	if [ "$spec" = 1 ]; then
+		if [ "$rel" != ".scratch/$feat/spec.md" ]; then
+			fail "$rel" "a spec must sit at .scratch/<feature-slug>/spec.md"
+		fi
+	else
+		if [[ ! $nn =~ ^[0-9]{2}$ ]]; then
+			fail "$rel" "the file name must start with two digits, NN-<slug>.md"
+		fi
+		if [[ $rel != ".scratch/$feat/issues/$nn-"*.md ]]; then
+			fail "$rel" "a ticket must sit at .scratch/<feature-slug>/issues/NN-<slug>.md"
+		fi
+	fi
+
 	if [ "$spec" = 0 ] && [[ $title != "$nn: "* ]]; then
 		fail "$rel" "heading must be '# $nn: <title>'"
 	fi

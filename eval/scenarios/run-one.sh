@@ -28,6 +28,9 @@ DEFAULT_TOOLS=(
 	"Bash(git:*)" "Bash(gh:*)" "Bash(python3:*)"
 	"Bash(scripts/check.sh:*)" "Bash(scripts/board.sh:*)"
 	"Bash(./scripts/check.sh:*)" "Bash(./scripts/board.sh:*)"
+	# the hand-built sandbox ships these two until the arkan-flow 37 rebuild
+	"Bash(scripts/build-board.sh:*)" "Bash(scripts/check-board.sh:*)"
+	"Bash(./scripts/build-board.sh:*)" "Bash(./scripts/check-board.sh:*)"
 	"Bash(cd:*)" "Bash(ls:*)" "Bash(cat:*)" "Bash(head:*)" "Bash(tail:*)"
 	"Bash(grep:*)" "Bash(find:*)" "Bash(wc:*)" "Bash(sort:*)" "Bash(diff:*)" "Bash(echo:*)"
 	"Bash(printf:*)" "Bash(mkdir:*)" "Bash(mktemp:*)" "Bash(pwd)" "Bash(test:*)" "Bash(sed:*)"
