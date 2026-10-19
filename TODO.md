@@ -37,9 +37,6 @@
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: none
 
-- [ ] 45: Incidents become review evals #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/45-incidents-become-review-evals.md` · blocked by: none
-
 - [ ] 46: Commit hooks for any language #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/46-commit-hooks-for-any-language.md` · blocked by: none
 
@@ -152,3 +149,6 @@
 
 - [x] 40: Arkan's own pull requests need a merge path #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/40-arkan-own-prs-need-a-merge-path.md` · blocked by: none
+
+- [x] 45: Incidents become review evals #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/45-incidents-become-review-evals.md` · blocked by: none
