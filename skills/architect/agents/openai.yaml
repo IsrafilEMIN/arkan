@@ -1,0 +1,5 @@
+interface:
+  display_name: "Architect"
+  short_description: "Sketch and compare designs before code"
+policy:
+  allow_implicit_invocation: true

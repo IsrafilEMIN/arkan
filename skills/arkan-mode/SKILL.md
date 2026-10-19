@@ -59,6 +59,10 @@ each line names the skill to call today. a ticket in brackets is a planned arkan
 - the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last.
 - any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply). text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
 - a repo has no scripted way to prove the app works → tell the user. a person starts `create-verification`; you do not.
+- a design that is a one-way door (a public api, a data schema, a seam row) → `architect`, which runs `arena`. a contested design, or a change on a sensitive path → `interrogate` before you ship.
+- a small diff you don't trust, or a change that reaches past its diff → `blast-radius`.
+- you are about to report a performance number → `benchmark-checklist`.
+- work that no playbook fits (a large migration, a multi-part change) → `figure-it-out`. wide parallel coverage or a race → `swarm`.
 
 more triggers:
 
