@@ -1,6 +1,7 @@
 # arkan-risk: give each pull request a risk label, auto or manual, that its author
 # cannot pick. arkan-merge reads it: an auto pr merges on the agent verifier's
-# PASS, a manual pr only on a person's PASS.
+# PASS, a manual pr only on a person's PASS. the marker format is seam row 6
+# (docs/seam.md in arkan).
 # copy this file to .github/workflows/arkan-risk.yml. setup: ci/README.md in arkan.
 name: arkan-risk
 

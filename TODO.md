@@ -40,6 +40,9 @@
 - [ ] 43: Pr skill gets a "how to revert" line #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/43-pr-skill-how-to-revert.md` · blocked by: none
 
+- [ ] 44: Check the seam in ci #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/44-check-the-seam.md` · blocked by: none
+
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
 
