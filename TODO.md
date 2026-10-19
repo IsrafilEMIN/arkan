@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] 32: Log how each review finding ends #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/32-log-how-each-finding-ends.md` · blocked by: 31
-
 - [ ] 02: Install the remaining pstack skills (later) #completion-loop #needs-triage
   `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: none
 
@@ -37,8 +34,8 @@
 
 ## Todo
 
-- [ ] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: none
+- [ ] 32: Log how each review finding ends #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/32-log-how-each-finding-ends.md` · blocked by: none
 
 - [ ] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
@@ -74,6 +71,9 @@
 
 - [x] 24: Catch a hidden dependency before the work is wasted #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/24-hidden-dependencies.md` · blocked by: none
+
+- [x] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: none
 
 - [x] 26: Spec mode in arkan-mode #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/26-spec-mode-in-arkan-mode.md` · blocked by: none
