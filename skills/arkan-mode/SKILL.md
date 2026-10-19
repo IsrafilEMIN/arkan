@@ -7,7 +7,7 @@ description: "the default way to do engineering work on one task: check that it 
 
 arkan mode is how you work on one task. it comes from pstack's `poteto-mode` and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
-other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, and so on). call them with the Skill tool when a step names them.
+other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). call them with the Skill tool when a step names them.
 
 ## 0. check that the work is a task
 
@@ -166,7 +166,7 @@ the full text is in `principles/`. one file per group.
 - **prove it works.** before you say done. check the real thing.
 - **fix root causes.** debugging. reproduce first, then ask "why" until you reach the cause.
 - **sequence verifiable units.** multi-step work. each unit ends green before the next starts.
-- **test behavior, not implementation.** writing or keeping a test. assert the exact result a user sees.
+- **test behavior, not implementation.** writing, changing or keeping a test. assert what the code's users can see. the full text is the `principle-test-behavior-not-implementation` skill.
 - **explain the number.** before you trust a number you measured. find what limits it.
 
 **working with agents** (`principles/agents.md`)
