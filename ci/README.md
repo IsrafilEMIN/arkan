@@ -101,6 +101,7 @@ required status checks need github pro on a private repo, or a public repo. on t
 
 - **runs on** `pull_request_review` `submitted`, only for a review whose body begins with `PASS` from an author association of `OWNER`, `MEMBER` or `COLLABORATOR`. this filter only keeps strangers on a public repo from starting runs.
 - **counts the verdict** only when the reviewer's repo permission is `write`, `maintain` or `admin` (`gh api repos/<repo>/collaborators/<login>/permission --jq .permission`). an author association does not prove write access: an org member can have read only.
+- **refuses an agent's verdict**: a review whose body holds `AGENT_MARK` (`<!-- arkan:verifier -->`, which the broker adds to every verdict an agent posts, underground ticket 48) does not merge. until the risk tier labels a pr `auto` (arkan ticket 42), every pr is `manual`, so only a person's `PASS` merges.
 - **refuses** when the review's `commit_id` is not the pr's current head: a push after the verdict needs a new verdict.
 - **waits** up to 35 minutes, longer than `arkan-review`'s 30-minute job limit, for every other check run on the head. it refuses if any check ends other than `success` or `skipped`.
 - **merges** with `gh pr merge --squash --match-head-commit <head>`, so github refuses the merge if the head moved while the run waited. the branch rule still applies: a missing required check stops the merge.

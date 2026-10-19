@@ -23,3 +23,7 @@ Single-context: one root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.
 `TODO.md` (the Tern board) shows one card per ticket; the details stay in the ticket. See the `## Board` section of `docs/agents/issue-tracker.md`.
 
 Do not edit `TODO.md` by hand. Before you commit a change under `.scratch/`, run `scripts/board.sh build` to write `TODO.md` from the tickets, then run `scripts/board.sh check`; it must print `ok`. If `TODO.md` has a merge conflict, run `scripts/board.sh build` again to fix it.
+
+### Merging
+
+A pull request merges through `.github/workflows/arkan-merge.yml`: once every check on the head commit is green (`check` runs `scripts/check.sh`), the owner posts a `COMMENT` review that starts with `PASS` on that commit, and the workflow merges it. Every pull request is `manual` until arkan ticket 42 ships, so an agent never posts that `PASS` here, and never merges.
