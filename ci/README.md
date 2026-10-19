@@ -56,6 +56,10 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
    - leave the bypass list empty, so nobody, the owner included, can merge around the rules.
    - if new branches that the rule covers are created by a push (for example `run/**` trunks), turn on "do not require status checks on creation", or the first push is refused.
 
+### the plan gate
+
+required status checks need github pro on a private repo, or a public repo. on the free plan a private repo refuses a ruleset (403), so the gate cannot bind: nothing requires `check` or `arkan-review`, and nothing stops a merge around them. where the gate cannot bind, the merge goes through the broker instead: `agent-merge <pr> <sha>`.
+
 ### what one run does
 
 - **runs on** `pull_request_review` `submitted`, only for a review whose body begins with `PASS` from an author association of `OWNER`, `MEMBER` or `COLLABORATOR`. this filter only keeps strangers on a public repo from starting runs.
