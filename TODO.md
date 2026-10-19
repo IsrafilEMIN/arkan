@@ -29,9 +29,6 @@
 - [ ] 28: Feature flags in the flow #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/28-feature-flags.md` · blocked by: none
 
-- [ ] 36: Red-first commits clash with "checks green before each commit" #arkan-flow #needs-triage
-  `.scratch/arkan-flow/issues/36-red-first-commit-vs-green-before-commit.md` · blocked by: none
-
 - [ ] 37: Rebuild the scenario sandbox from arkan #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/37-rebuild-the-sandbox-from-arkan.md` · blocked by: 04
 
@@ -95,6 +92,9 @@
 
 - [x] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
+
+- [x] 36: Red-first commits clash with "checks green before each commit" #arkan-flow #needs-triage
+  `.scratch/arkan-flow/issues/36-red-first-commit-vs-green-before-commit.md` · blocked by: none
 
 - [x] 01: Port poteto-mode to all agents (drop cursor-only mechanics) #completion-loop #wontfix
   `.scratch/completion-loop/issues/01-port-poteto-mode.md` · blocked by: none
