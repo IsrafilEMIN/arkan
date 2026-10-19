@@ -10,7 +10,7 @@ Set up what the other arkan skills assume. A script checks; you ask the person a
 
 - [scripts/setup.sh](./scripts/setup.sh) `check [repo-root]` prints one line per item: `ok`, `missing`, `out-of-date`, `hint` or `skip`. It changes nothing.
 - `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state.
-- [scripts/board.sh](./scripts/board.sh) `build|check [repo-root]` writes and checks `TODO.md` for a local tracker. Repos run it from this skill; they get no copy.
+- [scripts/board.sh](./scripts/board.sh) `build|check|fields [repo-root]` writes and checks `TODO.md` for a local tracker; `fields` checks only the ticket fields and needs no `TODO.md`. Repos run it from this skill; they get no copy.
 - The seeds are in [references/](./references/).
 
 ## Process
@@ -30,12 +30,12 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | item | what to do | ask? |
 |---|---|---|
 | `git` | `apply git` (runs `git init`) | yes |
-| `tracker` | GitHub if a remote points at github, GitLab if at gitlab, else local markdown; "other" gets a one-paragraph description. Write `docs/agents/issue-tracker.md` from `references/issue-tracker-<kind>.md`. For "other", write it from the description and copy the `## Board` section from the github seed | yes, which kind |
+| `tracker` | GitHub if a remote points at github, GitLab if at gitlab, else local markdown; "other" gets a one-paragraph description. Write `docs/agents/issue-tracker.md` from `references/issue-tracker-<kind>.md`. For "other", write it from the description and copy the `## Board` section from the github seed. With a local tracker, the check also runs `board.sh fields`: a ticket that breaks the field contract reads `out-of-date` | yes, which kind |
 | `labels` | write `docs/agents/triage-labels.md` from `references/triage-labels.md`, as it is. With a github or gitlab tracker, also create the five labels on the host | only before creating labels on the host |
 | `domain` | single-context: write `docs/agents/domain.md` from `references/domain.md`. Offer multi-context only when the repo has monorepo signals (`pnpm-workspace.yaml`, `workspaces` in `package.json`, a populated `packages/*`) | only with monorepo signals |
 | `gitattributes` | `apply gitattributes` (adds `GLOSSARY.md merge=union`) | no |
-| `agents-block` | write the block below into `AGENTS.md` | no |
-| `board` | `apply board` (seeds `TODO.md`, removes a `TODO.md` line from `.gitignore`). With a local tracker, then run `board.sh build` and `board.sh check`; it must print `ok`. With github or gitlab, the board is written by hand, as that tracker's seed says | no |
+| `agents-block` | write the block below into `AGENTS.md`. With a local tracker, the `### Board` line must name `board.sh build` and `board.sh check`; the check reads `out-of-date` when it does not | no |
+| `board` | `apply board` (seeds `TODO.md`, removes a `TODO.md` line from `.gitignore`). With a local tracker, the check runs `board.sh check` and reads `ok` only on `check-board: ok`; then run `board.sh build` and `board.sh check` until it passes. With github or gitlab, the board is written by hand, as that tracker's seed says | no |
 | `sensitive-paths` | start from `references/sensitive-paths.md` and add what the repo has: installer scripts, auth, billing, release workflows. Show the list | yes, the person approves or edits the list |
 | `approvals` | `apply approvals` (the fixed rule: `auto` and `manual`) | no |
 | `review-md` | `apply review-md` (seeds `REVIEW.md`). Fill in the failure line from what the repo is, if it is plain | no |

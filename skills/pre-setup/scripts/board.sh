@@ -5,8 +5,9 @@ verb=${1:-}
 case "$verb" in
 	build) prefix=build-board ;;
 	check) prefix=check-board ;;
+	fields) prefix=fields ;;
 	*)
-		printf 'usage: board.sh <build|check> [repo-root]\n' >&2
+		printf 'usage: board.sh <build|check|fields> [repo-root]\n' >&2
 		exit 2
 		;;
 esac
@@ -159,6 +160,11 @@ if [ $problems -gt 0 ]; then
 		printf '%s: %s problem(s)\n' "$prefix" "$problems" >&2
 	fi
 	exit 1
+fi
+
+if [ "$verb" = fields ]; then
+	printf 'fields: ok (%s cards)\n' "${#t_path[@]}"
+	exit 0
 fi
 
 card() {
