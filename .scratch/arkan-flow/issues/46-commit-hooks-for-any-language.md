@@ -8,13 +8,13 @@
 
 **Blocked by:** None (can start immediately).
 
-- [ ] the skill detects at least rust, python, go and js/ts from their manifest files (`Cargo.toml`, `pyproject.toml`, `go.mod`, `package.json`), and asks when it finds none or several
-- [ ] for a language with no package-manager hook tool, it writes a plain `.git/hooks/pre-commit` (or the repo's `core.hooksPath`) that runs the formatter and linter on staged files
-- [ ] the hook runs format and lint only; tests stay in ci
-- [ ] `pre-setup`'s `hooks` check reports `hint` for any detected language with no hook
-- [ ] proof: a scratch rust repo and a scratch python repo each get a hook that blocks a badly formatted commit and lets a clean one through
+- [x] the skill detects at least rust, python, go and js/ts from their manifest files (`Cargo.toml`, `pyproject.toml`, `go.mod`, `package.json`), and asks when it finds none or several
+- [x] for a language with no package-manager hook tool, it writes a plain `.git/hooks/pre-commit` (or the repo's `core.hooksPath`) that runs the formatter and linter on staged files
+- [x] the hook runs format and lint only; tests stay in ci
+- [x] `pre-setup`'s `hooks` check reports `hint` for any detected language with no hook
+- [x] proof: a scratch rust repo and a scratch python repo each get a hook that blocks a badly formatted commit and lets a clean one through
 
 ## Comments
 
 - 2026-10-19, owner: capture the language adaptation in a ticket.
-- 2026-10-19, agent: proof passed. a scratch rust repo blocked a badly formatted commit (`cargo fmt --check`) and passed after `cargo fmt`; a scratch python repo blocked one through `uvx ruff` and passed after `ruff format`; a second `install-hook.sh` run printed `hook unchanged`.
+- 2026-10-19, agent: proof passed. rust blocked a bad format and a clippy warning, then passed clean. python blocked a bad format and an F401, skipped an excluded folder, then passed clean. a staged bad file with a clean worktree copy was refused. with the global hooks path env set, a fresh rust repo read `hooks hint` and the installer wrote `.git/hooks/pre-commit`. a rust+js repo with only a rust hook read `hooks hint` for js/ts. a rerun over an edited arkan hook refused, and an identical rerun printed `hook unchanged`.
