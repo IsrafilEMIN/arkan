@@ -5,6 +5,8 @@
 
 **status:** parked by the owner on 2026-10-18. nothing here is built. it needs a ci review runner, a guard repo and repo host settings, which live outside this repo. when it comes back, split it into tickets again with `/to-tickets`.
 
+2026-10-19, ticket 05: the sensitive-path list (12), the host settings (14) and the approval rule (16, now two fixed labels) move into `pre-setup` (ticket 41). the risk tier (11) is ticket 42, with two labels, `auto` and `manual`. protecting the review rules (13) splits: codeowners goes to `pre-setup`, and the guard half to underground. the sections below stay as history.
+
 these were tickets `arkan-flow` 09, 10, 11, 12, 13, 14, 16 and 18. on 2026-10-18 the owner took 09, 10 and 18 out of the park as tickets 30, 31 and 32; their sections are removed here. a line below that names 09 or 10 now points at ticket 30 or 31. their text is below as it was, one section each. a "blocked by" line that names one of these numbers now points at a section of this file.
 
 

@@ -16,3 +16,4 @@
 ## Comments
 
 - 2026-10-18: a first `README.md` exists, with what arkan is, the flow and where the skills come from. this ticket now finishes its install and `pre-setup` steps.
+- 2026-10-19, ticket 05: the first step is the one command from ticket 04 (clone arkan, run `skills/pre-setup/scripts/setup.sh`); the second is `/arkan:pre-setup` in each repo (in claude code; another harness runs the `pre-setup` skill by its own name). a re-run reports what is done and skips it.

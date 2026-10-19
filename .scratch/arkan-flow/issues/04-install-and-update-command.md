@@ -8,7 +8,7 @@
 
 **Blocked by:** None (can start immediately).
 
-proposal: a script in the repo root (for example `install.sh`) that keeps one checkout of arkan (a pinned tag or `main`), and links each `skills/<name>` into `~/.agents/skills/<name>` (one canonical copy, per `symlink-first`). update is `git pull` on that checkout, then the same link step. harness-specific links (for example `~/.claude/skills/`) are not its job; `pre-setup` does them (ticket 06).
+proposal (superseded 2026-10-19 by ticket 05: the command is the machine part of `skills/pre-setup/scripts/setup.sh`, not a root `install.sh`): a script in the repo root (for example `install.sh`) that keeps one checkout of arkan (a pinned tag or `main`), and links each `skills/<name>` into `~/.agents/skills/<name>` (one canonical copy, per `symlink-first`). update is `git pull` on that checkout, then the same link step. harness-specific links (for example `~/.claude/skills/`) are not its job; `pre-setup` does them (ticket 06).
 
 - [ ] on a clean machine, one command puts every arkan skill in `~/.agents/skills/`
 - [ ] a second run prints that nothing changed and changes nothing
@@ -23,3 +23,4 @@ proposal: a script in the repo root (for example `install.sh`) that keeps one ch
 
 - 2026-10-18, owner: do this ticket last, after every other open ticket. ticket 07 waits on it, so 07 comes last too.
 - 2026-10-18, owner: claude code gets arkan as a plugin, so no skill is renamed (ticket 17). sources read 2026-10-18: claude code <https://code.claude.com/docs/en/skills>; codex source `codex-rs/skills/src/` in <https://github.com/openai/codex> (its docs page was blocked from the cloud session); pi <https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/skills.md>; omp <https://github.com/can1357/oh-my-pi/blob/main/docs/skills.md>.
+- 2026-10-19, ticket 05: no separate `install.sh` and no `arkan-install` skill. the one command is `skills/pre-setup/scripts/setup.sh`, run from a clone of arkan; its machine items install arkan, the claude code plugin, and the links in `~/.agents/skills/`. the criteria above still hold for it.
