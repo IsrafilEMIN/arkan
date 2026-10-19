@@ -152,3 +152,9 @@
 
 - [x] 46: Commit hooks for any language #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/46-commit-hooks-for-any-language.md` · blocked by: none
+
+- [x] 49: Restore tdd and test-to-break, keep the test principle skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/49-restore-tdd-and-test-to-break.md` · blocked by: none
+
+- [x] 50: Make the 24 principles skills, pstack-shaped #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/50-principles-as-skills.md` · blocked by: none

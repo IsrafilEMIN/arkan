@@ -23,7 +23,7 @@ Skip phase A only for truly greenfield work with no surrounding system.
 
 Run the `arena` skill with the design-sketch task and the phase A grounding, passing [`references/runner-prompt.md`](references/runner-prompt.md) as each runner's prompt. Runners use different model families where the harness allows (the `arena` skill's model rule).
 
-Design it twice. Require at least two structurally different candidates before synthesis, even when the first looks good enough: whole-shape alternatives, not point fixes inside one shape. This is **exhaust the design space** (`arkan-mode/principles/core.md`) made concrete.
+Design it twice. Require at least two structurally different candidates before synthesis, even when the first looks good enough: whole-shape alternatives, not point fixes inside one shape. This is **exhaust the design space** (`principle-exhaust-the-design-space`) made concrete.
 
 Screen every candidate against [`references/design-red-flags.md`](references/design-red-flags.md) before synthesis. Assume the next contributor is an agent that sees only the files it opened, copies the nearest example, and takes the shortest path that compiles. Prefer the design where a change that looks right from one file is right for the whole repo.
 
@@ -37,7 +37,7 @@ Default: go straight to implementation with the synthesized design, with no chec
 
 Stop for the person's sign-off only when they asked for it ("/architect with checkpoint", "show me before you implement"). A one-way door with a large blast radius (a public api, a data schema, a seam row in `docs/seam.md`) is a product call: show the design and ask, per arkan-mode's rule on forks.
 
-The synthesis can ship as its own commit either way, as the "scaffold first" mode of **foundational thinking** (`arkan-mode/principles/core.md`). Planned breakage during fill-in is fine, per **outcome-oriented execution** (same file). For adversarial pressure on the design before implementing, run `interrogate` on the sketch.
+The synthesis can ship as its own commit either way, as the "scaffold first" mode of **foundational thinking** (`principle-foundational-thinking`). Planned breakage during fill-in is fine, per **outcome-oriented execution** (`principle-outcome-oriented-execution`). For adversarial pressure on the design before implementing, run `interrogate` on the sketch.
 
 If the person pushes back on the shape, treat that as phase A evidence: ground again and re-run phase B before writing more code.
 
@@ -47,7 +47,7 @@ Replace `not implemented` bodies with code, and pseudocode with logic, test-firs
 
 ## Phase E: scrap when the architecture is wrong
 
-If implementation keeps producing friction the sketch cannot absorb, throw the sketch out. Don't bolt fixes onto a wrong design, per **redesign from first principles** (`arkan-mode/principles/core.md`) and **fix root causes** (`arkan-mode/principles/verification.md`).
+If implementation keeps producing friction the sketch cannot absorb, throw the sketch out. Don't bolt fixes onto a wrong design, per **redesign from first principles** (`principle-redesign-from-first-principles`) and **fix root causes** (`principle-fix-root-causes`).
 
 The signal is a pattern, not one instance:
 
@@ -64,7 +64,7 @@ When you scrap:
 
 1. re-run `how` over what has been built;
 2. redesign as if the new constraints had been there on day one;
-3. subtract before adding, per **subtract before you add** (`arkan-mode/principles/core.md`): the new sketch is smaller than the old one before it grows;
+3. subtract before adding, per **subtract before you add** (`principle-subtract-before-you-add`): the new sketch is smaller than the old one before it grows;
 4. go back to phase B and re-run arena.
 
 ## Outputs
