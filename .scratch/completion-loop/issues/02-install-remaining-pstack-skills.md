@@ -1,7 +1,7 @@
 # 02: Install the remaining pstack skills (later)
 
 **Role:** needs-triage
-**Closed:** no
+**Closed:** yes
 **Priority:** 12
 
 **What to build:** install the rest of the pstack skills from `pstack/skills/` into `~/.agents/skills/`, cursor parts ported like ticket 01. The remaining set:
@@ -10,10 +10,10 @@
 
 **Blocked by:** `arkan-flow` 01 (was `completion-loop` 01, now superseded) — the port approach there defines how cursor-only parts are neutralized. `arkan-flow` 03 is closed: pstack `tdd` is left out (it clashes with the `tdd` skill arkan keeps), so it is not in the set above.
 
-- [ ] every skill in the set is installed; any exclusion (for example a name conflict like `tdd`) is a maintainer decision recorded in the comments, nothing is silently skipped
+- [x] every skill in the set is installed; any exclusion (for example a name conflict like `tdd`) is a maintainer decision recorded in the comments, nothing is silently skipped
 - [x] copies come from a pinned cursor/plugins commit; the sha is recorded in the commit message
 - [x] cursor-only references ported per ticket 01's approach
-- [ ] `link-agents.sh --check` prints `ok`; `agents/openai.yaml` present with matching policy flags
+- [x] `link-agents.sh --check` prints `ok`; `agents/openai.yaml` present with matching policy flags
 - [x] board updated per change
 
 ## Comments
@@ -26,3 +26,4 @@
 - 2026-10-19, agent: batch 3 ported (writing): `unslop`, `technical-writing`, `no-comments`, `show-me-your-work`. changes: rule numbers in `unslop` kept (other skills cite them), with a note that a person's own style rules win; `technical-writing` points at the `pr` template and `GLOSSARY.md`, and drops pstack's tabs rule for the repo's own style; `no-comments` carries pstack's `comment-sicko` agent as `references/comment-sicko.md` (arkan has no agent definitions) and stays person-started because it edits code; `show-me-your-work` audits against the run's own tool calls (cursor's transcript path removed). arkan-mode routes prose to `unslop` / `technical-writing` and its decision-trail rule to `show-me-your-work`.
 - 2026-10-19, agent: batch 4 ported (learning): `how`, `why`, `teach`, `in-your-own-words`, `sharpen`, `recall`, `reflect`, `correct`, `ketchup`. changes: cursor's model names and `readonly` flags become the one model rule; `why` finds connectors by the harness's own tool list (claude code: `mcp__<server>__*`) and always searches the repo's tracker (`.scratch/` tickets and comments) and `docs/adr/`; `recall` and `reflect` read transcripts per harness (claude code `~/.claude/projects/<slug>/`, codex `~/.codex/sessions/`), only for the active workspace, and fall back to a session digest when underground's sandbox denies the folder; `reflect` routes edits through `writing-for-agents` and files backlog on the repo's tracker; `correct` is arkan-mode's "user corrected you" rule as a whole pass, with checks added to `scripts/check.sh`; `ketchup` speaks of `PASS` and arkan's merge path, and draws with mermaid. who starts them (ticket 23 rule): `how`, `why`, `teach` both; `in-your-own-words`, `sharpen`, `recall`, `reflect`, `correct`, `ketchup` the person (they shape work, edit skills, or look back).
 - 2026-10-19, agent: batch 5 ported (picks and formal verification): `bro`, `automate-me`, `typescript-best-practices`, `make-bot-ui`, `create-formal-verification`, `maintain-formal-verification`. changes: `automate-me` mines transcripts per `recall`'s table, writes `~/.agents/skills/<handle>-mode/` with a `~/.claude/skills/` link (or a `.scratch/` draft under the sandbox), authors with `writing-for-agents`, and asks with the harness's question tool; `typescript-best-practices` points at arkan-mode's type and boundary principles and drops cursor's `paths` key, so it is an agent skill; `make-bot-ui` drops cursor's routine panel, `update_state` and `SendToUser`: it uses the harness's own webhook or a local launcher wake, keeps the secret out of chat with a `read -rs` command when the harness has no secret request, and binds to the tailnet address; the formal pair drop `-skill` like batch 1, place verify skills in `.agents/skills/formal-verify-<area>/`, and file bugs as tickets. with this, every pstack skill in the set is ported or dropped by the owner (`setup-pstack`, `poteto-help`; `tdd` per `arkan-flow` 03). left: install on the mac and `link-agents.sh --check` (boxes 1 and 4), which ride `completion-loop` 04.
+- 2026-10-19, owner (macos): `git -C ~/Developer/Projects/arkan-install pull` to `b7c699f`, the new skills linked into `~/.agents/skills/`, `link-agents.sh` linked 31 into `~/.claude/skills/`. the first `--check` reported `NO-OPENAI-YAML` for `arkan-mode` and `security-review`; arkan pr 54 added both files and made `scripts/check.sh` enforce them. after that pull, `link-agents.sh --check` printed `ok` (boxes 1 and 4). closed. a one-command install stays with `arkan-flow` 04; `security-review` now shadows claude code's built-in `/security-review` until 04 ships arkan as a plugin.

@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] 02: Install the remaining pstack skills (later) #completion-loop #needs-triage
-  `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: none
-
 - [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/07-readme-run-pre-setup-first.md` · blocked by: 04, 06
 
@@ -134,6 +131,9 @@
 
 - [x] 01: Arkan-mode replaces poteto-mode #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/01-arkan-mode-replaces-poteto-mode.md` · blocked by: none
+
+- [x] 02: Install the remaining pstack skills (later) #completion-loop #needs-triage
+  `.scratch/completion-loop/issues/02-install-remaining-pstack-skills.md` · blocked by: none
 
 - [x] 44: Check the seam in ci #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/44-check-the-seam.md` · blocked by: none
