@@ -64,19 +64,20 @@ while IFS= read -r f; do
 		if [ "$rel" != ".scratch/$feat/spec.md" ]; then
 			fail "$rel" "a spec must sit at .scratch/<feature-slug>/spec.md"
 		fi
-	else
-		if [[ ! $nn =~ ^[0-9]{2}$ ]]; then
-			fail "$rel" "the file name must start with two digits, NN-<slug>.md"
-		fi
+	elif [[ ${rel##*/} =~ ^([0-9]{2})- ]]; then
+		nn="${BASH_REMATCH[1]}"
 		if [[ $rel != ".scratch/$feat/issues/$nn-"*.md ]]; then
 			fail "$rel" "a ticket must sit at .scratch/<feature-slug>/issues/NN-<slug>.md"
 		fi
+	else
+		nn=""
+		fail "$rel" "the file name must be <NN>-<slug>.md, two digits and a dash"
 	fi
 
-	if [ "$spec" = 0 ] && [[ $title != "$nn: "* ]]; then
+	if [ -n "$nn" ] && [[ $title != "$nn: "* ]]; then
 		fail "$rel" "heading must be '# $nn: <title>'"
 	fi
-	if [ "$spec" = 0 ]; then
+	if [ "$spec" = 0 ] && [ -n "$nn" ]; then
 		title="${title#"$nn: "}"
 	fi
 	[ -n "$title" ] || fail "$rel" "no '# ' heading"
