@@ -7,6 +7,9 @@ fail=0
 # the board matches the tickets.
 scripts/board.sh check || fail=1
 
+# arkan matches its seam with underground (docs/seam.md).
+scripts/check-seam.sh || fail=1
+
 # every shell script parses.
 while IFS= read -r f; do
 	bash -n "$f" || { printf 'check: %s does not parse\n' "$f" >&2; fail=1; }
