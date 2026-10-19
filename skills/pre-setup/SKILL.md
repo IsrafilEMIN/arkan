@@ -43,6 +43,8 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | `codeowners` | write `.github/CODEOWNERS`: each sensitive path, owned by the repo owner. Then offer the branch rule from `ci/README.md` (`arkan-merge`): require a pull request, require `check` and `arkan-review`, dismiss stale approvals, empty bypass list | before the branch rule |
 | `verify`, `hooks` (`hint`) | tell the person once: "no verify skill: run `create-verification`", or "this js/ts repo has no commit hooks: run `setup-pre-commit`". Change nothing | no |
 
+A `hint` on `ci-check` means the repo already runs its own ci: keep it, and copy `check.yml` only if the person wants arkan's `check` job beside it.
+
 An `out-of-date` line is a ci file that differs from arkan's copy. Show the diff and ask before you update it: the person may have changed a setting (`CHECK_COMMAND`, the `env:` lines). Keep their settings in the new copy.
 
 Write nothing over a file the person edited, except an `out-of-date` ci file they agreed to update. A doc that exists is `ok`, whatever its wording.

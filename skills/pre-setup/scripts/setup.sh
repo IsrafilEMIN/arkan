@@ -34,12 +34,27 @@ in_git() { git -C "$root" rev-parse --show-toplevel >/dev/null 2>&1; }
 
 check_file() { if has "$2"; then say "$1" ok "$2"; else say "$1" missing "$2"; fi; }
 
+# the repo's own workflow files: every .yml/.yaml in .github/workflows/ that is not arkan's.
+own_ci() {
+	local f out=""
+	for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
+		[ -f "$f" ] || continue
+		case "${f##*/}" in arkan-*.yml | check.yml) continue ;; esac
+		out="$out${out:+, }${f##*/}"
+	done
+	printf '%s' "$out"
+}
+
 check_ci() {
 	local name=$1 src=$2 dst=".github/workflows/$2"
 	if [ ! -f "$ci/$src" ]; then
 		say "$name" skip "arkan's ci/github/$src not found next to this skill"
 	elif ! has "$dst"; then
-		say "$name" missing "$dst"
+		if [ "$name" = ci-check ] && [ -n "$(own_ci)" ]; then
+			say "$name" hint "the repo runs its own ci ($(own_ci)); keep it, or copy $src"
+		else
+			say "$name" missing "$dst"
+		fi
 	elif cmp -s "$ci/$src" "$root/$dst"; then
 		say "$name" ok "$dst"
 	else
