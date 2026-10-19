@@ -26,6 +26,9 @@
 - [ ] 37: Rebuild the scenario sandbox from arkan #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/37-rebuild-the-sandbox-from-arkan.md` · blocked by: 04
 
+- [ ] 01: Implement mental models into the arkan skillset #mental-models #needs-triage
+  `.scratch/mental-models/issues/01-implement-mental-models.md` · blocked by: none
+
 ## Todo
 
 - [ ] 41: Build the pre-setup redesign #arkan-flow #ready-for-agent
