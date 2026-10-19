@@ -415,7 +415,9 @@ jobs:
                 mkdir -p "$(dirname "$ticket_path")"
                 printf '%s\n' "$body" >"$ticket_path"
                 git add "$ticket_path"
-                git commit -m "docs: ticket the post-merge miss"
+                if ! git diff --cached --quiet; then
+                  git commit -m "docs: ticket the post-merge miss"
+                fi
                 board=""
                 if [ -f .claude/skills/pre-setup/scripts/board.sh ]; then
                   board=.claude/skills/pre-setup/scripts/board.sh
