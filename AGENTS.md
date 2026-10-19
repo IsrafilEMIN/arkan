@@ -4,6 +4,10 @@
 
 This repo enhances agent skills and ships them as one bundle named "arkan".
 
+## Seam
+
+arkan and underground meet at six interfaces, one owner each. See `docs/seam.md`. A string or file the other repo reads becomes a row there first.
+
 ## Agent skills
 
 ### Issue tracker
