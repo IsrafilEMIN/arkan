@@ -28,6 +28,9 @@
 
 ## Todo
 
+- [ ] 47: The broker merges arkan's pull requests #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/47-broker-merges-arkan.md` · blocked by: none
+
 - [ ] 04: Install and update command #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
 
