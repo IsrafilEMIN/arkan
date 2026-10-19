@@ -1,6 +1,6 @@
 ---
 name: pre-setup
-description: "Set up the machine and this repo for the arkan skills: issue tracker, triage labels, domain docs, the Tern board, the sensitive-path list, the approval rule, REVIEW.md, the ci jobs and the merge gate. Safe to run again: it checks first and only works on what is missing or out of date."
+description: "Set up the machine and this repo for the arkan skills: issue tracker, triage labels, domain docs, the Tern board, the sensitive-path list, the approval rule, REVIEW.md, the ci jobs and the merge path. Safe to run again: it checks first and only works on what is missing or out of date."
 disable-model-invocation: true
 ---
 
@@ -39,15 +39,25 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | `sensitive-paths` | start from `references/sensitive-paths.md` and add what the repo has: installer scripts, auth, billing, release workflows. Show the list | yes, the person approves or edits the list |
 | `approvals` | `apply approvals` (the fixed rule: `auto` and `manual`) | no |
 | `review-md` | `apply review-md` (seeds `REVIEW.md`). Fill in the failure line from what the repo is, if it is plain | no |
-| `ci-review`, `ci-check`, `ci-risk`, `ci-merge` | `apply <item>` copies arkan's file into `.github/workflows/`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
-| `codeowners` | write `.github/CODEOWNERS`: each sensitive path, owned by the repo owner. Then offer the branch rule from `ci/README.md` (`arkan-merge`): require a pull request, require `check` and `arkan-review`, dismiss stale approvals, empty bypass list | before the branch rule |
+| `ci-review`, `ci-check`, `ci-risk` | `apply <item>` copies arkan's file into `.github/workflows/`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
+| `ci-merge` | ask gate or broker. Record the answer as the exact line in `docs/agents/approvals.md`: broker installs no gate; gate does. See [Merge path](#merge-path) | yes, which path |
+| `codeowners` | write `.github/CODEOWNERS`: each sensitive path, owned by the repo owner. With the gate path, then offer the branch rule from `ci/README.md` (`arkan-merge`): require a pull request, require `check` and `arkan-review`, dismiss stale approvals, empty bypass list | before the branch rule |
 | `verify`, `hooks` (`hint`) | tell the person once: "no verify skill: run `create-verification`", or "this js/ts repo has no commit hooks: run `setup-pre-commit`". Change nothing | no |
 
 A `hint` on `ci-check` means the repo already runs its own ci: keep it, and copy `check.yml` only if the person wants arkan's `check` job beside it.
 
-Offer `ci-review` only when the person has added the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`) and arkan's skills in `.claude/skills/` on the default branch. Without them `arkan-review` fails on every pull request, and `arkan-merge` refuses every merge. Otherwise skip it and say why.
+Offer `ci-review` only when the person has added the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`) and arkan's skills in `.claude/skills/` on the default branch. Without them `arkan-review` fails on every pull request, and the gate refuses every merge. Otherwise skip it and say why.
 
-An `out-of-date` line is a ci file that differs from arkan's copy. Show the diff and ask before you update it: the person may have changed a setting (`CHECK_COMMAND`, the `env:` lines). Keep their settings in the new copy.
+#### Merge path
+
+`ci-merge` is a choice, not a default. Ask which path the repo merges through and record the answer as the exact line in `docs/agents/approvals.md`:
+
+- broker: `**Merge path:** broker`. The broker on the person's machine merges. Install no gate; the check reads `ci-merge ok broker (docs/agents/approvals.md)`. If `.github/workflows/arkan-merge.yml` is present, the check reads `out-of-date`: show the conflict, and remove the file only after the person says yes. Broker availability is the person's call, not a probe: do not claim a broker loop runs unless they say it is deployed. Until it is, the agent calls `agent-merge <pr> <sha>` after the person's `PASS`.
+- gate: `**Merge path:** gate`. Run `apply ci-merge`, then follow its steps in `ci/README.md`. The check compares the copy as before.
+
+`apply ci-merge` reads that record. Under broker it prints the broker state and copies nothing. With no record, or with both lines, it refuses and says which line to keep. A gate that is already installed with no record is checked as before, so an existing gate keeps working until the person picks a path.
+
+An `out-of-date` line is a ci file that differs from arkan's copy, or a gate installed where `docs/agents/approvals.md` records broker. Show the diff or conflict and ask before you change it: the person may have changed a setting (`CHECK_COMMAND`, the `env:` lines). Keep their settings in the new copy.
 
 Write nothing over a file the person edited, except an `out-of-date` ci file they agreed to update. A doc that exists is `ok`, whatever its wording.
 
@@ -76,7 +86,7 @@ The five default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready
 
 ### Approvals
 
-Pull requests are `auto` or `manual`; the person approves `manual` ones. See `docs/agents/approvals.md` and `docs/agents/sensitive-paths.md`.
+Pull requests are `auto` or `manual`; the person approves `manual` ones. The merge path (`broker` or `gate`) is recorded in the same file. See `docs/agents/approvals.md` and `docs/agents/sensitive-paths.md`.
 
 ### Review
 

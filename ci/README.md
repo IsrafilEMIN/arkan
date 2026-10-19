@@ -80,7 +80,7 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
 
 ## arkan-risk
 
-[`github/arkan-risk.yml`](github/arkan-risk.yml) gives each pull request a risk label, `auto` or `manual`, that its author cannot pick. `arkan-merge` reads it: an `auto` pr merges on the agent verifier's `PASS`, a `manual` pr only on a person's `PASS`. the rules follow the claude code team's review post: the change sets the tier, some paths always need a person, an agent's approval never counts as a person's, and start strict.
+[`github/arkan-risk.yml`](github/arkan-risk.yml) gives each pull request a risk label, `auto` or `manual`, that its author cannot pick. `arkan-merge` and the broker's `pr-merge` read it: an `auto` pr merges on the agent verifier's `PASS`, a `manual` pr only on a person's `PASS`. the rules follow the claude code team's review post: the change sets the tier, some paths always need a person, an agent's approval never counts as a person's, and start strict.
 
 ### add it to a repo
 
@@ -92,14 +92,16 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
 - **runs on** `pull_request` `opened`, `synchronize` and `reopened`. a newer push cancels the run on the older head.
 - **fixed rules first**, each one makes the pr `manual`: the author is not the repo owner; the base branch has no `PATHS_FILE`; the pr touches a path (or the old name of a renamed path) that matches a glob in it. the list is read from the base branch, so a pr cannot edit its way out. `*` and `**` also match `/`.
 - **the vote** (`RISK_VOTE`) labels the rest. it is `off` until arkan ticket 42 builds it, so every pr is `manual`. with it `on` and no vote step yet, the run still says `manual`: it fails closed.
-- **posts** one sticky pr comment, edited in place. its first line is the marker `arkan-merge` reads: `<!-- arkan:risk head=<sha> label=<auto|manual> -->`. only a comment by `github-actions[bot]` counts. it also sets the pr label `arkan:auto` or `arkan:manual` for people to see; the gate never reads the label.
+- **posts** one sticky pr comment, edited in place. its first line is the marker `arkan-merge` and the broker read: `<!-- arkan:risk head=<sha> label=<auto|manual> -->`. only a comment by `github-actions[bot]` counts. it also sets the pr label `arkan:auto` or `arkan:manual` for people to see; the gate and the broker never read the label.
 - **permissions**: `contents: read`, `pull-requests: write`, `issues: write`.
 
 ## arkan-merge
 
-[`github/arkan-merge.yml`](github/arkan-merge.yml) merges a pull request once its verifier posts a `PASS` verdict on the head commit and every check on that commit passed. the person installs it once in a repo. after that the agent never merges: it opens the pr, its verifier posts the verdict, and the repo merges. it uses no third-party actions, only `gh` on the runner.
+[`github/arkan-merge.yml`](github/arkan-merge.yml) is a merge gate a repo can install once. arkan does not use it: arkan's merge path is the broker (`agent-merge <pr> <sha>` on the owner's machine). a repo that installs the gate merges a pull request once its verifier posts a `PASS` verdict on the head commit and every check on that commit passed; after that the agent never merges: it opens the pr, its verifier posts the verdict, and the repo merges. it uses no third-party actions, only `gh` on the runner.
 
 ### add it to a repo
+
+a repo that chose the gate path follows these steps; a repo on the broker path skips them.
 
 1. add `arkan-review` first (above), so each push gets a review check.
 2. copy the file to `.github/workflows/arkan-merge.yml` on the default branch, and on each base branch a pr can target.
@@ -110,9 +112,13 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
    - leave the bypass list empty, so nobody, the owner included, can merge around the rules.
    - if new branches that the rule covers are created by a push (for example `run/**` trunks), turn on "do not require status checks on creation", or the first push is refused.
 
-### the plan gate
+### gate or broker
 
-required status checks need github pro on a private repo, or a public repo. on the free plan a private repo refuses a ruleset (403), so the gate cannot bind: nothing requires `check` or `arkan-review`, and nothing stops a merge around them. where the gate cannot bind, the merge goes through the broker instead: `agent-merge <pr> <sha>`.
+a repo uses one merge path, recorded in `docs/agents/approvals.md` as `**Merge path:** gate` or `**Merge path:** broker`. `pre-setup` asks for the choice; the broker never reads the file.
+
+the gate path needs required status checks, which need github pro on a private repo, or a public repo. on the free plan a private repo refuses a ruleset (403), so the gate cannot bind: nothing requires `check` or `arkan-review`, and nothing stops a merge around them. that repo uses the broker path instead: `agent-merge <pr> <sha>`.
+
+the broker path needs no ruleset. the broker applies row 6's rule itself (seam row 6, `docs/seam.md`): a `manual` pull request lands only on the person's unmarked `PASS` on the head, and an `auto` one may land on the agent verifier's marked `PASS`. it merges with `--merge --delete-branch` and the head pinned.
 
 ### what one run does
 

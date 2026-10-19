@@ -49,4 +49,4 @@ Run its own instructions end to end once: launch, doctor, drive one mapped featu
 
 ## 5. Ship it and hand over the upkeep
 
-Commit the skill on a work branch and open a pull request the way `arkan-mode`'s `opening-a-pr` playbook says; it lands through the repo's merge path (seam row 6: the gate on the person's `PASS`). Then point the person at `maintain-verification` for keeping the map true as the app changes. Suggest a cadence only if they ask.
+Commit the skill on a work branch and open a pull request the way `arkan-mode`'s `opening-a-pr` playbook says; it lands through the repo's merge path (seam row 6: the gate or the broker on the person's `PASS`). Then point the person at `maintain-verification` for keeping the map true as the app changes. Suggest a cadence only if they ask.

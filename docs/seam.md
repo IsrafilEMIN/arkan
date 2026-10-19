@@ -9,7 +9,7 @@ arkan and underground share one machine and one agent workflow. underground boun
 | 3 | hook wiring (`~/.agents/hooks.json`, the shell-hooks extension, `~/.agents/git-hooks/`) | underground | nothing; the `freeze` skill's own adapters are private to it |
 | 4 | policy file (`~/.omp/policy.yml`) | underground | nothing |
 | 5 | tracker contract (`docs/agents/issue-tracker.md`) | arkan | `pre-setup`'s seeds and `board.sh build\|check` |
-| 6 | merge rule: the `PASS` verdict, the agent mark `<!-- arkan:verifier -->`, the risk marker `<!-- arkan:risk head=<sha> label=<auto\|manual> -->`, and the rule | arkan | `ci/github/arkan-risk.yml` writes the marker; `ci/github/arkan-merge.yml` applies the rule; `docs/agents/approvals.md` (from `pre-setup`) states it |
+| 6 | merge rule: the `PASS` verdict, the agent mark `<!-- arkan:verifier -->`, the risk marker `<!-- arkan:risk head=<sha> label=<auto\|manual> -->`, and the rule | arkan | `ci/github/arkan-risk.yml` writes the marker; the broker's `pr-merge` applies the rule (its merge loop, where deployed, uses the same code); `ci/github/arkan-merge.yml` is the gate a consumer repo can install; `docs/agents/approvals.md` (from `pre-setup`) states the rule and records the repo's merge path (`**Merge path:** broker` for arkan) |
 
 Row 2's verbs, as `agent-gh <verb>`: `push`, `worktree-remove`, `pr-create`, `pr-view`, `pr-checks`, `pr-merge`, `pr-retarget`, `pr-review`, `pr-reply`, `pr-diff`, and `raw` (the transport `pr-diff` and `worktree-remove` use).
 
@@ -17,8 +17,10 @@ Row 2's verbs, as `agent-gh <verb>`: `push`, `worktree-remove`, `pr-create`, `pr
 
 - A verdict is a pull request review on the head commit whose body starts with `PASS`.
 - The broker adds the agent mark to every verdict an agent posts; an agent cannot post one without it.
-- A pull request whose risk marker for the current head says `auto` merges on a marked or an unmarked `PASS`. Any other pull request (`manual`, no marker, or a marker for an older head) merges only on an unmarked `PASS`: the person's.
-- Both merge paths obey it: a repo's `arkan-merge` workflow, and the broker's `pr-merge`.
+- A pull request whose risk marker for the current head says `auto` merges on a marked or an unmarked `PASS`. Any other pull request (`manual`, no marker, or a marker for an older head) merges only on an unmarked `PASS`: the person's. On a `manual` pull request, an agent's marked `PASS` never substitutes for the person's.
+- Both merge paths obey it: a repo's `arkan-merge` workflow, and the broker's `pr-merge` (and its merge loop, where deployed). arkan uses the broker and installs no gate; `ci/github/arkan-merge.yml` stays as the gate a consumer repo can install.
+
+The merge path is a local `pre-setup` choice recorded in `docs/agents/approvals.md` as `**Merge path:** gate` or `**Merge path:** broker`; arkan's line says broker. The broker never reads that file: it applies the rule above from the marker and the review on the head.
 
 ## Drift check
 
