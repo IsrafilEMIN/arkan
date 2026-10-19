@@ -37,6 +37,9 @@
 
 ## Todo
 
+- [ ] 04: One bash-3.2-safe entry point for the board #board #ready-for-agent
+  `.scratch/board/issues/04-one-bash-3-2-safe-board-entry-point.md` · blocked by: none
+
 - [ ] 31: Keep the review round count in the pull request #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/31-review-round-count-in-the-pr.md` · blocked by: none
 
