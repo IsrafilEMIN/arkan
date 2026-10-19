@@ -7,7 +7,8 @@ seam=docs/seam.md
 fail=0
 bad() { printf 'check-seam: %s\n' "$1" >&2; fail=1; }
 
-files=$(git ls-files | grep -v '^\.scratch/' | grep -v "^$seam\$" || true)
+# this script is skipped too: its patterns name what they look for.
+files=$(git ls-files | grep -v '^\.scratch/' | grep -vxF -e "$seam" -e scripts/check-seam.sh || true)
 
 # 1. every agent-gh verb a file names is in row 2's list.
 verbs=$(grep "^Row 2's verbs" "$seam" | grep -oE '`[a-z-]+`' | tr -d '`')
