@@ -3,11 +3,12 @@ set -eu
 
 tab="$(printf '\t')"
 home="${HOME:-}"
-arkan="$(cd "$(dirname "$0")/../../.." && pwd -P)"
+pending=""
+hermes_agents=0
 
 say() { printf '%-16s %s%s\n' "$1" "$2" "${3:+  $3}"; }
 
-usage() { printf 'usage: name-scan.sh <harness>...  (claude code, codex, dsh, pi, omp, cursor, opencode, hermes)\n' >&2; exit 2; }
+usage() { printf 'usage: name-scan.sh [--pending <skills-dir>] <harness>...  (claude code, codex, dsh, pi, omp, cursor, opencode, hermes)\n' >&2; exit 2; }
 
 trim() {
 	local s="$1"
@@ -84,40 +85,6 @@ hermes_dirs() {
 record() { printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$5" >>"$records"; }
 hint() { printf '%s\n' "$1" >>"$hints"; }
 
-claude_plugin_installed() {
-	local record="$home/.claude/plugins/installed_plugins.json" out f
-	if command -v claude >/dev/null 2>&1; then
-		out="$(claude plugin list --json 2>/dev/null)" || out=""
-		if [ -n "$out" ]; then
-			case "$out" in
-				*'"arkan@arkan"'*) return 0 ;;
-				*) return 1 ;;
-			esac
-		fi
-	fi
-	if [ -f "$record" ]; then
-		grep -qF '"arkan@arkan"' "$record"
-		return
-	fi
-	for f in "$home"/.claude/plugins/cache/arkan/arkan/*/; do
-		if [ -f "$f/.claude-plugin/plugin.json" ]; then return 0; fi
-	done
-	return 1
-}
-
-scan_plugin() {
-	local entry canonical name
-	for entry in "$arkan"/skills/*; do
-		[ -d "$entry" ] || continue
-		[ -f "$entry/SKILL.md" ] || continue
-		canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
-		[ -n "$canonical" ] || continue
-		name="$(declared_name "$entry/SKILL.md")"
-		[ -n "$name" ] || continue
-		record "claude code" "plugin:arkan" "$name" "$canonical" "$arkan/skills"
-	done
-}
-
 scan_root() {
 	local harness="$1" root="$2" skip_system="$3" entry canonical name
 	[ -n "$root" ] || return 0
@@ -145,19 +112,54 @@ scan_root() {
 	done
 }
 
-scan_hermes_dir() {
-	local d path
+scan_tree() {
+	local harness="$1" root="$2" entry canonical name
+	[ -d "$root" ] || return 0
+	while IFS= read -r -d '' entry; do
+		[ -f "$entry/SKILL.md" ] || continue
+		canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
+		if [ -z "$canonical" ]; then
+			hint "skill source $entry unreadable; not grouped"
+			continue
+		fi
+		name="$(declared_name "$entry/SKILL.md")"
+		if [ -z "$name" ]; then
+			hint "skill without frontmatter name: $entry; not grouped"
+			continue
+		fi
+		record "$harness" plain "$name" "$canonical" "$root"
+	done < <(find -L "$root" -mindepth 1 -type d -print0 2>/dev/null)
+}
+
+clean_hermes_dir() {
+	local d
 	d="$(trim "$1")"
+	case "$d" in
+		\"*) d="${d#\"}"; d="${d%%\"*}" ;;
+		\'*) d="${d#\'}"; d="${d%%\'*}" ;;
+		*)
+			case "$d" in *[[:space:]]#*) d="${d%%[[:space:]]#*}" ;; esac
+			d="$(trim "$d")"
+			;;
+	esac
 	d="${d#\[}"; d="${d%\]}"
+	d="$(trim "$d")"
 	d="${d#\"}"; d="${d%\"}"
 	d="${d#\'}"; d="${d%\'}"
 	d="${d%/}"
+	printf '%s' "$d"
+}
+
+scan_hermes_dir() {
+	local d path
+	d="$(clean_hermes_dir "$1")"
 	case "$d" in ""|"[]") return 0 ;; esac
 	path="$(expand_home "$d")"
 	if [ -z "$path" ]; then
 		hint "hermes external dir $d unverified; not scanned"
 		return 0
 	fi
+	if [ "$path" = "$home/.agents/skills" ]; then hermes_agents=1; fi
 	scan_root hermes "$path" 0
 }
 
@@ -184,16 +186,13 @@ EOF
 
 scan_harness() {
 	case "$1" in
-		"claude code")
-			scan_root "claude code" "$home/.claude/skills" 0
-			if claude_plugin_installed; then scan_plugin; fi
-			;;
+		"claude code") scan_root "claude code" "$home/.claude/skills" 0 ;;
 		codex)
 			scan_root codex "$home/.agents/skills" 0
 			scan_root codex "${CODEX_HOME:-$home/.codex}/skills" 1
 			;;
 		dsh) scan_root dsh "$(dsh_agents_root)/skills" 0 ;;
-		pi) scan_root pi "$home/.agents/skills" 0 ;;
+		pi) scan_tree pi "$home/.agents/skills" ;;
 		omp)
 			scan_root omp "$home/.agents/skills" 0
 			scan_root omp "$home/.claude/skills" 0
@@ -210,6 +209,37 @@ scan_harness() {
 			;;
 		hermes) scan_hermes ;;
 	esac
+}
+
+pending_reads_agents() {
+	case "$1" in
+		codex|pi|omp|cursor|opencode) return 0 ;;
+		dsh) [ "$(dsh_agents_root)" = "$home/.agents" ] ;;
+		hermes) [ "$hermes_agents" = 1 ] ;;
+		*) return 1 ;;
+	esac
+}
+
+scan_pending() {
+	local harness="$1" root="$home/.agents/skills" entry canonical name
+	[ -n "$pending" ] || return 0
+	[ -d "$pending" ] || return 0
+	pending_reads_agents "$harness" || return 0
+	for entry in "$pending"/*; do
+		[ -d "$entry" ] || continue
+		[ -f "$entry/SKILL.md" ] || continue
+		canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
+		if [ -z "$canonical" ]; then
+			hint "skill source $entry unreadable; not grouped"
+			continue
+		fi
+		name="$(declared_name "$entry/SKILL.md")"
+		if [ -z "$name" ]; then
+			hint "skill without frontmatter name: $entry; not grouped"
+			continue
+		fi
+		record "$harness" plain "$name" "$canonical" "$root"
+	done
 }
 
 report() {
@@ -266,6 +296,19 @@ report() {
 	' "$records"
 }
 
+case "${1:-}" in
+	--pending)
+		pending="${2:-}"
+		[ -n "$pending" ] || usage
+		shift 2
+		;;
+	--pending=*)
+		pending="${1#--pending=}"
+		[ -n "$pending" ] || usage
+		shift
+		;;
+esac
+
 if [ -z "$home" ]; then
 	say names skip "HOME is not set"
 	exit 0
@@ -285,7 +328,10 @@ hints="$tmp/hints"
 : >"$records"
 : >"$hints"
 
-for h in "$@"; do scan_harness "$h"; done
+for h in "$@"; do
+	scan_harness "$h"
+	scan_pending "$h"
+done
 
 if [ -s "$records" ]; then
 	report

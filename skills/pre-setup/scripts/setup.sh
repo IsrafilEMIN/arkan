@@ -323,7 +323,7 @@ EOF
 }
 
 check_names() {
-	local list harness dsh_seen=0
+	local pending="${1:-}" list harness dsh_seen=0
 	local -a scan
 	scan=()
 	if [ -z "${HOME:-}" ]; then
@@ -345,7 +345,11 @@ EOF
 		say names skip "no harness detected"
 		return
 	fi
-	"$skill/scripts/name-scan.sh" "${scan[@]}"
+	if [ -n "$pending" ]; then
+		"$skill/scripts/name-scan.sh" --pending "$pending" "${scan[@]}"
+	else
+		"$skill/scripts/name-scan.sh" "${scan[@]}"
+	fi
 }
 
 check_claude_md() {
@@ -397,7 +401,7 @@ apply_arkan() {
 		say arkan skip "no skills/ in this checkout"
 		return
 	fi
-	check_names
+	check_names "$arkan/skills"
 	mkdir -p "$home_skills"
 	marker="$home_skills/.arkan-links"
 	if [ -f "$marker" ]; then
