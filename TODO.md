@@ -25,9 +25,6 @@
 
 ## Todo
 
-- [ ] 47: The broker merges arkan's pull requests #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/47-broker-merges-arkan.md` · blocked by: none
-
 - [ ] 04: Install and update command #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
 
@@ -107,6 +104,9 @@
 
 - [x] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
+
+- [x] 47: The broker merges arkan's pull requests #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/47-broker-merges-arkan.md` · blocked by: none
 
 - [x] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
