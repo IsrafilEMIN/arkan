@@ -24,11 +24,11 @@ The merge path is a local `pre-setup` choice recorded in `docs/agents/approvals.
 
 ## Drift check
 
-`scripts/check-seam.sh` runs in `scripts/check.sh`, so ci fails on drift:
+`scripts/check-seam.sh` runs in `scripts/check.sh`, so ci fails on drift. it skips `.scratch/`, this page, `scripts/check-seam.sh` itself, and each case's `bad.diff` under `docs/agents/review-evals/`, in all three checks below.
 
 - a file names `agent-gh <verb>` with a verb that is not in row 2's list above;
 - `ci/github/arkan-merge.yml`, `ci/github/arkan-risk.yml` or their copies in `.github/workflows/` do not carry row 6's agent mark and risk marker exactly as written here;
-- a file outside `.scratch/` and this page names a path inside underground (its broker sources, staged copies, probes, threat model or adr).
+- a file outside those skips names a path inside underground (its broker sources, staged copies, probes, threat model or adr).
 
 ## Change rule
 
