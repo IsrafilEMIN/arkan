@@ -13,8 +13,7 @@
 # Runs are sequential: a second run waits for the first (the git proxy allows 2 git ops).
 #
 # env: SANDBOX_REPO (default: the public sandbox), RUN_TIMEOUT (default 30m),
-#      RUN_MODEL (passed as --model when set), RUN_TOOLS (overrides the allowed tool list below),
-#      AGENT_SANDBOX=1 (the trunk push and the run's forge calls go through agent-gh).
+#      RUN_MODEL (passed as --model when set), RUN_TOOLS (overrides the allowed tool list below).
 set -euo pipefail
 
 REPO="${SANDBOX_REPO:-https://github.com/IsrafilEMIN/arkan-sandbox}"
