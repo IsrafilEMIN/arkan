@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 import argparse
 import hashlib
 import http.client
@@ -1324,7 +1325,6 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         subparser.add_argument("--execution-file", default=None)
     review.add_argument("--prior-env", default=None)
     review.add_argument("--eval", action="store_true")
-    risk.add_argument("--print", dest="print_json", action="store_true")
     return parser.parse_args(argv)
 
 
