@@ -1,0 +1,461 @@
+name: arkan-post-merge
+
+on:
+  workflow_run:
+    workflows: [check]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+env:
+  POST_MERGE_MODEL: claude-opus-5-5
+  MAX_TURNS: "60"
+  CHECK_COMMAND: bash scripts/check.sh
+  SIGNAL_COMMAND: ""
+  MAIN: main
+
+jobs:
+  diagnose:
+    name: diagnose
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.event == 'push' &&
+       !contains(github.event.workflow_run.head_commit.message, 'post-merge'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+      issues: read
+      pull-requests: read
+    concurrency:
+      group: arkan-post-merge-diagnose-${{ github.event.workflow_run.head_sha || github.run_id }}
+      cancel-in-progress: false
+    outputs:
+      result: ${{ steps.post.outputs.structured_output }}
+      branch: ${{ steps.pack.outputs.branch }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Read the signal
+        id: signal
+        env:
+          EVENT: ${{ github.event_name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          THIS_RUN: ${{ github.run_id }}
+        run: |
+          set -eu
+          broken=false
+          if eval "$CHECK_COMMAND" >/dev/null 2>&1; then
+            echo "main is green"
+          else
+            broken=true
+            echo "main is red"
+          fi
+
+          revert=false
+          slow=""
+          if [ "$EVENT" = workflow_run ]; then
+            if git rev-parse --verify -q "${SHA}^1" >/dev/null; then
+              messages=$(git log --first-parent --format=%B "${SHA}^1..${SHA}")
+            else
+              messages=$(git log -1 --format=%B "$SHA")
+            fi
+            if printf '%s\n' "$messages" | grep -qE '^(Revert |This reverts commit )'; then
+              revert=true
+            fi
+            signals="the check run finished $CONCLUSION on ${SHA}: ${RUN_URL}"
+            if [ "$revert" = true ]; then
+              signals="${signals}
+          a revert landed in that push"
+            fi
+          else
+            since=$(gh run list --workflow arkan-post-merge.yml --limit 20 \
+              --json databaseId,createdAt,conclusion \
+              | jq -r --arg id "$THIS_RUN" '[.[] | select(.databaseId != ($id | tonumber) and .conclusion == "success")] | sort_by(.createdAt) | last | .createdAt // ""' \
+              2>/dev/null || true)
+            if [ -z "$since" ]; then
+              since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+            fi
+            if [ -n "$SIGNAL_COMMAND" ]; then
+              slow=$(bash -c "$SIGNAL_COMMAND" 2>&1 || true)
+            fi
+            reverts=$(git log --first-parent --since="$since" --format='%h %s%n%b' "$MAIN" \
+              | grep -iE '^(Revert |This reverts commit )' || true)
+            if [ -n "$reverts" ]; then
+              revert=true
+              slow="${slow:+${slow}
+          }a revert landed since ${since}:
+          ${reverts}"
+            fi
+            issues=$(gh api "repos/$REPO/issues?state=open&labels=incident&per_page=5" \
+              --jq '.[] | "incident #\(.number): \(.title) \(.html_url)"' 2>/dev/null || true)
+            if [ -n "$issues" ]; then
+              slow="${slow:+${slow}
+          }${issues}"
+            fi
+            signals="the run found:"
+            if [ -n "$slow" ]; then
+              signals="${signals}
+          ${slow}"
+            else
+              signals="${signals} no slow signal"
+            fi
+          fi
+
+          run=no
+          if [ "$broken" = true ] || [ "$revert" = true ] || [ -n "$slow" ]; then
+            run=yes
+          fi
+          {
+            echo "run=$run"
+            echo "broken=$broken"
+            echo "revert=$revert"
+            echo "signals<<ARKAN_SIGNALS_EOF"
+            printf '%s\n' "$signals"
+            echo "ARKAN_SIGNALS_EOF"
+          } >>"$GITHUB_OUTPUT"
+          printf 'signal (%s): broken=%s revert=%s run=%s\n%s\n' \
+            "$EVENT" "$broken" "$revert" "$run" "$signals"
+
+      - name: Run the post-merge skill
+        id: post
+        if: >-
+          steps.signal.outputs.run == 'yes' &&
+          (github.event_name != 'workflow_run' ||
+           !contains(github.event.workflow_run.head_commit.message, 'post-merge'))
+        continue-on-error: true
+        uses: anthropics/claude-code-action@f27be6b65a4652f08a2ba3cff79114829b588967 # v1.0.252
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            You are the arkan post-merge agent for ${{ github.repository }}. No person is watching this run.
+
+            This is a `${{ github.event_name }}` trigger. The signal is:
+            ${{ steps.signal.outputs.signals }}
+
+            `${{ steps.signal.outputs.broken }}` says whether `${{ env.CHECK_COMMAND }}` fails on `${{ env.MAIN }}` now.
+            `${{ steps.signal.outputs.revert }}` says whether a revert landed in the signal above.
+
+            Read `.claude/skills/post-merge/SKILL.md` and follow it. Its `## In ci` section holds this run's inputs and the defaults that replace every question:
+            - the check is `${{ env.CHECK_COMMAND }}`, run from the repo root
+            - the main branch is `${{ env.MAIN }}`
+            - the signal is above; the workflow has already run the check on main
+            - no person, and no push, pull request or issue from you: return the structured output, and the next job publishes it.
+
+            Start from `${{ env.MAIN }}`, which is checked out.
+            1. If a revert is the signal and main is green, open no branch: the revert already made main safe. Return `broken` false, `action` `none`, and the ticket for the miss.
+            2. If nothing is broken, return `broken` false, `action` `none`, the empty strings, and the signals you read.
+            3. Otherwise find the first bad merge with `git bisect start --first-parent <bad> <good>` and `git bisect run ${{ env.CHECK_COMMAND }}`, then `git bisect reset`. Name the merged commit, and the pull request when `gh api repos/${{ github.repository }}/commits/<sha>/pulls` finds one.
+            4. On a new branch named `post-merge/<first 7 of the bad merge sha>`, revert with `git revert -m 1 <merge>` or fix forward when the cause is plain and a revert would undo more than it saves. Run the check on the branch; it must pass. Commit with a message that starts `post-merge: revert <merge short>` (body: `This reverts commit <merge>.`) or `post-merge: fix <merge short>`; the `post-merge` word keeps the merged commit from starting this workflow again under any merge method. Do not push.
+            5. Name the node that should have caught the bug, with the evidence from the bad diff or that node's output.
+            6. Write the ticket content into the fields, not into a file. Put `{{pr}}` where the pull request url goes and `{{ticket}}` in `pr_body` where the ticket goes. `ticket_path` is a new path under `.scratch/post-merge/issues/`, numbered like the other tickets, and is used only when `docs/agents/issue-tracker.md` names the local markdown tracker. Give the local ticket the fields `board.sh` reads: `**Role:** needs-triage`, `**Closed:** no`, `**Priority:**`, and `**Blocked by:** none` (or the open blockers).
+            7. `pr_title` starts `post-merge: `; that word keeps the merged pull request from starting this workflow again. `pr_body` names the signal, the bad merge and its pull request, the node, and the check you ran.
+
+            Return only the structured output.
+          claude_args: |
+            --model ${{ env.POST_MERGE_MODEL }}
+            --max-turns ${{ env.MAX_TURNS }}
+            --allowedTools "Read,Glob,Grep,Edit,Write,Task,Agent,Bash"
+            --json-schema '{"type":"object","properties":{"summary":{"type":"string"},"signal":{"type":"string"},"broken":{"type":"boolean"},"bad_merge":{"type":"string"},"bad_pr":{"type":"string"},"node":{"type":"string"},"action":{"type":"string","enum":["revert","fix","none"]},"branch":{"type":"string"},"pr_title":{"type":"string"},"pr_body":{"type":"string"},"ticket_path":{"type":"string"},"ticket_title":{"type":"string"},"ticket_body":{"type":"string"}},"required":["summary","signal","broken","bad_merge","bad_pr","node","action","branch","pr_title","pr_body","ticket_path","ticket_title","ticket_body"]}'
+
+      - name: Pack the fix branch
+        id: pack
+        if: always()
+        env:
+          OUT: ${{ steps.post.outputs.structured_output }}
+          OUTCOME: ${{ steps.post.outcome }}
+        run: |
+          set -eu
+          if [ "$OUTCOME" = skipped ]; then
+            echo "bundle=no" >>"$GITHUB_OUTPUT"
+            echo "branch=" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$OUTCOME" != success ] || [ -z "$OUT" ]; then
+            echo "::error title=arkan-post-merge::the post-merge run returned no structured output"
+            exit 1
+          fi
+          broken=$(printf '%s' "$OUT" | jq -r '.broken // ""')
+          action=$(printf '%s' "$OUT" | jq -r '.action // ""')
+          branch=$(printf '%s' "$OUT" | jq -r '.branch // ""')
+          case "$action" in
+            revert | fix | none) ;;
+            *) echo "::error title=arkan-post-merge::action is '$action'"; exit 1 ;;
+          esac
+          if [ "$broken" = true ] && [ "$action" = none ]; then
+            echo "::error title=arkan-post-merge::main is red and the run chose no action"
+            exit 1
+          fi
+          if [ "$action" = none ]; then
+            echo "bundle=no" >>"$GITHUB_OUTPUT"
+            echo "branch=" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "$branch" in
+            post-merge/?*) ;;
+            *) echo "::error title=arkan-post-merge::branch is '$branch', not post-merge/*"; exit 1 ;;
+          esac
+          current=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$current" != "$branch" ]; then
+            echo "::error title=arkan-post-merge::HEAD is $current, not $branch"
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            echo "::error title=arkan-post-merge::the fix branch has uncommitted changes"
+            exit 1
+          fi
+          git bundle create "$RUNNER_TEMP/post-merge.bundle" "$MAIN..refs/heads/$branch"
+          echo "bundle=yes" >>"$GITHUB_OUTPUT"
+          echo "branch=$branch" >>"$GITHUB_OUTPUT"
+
+      - name: Upload the fix branch
+        if: steps.pack.outputs.bundle == 'yes'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: post-merge
+          path: ${{ runner.temp }}/post-merge.bundle
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: publish
+    needs: diagnose
+    if: always() && needs.diagnose.result == 'success' && needs.diagnose.outputs.result != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: arkan-post-merge-publish-${{ needs.diagnose.outputs.branch || github.run_id }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.POST_MERGE_TOKEN || github.token }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Read the result
+        id: out
+        env:
+          OUT: ${{ needs.diagnose.outputs.result }}
+        run: |
+          set -eu
+          action=$(printf '%s' "$OUT" | jq -r '.action // ""')
+          broken=$(printf '%s' "$OUT" | jq -r '.broken // ""')
+          branch=$(printf '%s' "$OUT" | jq -r '.branch // ""')
+          case "$action" in
+            revert | fix | none) ;;
+            *) echo "::error title=arkan-post-merge::action is '$action'"; exit 1 ;;
+          esac
+          if [ "$broken" = true ] && [ "$action" = none ]; then
+            echo "::error title=arkan-post-merge::main is red and the run chose no action"
+            exit 1
+          fi
+          has_bundle=no
+          if [ "$action" != none ]; then
+            case "$branch" in
+              post-merge/?*) ;;
+              *) echo "::error title=arkan-post-merge::branch is '$branch', not post-merge/*"; exit 1 ;;
+            esac
+            has_bundle=yes
+          fi
+          {
+            echo "action=$action"
+            echo "broken=$broken"
+            echo "branch=$branch"
+            echo "has_bundle=$has_bundle"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Download the fix branch
+        if: steps.out.outputs.has_bundle == 'yes'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: post-merge
+          path: ${{ runner.temp }}
+
+      - name: Publish the branch, pull request and ticket
+        env:
+          OUT: ${{ needs.diagnose.outputs.result }}
+          BUNDLE: ${{ runner.temp }}/post-merge.bundle
+          HAS_BUNDLE: ${{ steps.out.outputs.has_bundle }}
+          BRANCH: ${{ steps.out.outputs.branch }}
+          ACTION: ${{ steps.out.outputs.action }}
+          BROKEN: ${{ steps.out.outputs.broken }}
+          MAIN: ${{ env.MAIN }}
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.POST_MERGE_TOKEN || github.token }}
+        run: |
+          set -eu
+          field() { printf '%s' "$OUT" | jq -r --arg k "$1" '.[$k] // ""'; }
+          summary=$(field summary) signal=$(field signal) node=$(field node)
+          bad=$(field bad_merge) bad_pr=$(field bad_pr)
+          pr_title=$(field pr_title) pr_body=$(field pr_body)
+          ticket_path=$(field ticket_path) ticket_title=$(field ticket_title) ticket_body=$(field ticket_body)
+          echo "signal: $signal"
+          echo "bad merge: ${bad:-none}${bad_pr:+ (pull request #$bad_pr)}"
+          echo "node: ${node:-none}"
+          echo "action: $ACTION"
+
+          pr_url=""
+          code_pr=""
+          if [ "$HAS_BUNDLE" = yes ]; then
+            git bundle verify "$BUNDLE" >/dev/null
+            git fetch --quiet "$BUNDLE" "refs/heads/$BRANCH"
+            git switch -c "$BRANCH" FETCH_HEAD
+            current=$(git rev-parse --abbrev-ref HEAD)
+            if [ "$current" != "$BRANCH" ]; then
+              echo "::error title=arkan-post-merge::HEAD is $current, not $BRANCH"
+              exit 1
+            fi
+            owner=${REPO%%/*}
+            existing=$(gh api "repos/$REPO/pulls?state=open&head=$owner:$BRANCH" \
+              --jq '.[0].html_url // ""')
+            if [ -n "$existing" ]; then
+              existing_body=$(gh api "repos/$REPO/pulls/${existing##*/}" --jq '.body // ""')
+              case "$existing_body" in
+                *"ticket: pending"*)
+                  pr_url=$existing
+                  code_pr=$existing
+                  git fetch --quiet origin "refs/heads/$BRANCH"
+                  git switch -C "$BRANCH" FETCH_HEAD
+                  echo "pull request is open, ticket still pending: $pr_url"
+                  ;;
+                *)
+                  echo "::notice title=arkan-post-merge::a run already published $BRANCH: $existing"
+                  exit 0
+                  ;;
+              esac
+            fi
+            if [ -z "$pr_url" ]; then
+              if git ls-remote --exit-code --heads origin "refs/heads/$BRANCH" >/dev/null 2>&1; then
+                remote_sha=$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)
+                git push --force-with-lease="refs/heads/$BRANCH:$remote_sha" origin "$BRANCH"
+                echo "replaced $BRANCH; no pull request was open for it"
+              else
+                git push origin "$BRANCH"
+              fi
+              case "$pr_title" in post-merge:*) ;; *) pr_title="post-merge: $pr_title" ;; esac
+              create_body=${pr_body//\{\{ticket\}\}/ticket: pending}
+              if ! pr_url=$(gh api "repos/$REPO/pulls" --jq .html_url \
+                -f title="$pr_title" -f head="$BRANCH" -f base="$MAIN" -f body="$create_body" \
+                2>/tmp/arkan-post-merge-pr.err); then
+                pr_url=$(gh api "repos/$REPO/pulls?state=open&head=$owner:$BRANCH" \
+                  --jq '.[0].html_url // ""' || true)
+                if [ -z "$pr_url" ]; then
+                  cat /tmp/arkan-post-merge-pr.err >&2
+                  echo "::error title=arkan-post-merge::could not open the pull request"
+                  exit 1
+                fi
+                echo "::notice title=arkan-post-merge::a concurrent run opened $pr_url"
+              fi
+              code_pr=$pr_url
+              echo "pull request: $pr_url"
+            fi
+          fi
+
+          ticket_ref=""
+          if [ -n "$ticket_body" ]; then
+            tracker=docs/agents/issue-tracker.md
+            kind=none
+            if git cat-file -e "$MAIN:$tracker" 2>/dev/null; then
+              case "$(git show "$MAIN:$tracker" | head -n1)" in
+                "# Issue tracker: GitHub") kind=github ;;
+                "# Issue tracker: Local Markdown") kind=local ;;
+              esac
+            fi
+            body=${ticket_body//\{\{pr\}\}/${pr_url:-none: a revert already landed}}
+            case "$kind" in
+              github)
+                if issue=$(gh api "repos/$REPO/issues" --jq .html_url \
+                  -f title="$ticket_title" -f body="$body" -f 'labels[]=needs-triage' 2>/dev/null); then
+                  :
+                else
+                  issue=$(gh api "repos/$REPO/issues" --jq .html_url -f title="$ticket_title" -f body="$body")
+                fi
+                ticket_ref=$issue
+                echo "ticket: $issue"
+                ;;
+              local)
+                case "$ticket_path" in
+                  *..*) ticket_path=".scratch/post-merge/issues/01-post-merge-$RUN_ID.md" ;;
+                  .scratch/*.md) ;;
+                  *) ticket_path=".scratch/post-merge/issues/01-post-merge-$RUN_ID.md" ;;
+                esac
+                if [ -z "$pr_url" ]; then
+                  BRANCH="post-merge/ticket-$RUN_ID"
+                  git switch -c "$BRANCH"
+                fi
+                mkdir -p "$(dirname "$ticket_path")"
+                printf '%s\n' "$body" >"$ticket_path"
+                git add "$ticket_path"
+                if ! git diff --cached --quiet; then
+                  git commit -m "docs: ticket the post-merge miss"
+                fi
+                board=""
+                for f in .claude/skills/pre-setup/scripts/board.sh scripts/board.sh; do
+                  if git cat-file -e "$MAIN:$f" 2>/dev/null; then
+                    git show "$MAIN:$f" >"$RUNNER_TEMP/board.sh"
+                    board=$f
+                    break
+                  fi
+                done
+                if [ -n "$board" ]; then
+                  bash "$RUNNER_TEMP/board.sh" build "$PWD"
+                  bash "$RUNNER_TEMP/board.sh" check "$PWD"
+                  if [ -n "$(git status --porcelain -- TODO.md)" ]; then
+                    git add TODO.md
+                    git commit -m "docs: rebuild the board"
+                  fi
+                fi
+                git push origin "$BRANCH"
+                ticket_ref=$ticket_path
+                if [ -z "$pr_url" ]; then
+                  pr_url=$(gh api "repos/$REPO/pulls" --jq .html_url \
+                    -f title="post-merge: ticket the miss" -f head="$BRANCH" -f base="$MAIN" \
+                    -f body="The revert already landed. This pull request carries the ticket for the miss: \`$ticket_ref\`.")
+                  echo "pull request: $pr_url"
+                fi
+                echo "ticket: $ticket_ref"
+                ;;
+              *)
+                ticket_ref="not opened: no ticket tracker"
+                echo "::warning title=arkan-post-merge::no ticket: $tracker is missing or does not start with '# Issue tracker: GitHub' or '# Issue tracker: Local Markdown'"
+                ;;
+            esac
+          fi
+
+          if [ -n "$code_pr" ] && [ -n "$ticket_ref" ]; then
+            body=${pr_body//\{\{ticket\}\}/$ticket_ref}
+            gh api -X PATCH "repos/$REPO/pulls/${code_pr##*/}" -f body="$body" >/dev/null || true
+          fi
+          echo "$summary"
