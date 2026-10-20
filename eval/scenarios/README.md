@@ -19,7 +19,7 @@ the build materializes `main` and `pre-break` with the scenario history, plants 
 
 the same inputs give the same branch tips and trees.
 
-`build.sh refresh <checkout> [base]` replaces only `.claude/skills/` on a new `agent/refresh-skills-<arkan-sha>` branch and opens its pull request through `agent-gh`. it fetches and compares against `origin/<base>`, refuses a dirty checkout, a dirty `skills/`, or a change outside `.claude/skills/`, and removes its temporary worktree and branch when a push fails. a retry at the same arkan sha makes the same commit. `base` defaults to `pre-break`. the broker must allow the target repository, so a guarded run stops on a refusal instead of falling back to `gh`.
+`build.sh refresh <checkout> [base]` replaces only `.claude/skills/` on a new `agent/refresh-skills-<arkan-sha>` branch and opens its pull request through `agent-gh`. it fetches and compares against `origin/<base>`, refuses a dirty checkout, a dirty `skills/`, or a change outside `.claude/skills/`, and removes its temporary worktree and branch when the push or the PR creation fails. a retry at the same arkan sha makes the same commit. `base` defaults to `pre-break`. the broker must allow the target repository, so a guarded run stops on a refusal instead of falling back to `gh`.
 
 ## the sandbox
 

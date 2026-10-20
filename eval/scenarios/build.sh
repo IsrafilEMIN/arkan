@@ -25,15 +25,7 @@ refresh_branch=""
 refresh_root=""
 refresh_keep=0
 
-rm_tree() {
-	local dir="$1"
-	[ -n "$dir" ] || die "refusing to remove an empty path"
-	[ -d "$dir" ] || return 0
-	find "$dir" -depth -mindepth 1 -delete
-	rmdir "$dir"
-}
-
-cleanup_dir() {
+remove_tree() {
 	local dir="$1"
 	[ -n "$dir" ] && [ -d "$dir" ] || return 0
 	find "$dir" -depth -mindepth 1 -delete 2>/dev/null || true
@@ -41,19 +33,19 @@ cleanup_dir() {
 }
 
 cleanup_all() {
-	cleanup_dir "$cleanup_root"
+	remove_tree "$cleanup_root"
 	if [ "$refresh_keep" = 1 ]; then
 		return 0
 	fi
 	if [ -n "$refresh_target" ] && [ -n "$refresh_worktree" ] && [ -d "$refresh_worktree" ]; then
 		git -C "$refresh_target" worktree remove --force "$refresh_worktree" >/dev/null 2>&1 || true
-		cleanup_dir "$refresh_worktree"
+		remove_tree "$refresh_worktree"
 	fi
 	if [ -n "$refresh_target" ] && [ -n "$refresh_branch" ] &&
 		git -C "$refresh_target" rev-parse --verify "refs/heads/$refresh_branch" >/dev/null 2>&1; then
 		git -C "$refresh_target" branch -D "$refresh_branch" >/dev/null 2>&1 || true
 	fi
-	cleanup_dir "$refresh_root"
+	remove_tree "$refresh_root"
 }
 trap cleanup_all EXIT
 
@@ -77,7 +69,7 @@ export_skills() {
 
 install_skills() {
 	local stage="$1" source="$2"
-	rm_tree "$stage/.claude/skills"
+	remove_tree "$stage/.claude/skills"
 	mkdir -p "$stage/.claude"
 	cp -a "$source/skills/." "$stage/.claude/skills"
 }
@@ -137,7 +129,7 @@ stage_branch() {
 
 build() {
 	local dest="$1" parent repo main_before pre_before main_tip pre_tip
-	local skills stage link count main_log
+	local skills stage link count arkan_skills stage_skills
 	[ -n "$dest" ] || usage
 	if [ -e "$dest" ]; then
 		[ -d "$dest" ] || die "destination is not a directory: $dest"
@@ -156,6 +148,8 @@ build() {
 	cleanup_root=$(mktemp -d "$parent/.arkan-build.XXXXXX")
 	skills="$cleanup_root/skills"
 	export_skills "$skills"
+	arkan_skills=$(git -C "$arkan_root" rev-parse HEAD:skills) ||
+		die "arkan HEAD has no skills tree"
 	repo="$cleanup_root/repo"
 	mkdir -p "$repo"
 	git -C "$repo" init -q
@@ -178,7 +172,9 @@ build() {
 	done
 
 	for stage in main pre-break; do
-		diff -r "$skills/skills" "$cleanup_root/$stage/.claude/skills" >/dev/null ||
+		stage_skills=$(git -C "$repo" rev-parse "$stage:.claude/skills") ||
+			die "$stage has no .claude/skills tree"
+		[ "$stage_skills" = "$arkan_skills" ] ||
 			die "$stage .claude/skills does not match arkan HEAD"
 		grep -q 'scripts/board.sh build' "$cleanup_root/$stage/AGENTS.md" ||
 			die "$stage AGENTS.md does not name board.sh build"
@@ -315,10 +311,10 @@ Scenario runs use the refreshed skills; the stock code and tests are unchanged.
 ## Verification
 git diff --name-only $base_sha..$head lists only .claude/skills/ paths."
 	agent-gh push "$slug" "$refresh_worktree" "$branch" "$head"
-	refresh_keep=1
 	agent-gh pr-create "$slug" "$base" "$branch" "$title" "$body"
+	refresh_keep=1
 	git -C "$target" worktree remove "$refresh_worktree"
-	rm_tree "$refresh_root"
+	remove_tree "$refresh_root"
 	count=$(awk 'END {print NR}' <<<"$changed")
 	printf 'refresh: branch %s at %s, %s files\n' "$branch" "$head" "$count"
 }
