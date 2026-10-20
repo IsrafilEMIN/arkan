@@ -48,6 +48,115 @@ merge_path() {
 	fi
 }
 
+tracker_kind() {
+	local f="$root/docs/agents/issue-tracker.md" head
+	[ -f "$f" ] || return 0
+	head="$(grep -m1 '^# ' "$f" || true)"
+	head="$(printf '%s' "$head" | tr '[:upper:]' '[:lower:]')"
+	case "$head" in
+		*"local markdown"*) printf local ;;
+		*github*) printf github ;;
+		*gitlab*) printf gitlab ;;
+		*) printf other ;;
+	esac
+}
+
+check_tracker() {
+	local out line rel bad=0 total=0 problems=0 seen=" " shown=0 first="" detail=""
+	if ! has docs/agents/issue-tracker.md; then
+		say tracker missing docs/agents/issue-tracker.md
+		return
+	fi
+	if [ "$(tracker_kind)" != local ]; then
+		say tracker ok docs/agents/issue-tracker.md
+		return
+	fi
+	if [ ! -d "$root/.scratch" ]; then
+		say tracker out-of-date "no .scratch/; run setup.sh apply board"
+		return
+	fi
+	if out="$("$skill/scripts/board.sh" fields "$root" 2>&1)"; then
+		say tracker ok docs/agents/issue-tracker.md
+		return
+	fi
+	total="$(find "$root/.scratch" -type f \( -path '*/issues/*.md' -o -name spec.md \) 2>/dev/null | wc -l | tr -d ' ')"
+	while IFS= read -r line; do
+		case "$line" in
+			.scratch/*) ;;
+			*) continue ;;
+		esac
+		problems=$((problems + 1))
+		rel="${line%%: *}"
+		case "$seen" in
+			*" $rel "*) ;;
+			*) seen="$seen$rel "; bad=$((bad + 1)) ;;
+		esac
+		if [ $shown -lt 3 ]; then
+			first="$first$line"$'\n'
+			shown=$((shown + 1))
+		fi
+	done <<<"$out"
+	if [ $problems = 0 ]; then
+		detail="$(printf '%s\n' "$out" | head -n1)"
+		detail="${detail#fields: }"
+		[ -n "$detail" ] || detail="board.sh fields failed"
+		say tracker out-of-date "$detail; fix the tickets first"
+		return
+	fi
+	say tracker out-of-date "$bad of $total files break the contract: $problems problem(s)"
+	while IFS= read -r line; do
+		if [ -n "$line" ]; then printf '  %s\n' "$line"; fi
+	done <<<"$first"
+}
+
+check_board() {
+	local out count detail
+	if ! has TODO.md; then
+		say board missing TODO.md
+		return
+	fi
+	if in_git && git -C "$root" check-ignore -q --no-index TODO.md; then
+		say board missing "TODO.md is git-ignored"
+		return
+	fi
+	if [ "$(tracker_kind)" != local ]; then
+		say board ok TODO.md
+		return
+	fi
+	if [ ! -d "$root/.scratch" ]; then
+		say board out-of-date "no .scratch/; run setup.sh apply board"
+		return
+	fi
+	if out="$("$skill/scripts/board.sh" check "$root" 2>&1)"; then
+		case "$out" in
+			*"check-board: ok"*) say board ok TODO.md ;;
+			*) say board out-of-date "board.sh check did not print ok" ;;
+		esac
+		return
+	fi
+	count="$(printf '%s\n' "$out" | sed -n 's/^check-board: \([0-9][0-9]*\) problem(s)$/\1/p' | head -n1)"
+	if [ -n "$count" ]; then
+		detail="$count problem(s)"
+	else
+		detail="$(printf '%s\n' "$out" | sed -n 's/^check-board: //p' | head -n1)"
+		detail="${detail%:}"
+		[ -n "$detail" ] || detail="board.sh check failed"
+	fi
+	if "$skill/scripts/board.sh" fields "$root" >/dev/null 2>&1; then
+		say board out-of-date "$detail; run board.sh build"
+	else
+		say board out-of-date "$detail; fix the tickets first, then run board.sh build"
+	fi
+}
+
+agents_board_line() {
+	awk '
+		/^## / { block = ($0 == "## Agent skills"); next }
+		block && /board\.sh build/ && /board\.sh check/ { found = 1 }
+		END { exit !found }
+	' "$root/AGENTS.md"
+}
+
 # the repo's own workflow files: every .yml/.yaml in .github/workflows/ that is not arkan's.
 own_ci() {
 	local f out=""
@@ -170,7 +279,7 @@ hook_covers() { # language hook-file: a non-comment line names that language's t
 
 check() {
 	if in_git; then say git ok; else say git missing "not a git repo"; fi
-	check_file tracker docs/agents/issue-tracker.md
+	check_tracker
 	check_file labels docs/agents/triage-labels.md
 	check_file domain docs/agents/domain.md
 	if has .gitattributes && grep -qx 'GLOSSARY.md merge=union' "$root/.gitattributes"; then
@@ -178,18 +287,15 @@ check() {
 	else
 		say gitattributes missing "GLOSSARY.md merge=union"
 	fi
-	if has AGENTS.md && grep -qx '## Agent skills' "$root/AGENTS.md"; then
-		say agents-block ok AGENTS.md
-	else
+	if ! has AGENTS.md || ! grep -qx '## Agent skills' "$root/AGENTS.md"; then
 		say agents-block missing "## Agent skills in AGENTS.md"
-	fi
-	if ! has TODO.md; then
-		say board missing TODO.md
-	elif in_git && git -C "$root" check-ignore -q --no-index TODO.md; then
-		say board missing "TODO.md is git-ignored"
+	elif [ "$(tracker_kind)" = local ] && ! agents_board_line; then
+		say agents-block out-of-date "add this line under ### Board in ## Agent skills:"
+		printf '  %s\n' "Do not edit \`TODO.md\` by hand: run the \`pre-setup\` skill's \`scripts/board.sh build\` from the repo root, then \`scripts/board.sh check\`; it must print \`ok\`."
 	else
-		say board ok TODO.md
+		say agents-block ok AGENTS.md
 	fi
+	check_board
 	check_file sensitive-paths docs/agents/sensitive-paths.md
 	check_file approvals docs/agents/approvals.md
 	check_file review-md REVIEW.md
@@ -261,6 +367,7 @@ apply() {
 		git) in_git || git -C "$root" init -q ;;
 		gitattributes) append_line .gitattributes 'GLOSSARY.md merge=union' ;;
 		board)
+			if [ "$(tracker_kind)" = local ]; then mkdir -p "$root/.scratch"; fi
 			seed TODO.md todo.md
 			if has .gitignore; then
 				local tmp
