@@ -223,7 +223,7 @@ claude_detected() {
 	plugin_record_ok
 }
 
-hermes_dirs_ok() { # config file: external_dirs names the canonical skills dir
+hermes_dirs_ok() {
 	local raw line d
 	raw="$(awk '
 		/^[[:space:]]*external_dirs:/ {
