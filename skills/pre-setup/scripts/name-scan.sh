@@ -87,6 +87,7 @@ hint() { printf '%s\n' "$1" >>"$hints"; }
 
 add_skill() {
 	local harness="$1" root="$2" entry="$3" canonical name
+	if pending_owned_link "$root" "$entry"; then return 0; fi
 	[ -d "$entry" ] || return 0
 	[ -f "$entry/SKILL.md" ] || return 0
 	canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
@@ -131,7 +132,6 @@ scan_root() {
 			hint "dangling skill link $entry; not grouped"
 			continue
 		fi
-		if pending_owned_link "$root" "$entry"; then continue; fi
 		add_skill "$harness" "$root" "$entry"
 	done
 }
@@ -140,7 +140,6 @@ scan_tree() {
 	local harness="$1" root="$2" entry
 	[ -d "$root" ] || return 0
 	while IFS= read -r -d '' entry; do
-		if pending_owned_link "$root" "$entry"; then continue; fi
 		add_skill "$harness" "$root" "$entry"
 	done < <(find -L "$root" -mindepth 1 \
 		\( -name '.*' -o -name node_modules \) -prune -o \
@@ -158,6 +157,7 @@ clean_hermes_dir() {
 		\'*) d="${d#\'}"; d="${d%%\'*}" ;;
 		*)
 			case "$d" in *[[:space:]]#*) d="${d%%[[:space:]]#*}" ;; esac
+			d="$(trim "$d")"
 			d="$(trim "${d%\]}")"
 			;;
 	esac
