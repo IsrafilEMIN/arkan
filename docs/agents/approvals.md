@@ -13,7 +13,7 @@ Each pull request gets one label, set in ci, never by its author:
 - `auto`: merges with no person once every check is green, both reviews (code and security) have no open finding, and the agent verifier posted `PASS` on the head commit.
 - `manual`: merges only after the person posts `PASS` on the head commit.
 
-Until the risk tier is installed (arkan ticket 42), every pull request is `manual`.
+A pull request with no risk marker, or with a marker for an older head, is `manual`.
 
 ## Rules
 

@@ -1,6 +1,6 @@
 # Review evals
 
-Each confirmed miss by the ci reviewer becomes one case here. The cases keep the reviewer honest: a change to `ci/github/arkan-review.yml`, `skills/code-review/` or `skills/security-review/` is kept only when it misses no case caught before.
+Each confirmed miss by the ci reviewer becomes one case here. The cases keep the reviewer honest: a change to `ci/github/arkan-review.yml`, `ci/opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when it misses no case caught before.
 
 ## A case
 
@@ -24,9 +24,9 @@ One folder per case, `<NN>-<slug>/`, numbered from `01`. It holds:
 
 ## One reviewer
 
-`ci/review-eval.sh` reads the prompt, `REVIEW_MODEL`, `MAX_TURNS` and the `--allowedTools` line from `ci/github/arkan-review.yml`, the file ci runs. It fills the workflow's `${{ }}` inputs with the case's values, so a change to that file changes the eval. One file, not a second prompt copy that can drift. The script dies when the prompt holds an input it does not fill, or the workflow uses a `${{ env.* }}` setting it does not read.
+`ci/review-eval.sh` reads the prompt, `REVIEW_MODEL` and `MAX_TURNS` from `ci/github/arkan-review.yml`, the file ci runs. It fills the workflow's `${{ }}` inputs with the case's values, so a change to that file changes the eval. One file, not a second prompt copy that can drift. The script dies when the prompt holds an input it does not fill, or the workflow uses a `${{ env.* }}` setting it does not read.
 
-The default reviewer is `claude -p` with that model, turn limit and tools: the reviewer ci runs. Set `REVIEW_CMD`, or pass `--reviewer`, to use another headless harness. A swapped harness is a weaker proof, because it does not run the command ci runs.
+The default reviewer is `ci/opencode_agent.py review --eval` with that model and turn limit: the reviewer ci runs. Set `REVIEW_CMD`, or pass `--reviewer`, to use another headless harness. A swapped harness is a weaker proof, because it does not run the command ci runs.
 
 Each case runs in a temp git repo. One commit holds the bad commit's parent tree; the next applies `bad.diff`. The checkout is the bad commit, so the workflow's `git diff <base>...<head>` returns the case's diff. `.claude/skills/` holds the branch's `code-review` and `security-review`: each replaces the parent tree's copy as a whole, from `skills/<name>` when present, else `.claude/skills/<name>`. The repo never holds `docs/agents/review-evals/`: no case, baseline or example is in reach.
 
@@ -40,7 +40,7 @@ ci/review-eval.sh --prompt weak.md   # test another reviewer prompt
 ci/review-eval.sh --check            # check the cases, prompt and baseline, no model
 ```
 
-A finding counts when its line names the case's `Path:` at a line start, or after a character that is not a letter, digit, `.`, `_`, `-` or `/`, and the path is followed by `:`. That `:` must be followed by a line or an `A-B` range. The line or range must sit inside `Lines:`, and a range must be no wider than `Lines:`. So for a case at `Lines: 10`, `scripts/check-seam.sh:10:` counts; `:13`, `1-99999`, `scripts/check-seam.sh.orig:20`, `./scripts/check-seam.sh:10` and prose that names the file without `:<line>` do not. The script appends the one-line output rule, because it grades text.
+A finding counts when its line names the case's `Path:` at a line start, or after a character that is not a letter, digit, `.`, `_`, `-` or `/`, and the path is followed by `:`. That `:` must be followed by a line or an `A-B` range. The line or range must sit inside `Lines:`, and a range must be no wider than `Lines:`. So for a case at `Lines: 10`, `scripts/check-seam.sh:10:` counts; `:13`, `1-99999`, `scripts/check-seam.sh.orig:20`, `./scripts/check-seam.sh:10` and prose that names the file without `:<line>` do not. The runner's `--eval` mode prints one `file:line: body` line per finding, or `none`. A custom `REVIEW_CMD` gets the one-line output rule appended, because the script grades text.
 
 `--prompt FILE` replaces the workflow's prompt. The file must name the diff, as the workflow's prompt does: the checkout is at `HEAD`, the bad commit, and `HEAD^` is its parent. A weaker prompt is the proof that a case can go from caught to missed.
 

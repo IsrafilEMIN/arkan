@@ -2,19 +2,20 @@
 
 ## arkan-review
 
-[`github/arkan-review.yml`](github/arkan-review.yml) reviews each push to an open pull request with arkan's `code-review` and `security-review` skills, in a github actions run that no session drives. it runs [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action), pinned to a release commit.
+[`github/arkan-review.yml`](github/arkan-review.yml) reviews each push to an open pull request with arkan's `code-review` and `security-review` skills, in a github actions run that no session drives. it runs `ci/opencode_agent.py`, a stdlib python runner, against the opencode go chat completions api.
 
 ### add it to a repo
 
-1. put arkan's skills in the repo's `.claude/skills/`, on the default branch. the action reads `.claude/` from the pr's base branch, never from the pr, so a pr cannot change its own reviewer.
-2. add a repo secret `CLAUDE_CODE_OAUTH_TOKEN`: run `claude setup-token` on a pro or max plan and paste the token. to pay per token instead, add `ANTHROPIC_API_KEY` and swap the `claude_code_oauth_token` line for the commented `anthropic_api_key` line.
-3. copy the file to `.github/workflows/arkan-review.yml`, on the default branch too: a pr comment command runs the default branch's copy.
+1. add the repo secret `OPENCODE_API_KEY`. get the key from the opencode console.
+2. put arkan's skills in `skills/` or `.claude/skills/`, on the default branch. the runner reads them from the pr's base commit, never from the pr, so a pr cannot change its own reviewer.
+3. copy `ci/opencode_agent.py` and the workflow to the default branch. the workflow reads the runner from the base commit. `pre-setup` installs both.
 4. to block merges on it, add `arkan-review` as a required status check in the branch protection of the base branch.
 
 ### what one run does
 
 - **runs on** `pull_request` `opened`, `synchronize` (each push) and `reopened`. a newer push cancels the run on the older head. it also runs on a pr comment (`issue_comment`, only when the comment has `arkan:` in it) and on an inline reply (`pull_request_review_comment`, each one: a skipped job would pass the check), to apply a person's command (below) with no model call. a comment run waits for the run in progress on the pr, and never starts a round. github runs an `issue_comment` run from the default branch's copy of this file, and its own check lands there, so it posts the `arkan-review` check run on the pr head itself; an inline reply runs the pr's copy, and its job is the check.
 - **skips**, with a pr comment that says why, a pr from a fork (its run gets no secrets, and its token cannot comment, so there the reason is a notice on the check) and a docs-only pr (every changed file matches `DOCS_ONLY_REGEX`). a pr that touches a file that steers the agent or its reviewer (`NEVER_DOCS_REGEX`: `.claude/`, `.scratch/`, `.github/`, `docs/agents/review-evals/`, `AGENTS.md`, `CLAUDE.md`, `CODING_STANDARDS.md`, `REVIEW.md`, `SKILL.md`) is always reviewed. a skipped run passes the check, so a person reviews those prs by hand.
+- **installs once**: the run executes the base commit's `ci/opencode_agent.py`. the pull request that first installs the runner has no base copy, so that run skips with a comment and passes its check as skipped. after the merge, every run has a trusted base runner. if the base has an installed workflow but no runner, the run fails red instead.
 - **counts rounds** in one sticky pr comment, which it edits in place. the comment's first line is a hidden marker, the only state a fresh run reads:
 
   ```
@@ -31,20 +32,21 @@
   a person sets the last three with a line in a pr comment or in a reply to the finding's inline comment: `arkan: <id> wrong`, `arkan: <id> intended` or `arkan: <id> did-not-matter`, one per line, several in one comment if needed. a command counts only from someone whose repo permission is `write`, `maintain` or `admin` (`gh api repos/<repo>/collaborators/<login>/permission`), never from a bot; others are ignored, and the run log says so. each run reads every comment on the pr, so a command applies on its own comment run or on any later run; for one id the latest command wins. a person's state overrides `fixed`, and the model never changes it. a closed finding is not `open`, so it stops blocking.
 - **the round** goes up by one only when the head commit changed since the marker's `head`. a rerun of the same head keeps its round, and if that head was already reviewed it does not call the model again: the check is decided from the marker. a run that returns no findings leaves the marker alone, so the next run is the same round again.
 - **reviews** in round 1 `git diff <base>...<head>`, the full pr diff. a later round reviews only `git diff <reviewed>..<head>`, the commits since the last review. if `reviewed` is not an ancestor of the head (a force-push or rebase), it reviews the full pr diff again, and the comment says so.
-- **limits** one model (`REVIEW_MODEL`), a turn limit (`MAX_TURNS`), a 30-minute job timeout, and read-only tools: the model reads files and runs read-only `git` commands, and posts nothing itself.
-- **returns** its findings as structured output (a json schema in `claude_args`): `source`, `tag` (`important`, `nit`, `pre-existing`), `class` (a short kebab-case name for the kind of defect), `symbol` (the function or class it is in), `file`, `line`, `body`; plus `fixed`, the ids of earlier findings it checked are gone at the head.
+- **limits** one model (`REVIEW_MODEL`), a turn limit per phase (`MAX_TURNS`), and a 30-minute job timeout. the model reads only committed git objects through `read_file`, `list_files`, `search` and `read_diff`; it has no shell, network, environment, working tree, github or file write. it posts nothing itself.
+- **phases** are fresh model conversations: the code-review Standards and Spec finders, a security finder, one code verification pass, one security false-positive filter per candidate, and a fixed check for earlier open findings. a phase that fails or returns malformed output fails the review closed.
+- **returns** its findings as structured output: `source`, `tag` (`important`, `nit`, `pre-existing`), `class` (a short kebab-case name for the kind of defect), `symbol` (the function or class it is in), `file`, `line`, `body`; plus `fixed`, the ids of earlier findings it checked are gone at the head.
 - **finding ids** are the first 8 hex of `sha256("<class>|<file>|<symbol>")`, worked out in shell, so an id does not move when lines shift. each earlier finding goes to the model with its id, so it does not report it again; a returned finding whose id is already in the marker is dropped all the same, and is never posted twice.
 - **fixed**: an earlier finding goes from `open` to `fixed` only when the model lists its id in `fixed` (it reads the code at that file and symbol at the head). the shell trusts only ids that are in the marker and `open`; it never reopens one.
 - **posts** the sticky comment with the round's verdict, the diff it reviewed, and all findings; and a pr review with an inline comment per new finding of this round only. if github refuses an inline line (outside the diff), the findings are still in the sticky comment.
 - **sets the check** `arkan-review` (the job name) by a shell step, not the model: it fails while any id in `blocking` is `open` in the marker, earlier rounds' included, or if the review returned no findings (turn limit, auth or quota), and passes otherwise. a comment run decides it from the marker the same way, and fails while the head has no finished review.
 - **round 4** (`RETHINK_ROUND`) reviews nothing. it writes "step back and rethink the approach" in the sticky comment, adds the label `arkan:rethink` (`RETHINK_LABEL`, created if missing), and fails the check. while the label is on the pr, every run fails the check at once, with no model call. a person removes the label to resume: the next run reviews everything since `reviewed`, and the round count goes on (5, 6, and so on, with no second stop).
-- **permissions**: `contents: read`, `pull-requests: write`, and `checks: write` for the check run an `issue_comment` run posts on the head. it passes the job's `github.token` to the action, so it needs neither the claude github app nor `id-token: write`; comments show as `github-actions`. the action reads `.claude/` from the base branch, so a pr cannot change its own reviewer.
+- **permissions**: `contents: read`, `pull-requests: write`, and `checks: write` for the check run an `issue_comment` run posts on the head. comments show as `github-actions`. the model step gets `OPENCODE_API_KEY` and no `GH_TOKEN`; the shell steps that post keep the job token. the runner reads the skills from the base commit, so a pr cannot change its own reviewer.
 
 ### change it
 
 the settings are the `env:` lines at the top: `REVIEW_MODEL`, `MAX_TURNS`, `RETHINK_ROUND`, `RETHINK_LABEL`, `DOCS_ONLY_REGEX`, `NEVER_DOCS_REGEX`.
 
-**on a pro or max plan,** each review uses the plan's usage; a later round reviews only its new commits, and a rerun of a reviewed head calls no model. when the plan hits its limit, the review returns nothing, the check stays red, and nothing merges until the limit resets: the gate fails closed. if reviews run out often, set `REVIEW_MODEL` to a lighter model. to move the action to a newer release, replace the commit sha and its `# v1.x.y` comment together, and read that release's inputs in its `action.yml` first.
+a later round reviews only its new commits, and a rerun of a reviewed head calls no model. when the provider returns an error or the turn limit runs out, the review returns nothing, the check stays red, and nothing merges: the gate fails closed. if reviews hit the provider limit often, set `REVIEW_MODEL` to a lighter model. the runner lives in `ci/opencode_agent.py`; keep the workflow and the runner on the default branch together.
 
 ### noise report
 
@@ -73,9 +75,9 @@ A merged change that broke main becomes a case under the repo's `docs/agents/rev
 ci/review-eval.sh --compare
 ```
 
-The default reviewer is `claude -p` with the workflow's `REVIEW_MODEL`, `MAX_TURNS` and `--allowedTools`: the reviewer ci runs. The script reads all of them from [`github/arkan-review.yml`](github/arkan-review.yml), so a change there changes the eval. Set `REVIEW_CMD` to another command that reads the prompt on stdin; a swapped harness is a weaker proof. `--prompt FILE` replaces the workflow's prompt, to test a weaker one. `--update-baseline` adds the cases caught now to `docs/agents/review-evals/baseline.txt` and never drops one; `--compare` exits 1 when a baseline case is now missed. The case format and the full command list are in [the cases doc](../docs/agents/review-evals/README.md).
+The default reviewer is `ci/opencode_agent.py review --eval` with the workflow's `REVIEW_MODEL` and `MAX_TURNS`: the reviewer ci runs. The script reads both from [`github/arkan-review.yml`](github/arkan-review.yml), so a change there changes the eval. Set `REVIEW_CMD` to another command that reads the prompt on stdin; a swapped harness is a weaker proof. `--prompt FILE` replaces the workflow's prompt, to test a weaker one. `--update-baseline` adds the cases caught now to `docs/agents/review-evals/baseline.txt` and never drops one; `--compare` exits 1 when a baseline case is now missed. The case format and the full command list are in [the cases doc](../docs/agents/review-evals/README.md).
 
-A change to `github/arkan-review.yml`, `skills/code-review/` or `skills/security-review/` is kept only when `--compare` misses no case caught before. No ci job runs a model: `scripts/check.sh` runs `--check`, which validates the case files and reads the workflow without one. The person or agent that changes the reviewer runs `--compare` locally before the change lands. The `post-merge` skill adds the case.
+A change to `github/arkan-review.yml`, `opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when `--compare` misses no case caught before. No ci job runs a model: `scripts/check.sh` runs `--check`, which validates the case files and reads the workflow without one. The person or agent that changes the reviewer runs `--compare` locally before the change lands. The `post-merge` skill adds the case.
 
 A repo that installs `arkan-review` copies `review-eval.sh` into its own `ci/` and keeps its cases in its own `docs/agents/review-evals/`. The script reads `.github/workflows/arkan-review.yml` when `ci/github/arkan-review.yml` is absent.
 
@@ -83,13 +85,13 @@ A repo that installs `arkan-review` copies `review-eval.sh` into its own `ci/` a
 
 [`github/arkan-post-merge.yml`](github/arkan-post-merge.yml) starts the [`post-merge` skill](../skills/post-merge/SKILL.md) with no person. It runs on a `workflow_run` of `check` finishing on the default branch, once a day (`schedule`), and on `workflow_dispatch`. Every run checks main first: a red main is a signal on every trigger. A green run also reads the merged commits, so a revert merged with `--merge` is found even though its head message is "Merge pull request ...".
 
-The work is split in two jobs. `diagnose` has the model and read-only permissions. It returns the structured output and a `git bundle` of the fix branch. `publish` has no model and the write permissions. It applies the bundle, pushes the branch, retries an open pull request, and publishes the ticket. `diagnose` runs [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action), pinned to a release commit, like `arkan-review`.
+The work is split in two jobs. `diagnose` has the model and read-only permissions. It returns the structured output and a `git bundle` of the fix branch. `publish` has no model and the write permissions. It applies the bundle, pushes the branch, retries an open pull request, and publishes the ticket. `diagnose` runs [`anthropics/claude-code-action`](https://github.com/anthropics/claude-code-action), pinned to a release commit.
 
 ### add it to a repo
 
 Work through these in order; a change on the host asks first.
 
-1. add `arkan-review` first (above): it puts arkan's skills in `.claude/skills/` and adds the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`). The post-merge file uses the same secret and reads the skill from the default branch.
+1. add `arkan-review` first (above) for the skills layout. The post-merge file needs its own `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`) and reads the skill from the default branch.
 2. copy `arkan-post-merge.yml` to `.github/workflows/`. Set `CHECK_COMMAND` in `env:` to the repo's check command. If the default branch is not `main`, rename `ref: main`, `MAIN`, and the `branches: [main]` trigger. If the repo's own check workflow is not named `check`, change `workflows: [check]` to its name. Change the `cron` when 06:17 utc is wrong, and set `SIGNAL_COMMAND` when the repo has an error log or alert query. The runner sets up no language, like `check.yml`: if the check needs one, add the same setup steps to `diagnose`, before `Read the signal`.
 3. to get `check`, `arkan-review` and `arkan-risk` runs on the fix pull request, add a `POST_MERGE_TOKEN` secret: a fine-grained token with `contents: write`, `pull-requests: write` and `issues: write`, or mint a GitHub App installation token in a step and pass that. An installation token expires after an hour, so it cannot be stored as the secret. Events made with that token start workflows; events made with `github.token` do not. Without the secret the file falls back to `github.token`: the pull request starts no checks, and opening it needs the repo setting "Allow GitHub Actions to create and approve pull requests" (Settings, Actions, General). On default settings that setting is off, so with the fallback the pull request is not created; the next run pushes the branch again and retries. With the gate path, required checks never report on a fallback pull request, so close and reopen it to start them.
 4. keep the file's `post-merge:` pull request titles and commit subjects. That word is the loop guard (below), so do not rewrite it. A repo that installed an older `arkan-post-merge-daily.yml` removes it after a yes: the daily trigger is in the one file now.
@@ -136,15 +138,16 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
 ### add it to a repo
 
 1. write `docs/agents/sensitive-paths.md` on the default branch (`pre-setup` does it): one glob per line in its first fenced block.
-2. copy the file to `.github/workflows/arkan-risk.yml`.
+2. add the repo secret `OPENCODE_API_KEY`.
+3. copy `ci/opencode_agent.py` and the file to the default branch. `pre-setup` installs both.
 
 ### what one run does
 
 - **runs on** `pull_request` `opened`, `synchronize` and `reopened`. a newer push cancels the run on the older head.
 - **fixed rules first**, each one makes the pr `manual`: the author is not the repo owner; the base branch has no `PATHS_FILE`; the pr touches a path (or the old name of a renamed path) that matches a glob in it. the list is read from the base branch, so a pr cannot edit its way out. `*` and `**` also match `/`.
-- **the vote** (`RISK_VOTE`) labels the rest. it is `off` until arkan ticket 42 builds it, so every pr is `manual`. with it `on` and no vote step yet, the run still says `manual`: it fails closed.
+- **the vote** (`RISK_VOTE`) labels the rest with `RISK_MODEL`. three fresh model conversations vote independently. the shell takes the majority. an `auto` majority then gets one fresh second check, which can only raise the label to `manual`. a failed voter, a missing second check, a malformed answer, a provider error or a missing base runner gives `manual`. with `RISK_VOTE: "off"`, every pr without a fixed rule is `manual`.
 - **posts** one sticky pr comment, edited in place. its first line is the marker `arkan-merge` and the broker read: `<!-- arkan:risk head=<sha> label=<auto|manual> -->`. only a comment by `github-actions[bot]` counts. it also sets the pr label `arkan:auto` or `arkan:manual` for people to see; the gate and the broker never read the label.
-- **permissions**: `contents: read`, `pull-requests: write`, `issues: write`.
+- **permissions**: `contents: read`, `pull-requests: write`, `issues: write`. the vote step gets `OPENCODE_API_KEY` and no `GH_TOKEN`; the shell steps that read the pr and post the marker keep the job token.
 
 ## arkan-merge
 

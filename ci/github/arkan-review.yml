@@ -31,8 +31,8 @@ permissions:
   checks: write
 
 env:
-  REVIEW_MODEL: claude-opus-5-5
-  MAX_TURNS: "40"
+  REVIEW_MODEL: deepseek-v4.1-flash
+  MAX_TURNS: "16"
   # the round that stops reviewing and asks for a rethink, and its label.
   RETHINK_ROUND: "4"
   RETHINK_LABEL: "arkan:rethink"
@@ -74,6 +74,7 @@ jobs:
         with:
           ref: ${{ steps.pr.outputs.head_sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Decide whether to review
         id: scope
@@ -96,6 +97,21 @@ jobs:
             if [ -n "$files" ] && [ -z "$other" ] && [ -z "$steering" ]; then
               reason="docs-only"
               text="arkan-review skipped: every changed file is docs (matches \`$DOCS_ONLY_REGEX\`), so no review ran."
+            fi
+          fi
+          if [ -z "$reason" ]; then
+            if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+              echo "::error title=arkan-review::the pr base commit is not in this checkout, so no trusted base runner can be read"
+              exit 1
+            fi
+            runner="$RUNNER_TEMP/opencode_agent.py"
+            if ! git show "$BASE_SHA:ci/opencode_agent.py" >"$runner" 2>/dev/null || [ ! -s "$runner" ]; then
+              if git cat-file -e "$BASE_SHA:.github/workflows/arkan-review.yml" 2>/dev/null; then
+                echo "::error title=arkan-review::the base branch has an installed arkan-review workflow but no trusted runner ci/opencode_agent.py"
+                exit 1
+              fi
+              reason="no-runner"
+              text="arkan-review skipped: the base branch has no trusted runner \`ci/opencode_agent.py\` and no installed arkan-review workflow, so this first-install pr ran no review and its check passed as skipped. A person reviews it by hand."
             fi
           fi
           if [ -z "$reason" ]; then
@@ -203,40 +219,37 @@ jobs:
         id: review
         if: steps.scope.outputs.skip != 'true' && steps.round.outputs.action == 'review'
         continue-on-error: true
-        uses: anthropics/claude-code-action@f27be6b65a4652f08a2ba3cff79114829b588967 # v1.0.252
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # or, billed per token: anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ github.token }}
-          # ci/review-eval.sh reads this prompt block, REVIEW_MODEL and the
-          # --allowedTools line. keep their shape when you change this file.
-          prompt: |
-            You are the arkan-review ci reviewer for pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}, review round ${{ steps.round.outputs.round }}. No person is watching this run: where a skill says to ask the user, take the default written here and go on.
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          FROM_SHA: ${{ steps.round.outputs.from }}
+          PRIOR: ${{ steps.round.outputs.prior }}
+          REVIEW_PROMPT: |
+            You are the arkan-review ci reviewer for pull request #${{ steps.pr.outputs.number }} in ${{ github.repository }}, review round ${{ steps.round.outputs.round }}. No person is watching this run: where a skill says to ask the user, take the default written here and go on.
 
-            The pr head ${{ github.event.pull_request.head.sha }} is checked out. The pr base is ${{ github.event.pull_request.base.sha }}.
+            The pr head ${{ steps.pr.outputs.head_sha }} is checked out as git objects. The pr base is ${{ steps.pr.outputs.base_sha }}. The from commit is ${{ steps.round.outputs.from }}.
             The diff to review is `git diff ${{ steps.round.outputs.diff }}`: ${{ steps.round.outputs.scope }}.
 
-            Findings from earlier rounds, already posted (id, state, tag, file:line, symbol, source and round, then the finding):
-            ${{ steps.round.outputs.prior }}
+            Earlier rounds' findings, when any, are listed in the runner context: never report one of them again, fixed or not. Use the base commit only to decide `pre-existing`.
 
-            1. Run the `code-review` skill with the fixed point ${{ github.event.pull_request.base.sha }}. If earlier findings are listed above, this is a re-review: review only the diff above, give the earlier findings to every sub-agent, and never report one of them again, fixed or not. Use the fixed point only to decide `pre-existing`. Find the spec as the skill says; if none is found, skip the Spec axis and note "no spec available" in the summary. Keep its verify pass and its tags.
-            2. Run the `security-review` skill on the same diff. Use ${{ steps.round.outputs.from }} wherever it says `origin/HEAD`. Do not report an earlier finding again.
-            3. Return the structured output:
-               - `findings`, one entry per kept new finding:
-                 - a code-review finding: `source` "code-review", `tag` as the skill tagged it.
-                 - a security-review finding: `source` "security-review", `tag` "important", `severity` as the skill rated it.
-                 - `class` is a short kebab-case name for the kind of defect, such as `off-by-one`, `missing-validation` or `wrong-sign`. `symbol` is the function, method or class the defect is in, or `-` at the top level of the file.
-                 - `file` is relative to the repo root; `line` is a line number in the head version of that file, inside a changed hunk where the finding allows.
-                 - `body` is one or two sentences: the defect and the fix.
-               - `fixed`: the ids of earlier findings in state `open` whose defect is gone at the head. Read the code at its file and symbol; list an id only when you checked that the defect no longer exists. Empty in round 1.
-               - `summary` is one line: the count of each tag, and the commit you reviewed.
+            Review on the two axes of the `code-review` skill, Standards and Spec. Find the spec as the skill says, from local committed files; if none is found, skip the Spec axis and note "no spec available" in the summary. Then run the `security-review` skill on the same diff, using the from commit wherever it says `origin/HEAD`. Keep the code-review skill's verification pass and its tags, and the security skill's false-positive filter.
 
-            Leave the working tree as it is and post nothing to GitHub: the next step posts your findings and sets the check.
-          claude_args: |
-            --model ${{ env.REVIEW_MODEL }}
-            --max-turns ${{ env.MAX_TURNS }}
-            --allowedTools "Skill,Read,Glob,Grep,Task,Agent,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git status:*),Bash(git rev-parse:*),Bash(git merge-base:*),Bash(git remote show:*)"
-            --json-schema '{"type":"object","properties":{"summary":{"type":"string"},"fixed":{"type":"array","items":{"type":"string"}},"findings":{"type":"array","items":{"type":"object","properties":{"source":{"type":"string","enum":["code-review","security-review"]},"tag":{"type":"string","enum":["important","nit","pre-existing"]},"severity":{"type":"string"},"class":{"type":"string"},"symbol":{"type":"string"},"file":{"type":"string"},"line":{"type":"integer"},"body":{"type":"string"}},"required":["source","tag","class","symbol","file","line","body"]}}},"required":["summary","fixed","findings"]}'
+            Each finding needs `source`, `tag`, `class`, `symbol`, `file`, `line` and a one-line `body`. `file` is relative to the repo root; `line` is a line number in the head version of that file, inside a changed hunk where the finding allows. `fixed` holds the ids of earlier open findings whose defect is gone at the head. `summary` is one line with the count of each tag and the commit you reviewed.
+
+            Leave the working tree alone and post nothing to GitHub: the next step posts your findings and sets the check.
+        run: |
+          python3 -E -s -B "$RUNNER_TEMP/opencode_agent.py" review \
+            --repo "$GITHUB_WORKSPACE" \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --from "$FROM_SHA" \
+            --model "$REVIEW_MODEL" \
+            --max-turns "$MAX_TURNS" \
+            --prompt-env REVIEW_PROMPT \
+            --prior-env PRIOR \
+            --github-output "$GITHUB_OUTPUT" \
+            --execution-file "$RUNNER_TEMP/claude-execution-output.json"
 
       - name: Post findings and set the check
         if: always() && steps.scope.outputs.skip != 'true' && steps.round.outputs.action != ''

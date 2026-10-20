@@ -24,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      GH_TOKEN: ${{ github.token }}
       PR: ${{ github.event.pull_request.number }}
       HEAD: ${{ github.event.pull_request.head.sha }}
       BASE: ${{ github.event.pull_request.base.ref }}
@@ -33,18 +32,21 @@ jobs:
       # the list of paths that always need a person, read from the base branch,
       # so a pr cannot edit the list to escape it.
       PATHS_FILE: docs/agents/sensitive-paths.md
-      # the agent vote for the prs no fixed rule catches. off: every such pr is
-      # manual (start strict). the vote is the open part of arkan ticket 42.
-      RISK_VOTE: "off"
+      RISK_VOTE: "on"
+      RISK_MODEL: deepseek-v4.1-flash
+      RISK_MAX_TURNS: "8"
     steps:
       - name: Check out the base branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Fixed rules
         id: rules
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # every path the pr touches, renames by both names.
           gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate \
@@ -80,12 +82,49 @@ jobs:
       - name: Vote
         id: vote
         if: steps.rules.outputs.vote == 'yes'
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          # not built yet (arkan ticket 42). fail closed: no vote is a manual pr.
-          { echo "label=manual"; echo "reason=the vote is on, but this workflow has no vote step yet"; } >>"$GITHUB_OUTPUT"
+          out="$RUNNER_TEMP/arkan-vote.out"
+          runner="$RUNNER_TEMP/opencode_agent.py"
+          rm -f "$out"
+          manual() { printf 'label=manual\nreason=%s\n' "$1" >"$out"; }
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            manual "the base commit is not in this checkout"
+          elif ! git show "$BASE_SHA:ci/opencode_agent.py" >"$runner" 2>/dev/null || [ ! -s "$runner" ]; then
+            manual "the base branch has no trusted runner ci/opencode_agent.py"
+          elif ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+            manual "the head commit is not in this checkout, so the vote cannot read it"
+          elif ! python3 -E -s -B "$runner" risk \
+            --repo "$GITHUB_WORKSPACE" \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --from "$BASE_SHA" \
+            --model "$RISK_MODEL" \
+            --max-turns "$RISK_MAX_TURNS" \
+            --github-output "$out"; then
+            manual "the vote failed, so the pr is manual"
+          fi
+          label=$(sed -n 's/^label=//p' "$out" | head -n1)
+          reason=$(sed -n 's/^reason=//p' "$out" | head -n1)
+          case "$label" in
+            auto|manual) ;;
+            *)
+              manual "the vote returned no label, so the pr is manual"
+              label=$(sed -n 's/^label=//p' "$out" | head -n1)
+              reason=$(sed -n 's/^reason=//p' "$out" | head -n1)
+              ;;
+          esac
+          {
+            printf 'label=%s\n' "$label"
+            printf 'reason=%s\n' "$reason"
+          } >>"$GITHUB_OUTPUT"
 
       - name: Post the label
         env:
+          GH_TOKEN: ${{ github.token }}
           LABEL: ${{ steps.rules.outputs.label || steps.vote.outputs.label }}
           REASON: ${{ steps.rules.outputs.reason || steps.vote.outputs.reason }}
         run: |
