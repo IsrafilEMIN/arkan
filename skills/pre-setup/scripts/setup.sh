@@ -37,30 +37,26 @@ check_file() { if has "$2"; then say "$1" ok "$2"; else say "$1" missing "$2"; f
 file_hash() { # path
 	if command -v sha256sum >/dev/null 2>&1; then
 		sha256sum "$1" | cut -d' ' -f1
-	else
+	elif command -v shasum >/dev/null 2>&1; then
 		shasum -a 256 "$1" | cut -d' ' -f1
+	elif command -v cksum >/dev/null 2>&1; then
+		cksum "$1" | tr ' ' '-'
+	else
+		printf 'setup: no sha256sum, shasum or cksum\n' >&2
+		return 1
 	fi
 }
 
-body_hash() { # path: the hash without a trailing arkan-copy line
-	local last tmp
-	last="$(tail -n 1 "$1" 2>/dev/null || true)"
-	case "$last" in
-		"# arkan-copy: "*) ;;
-		*) file_hash "$1"; return ;;
-	esac
+body_hash() { # path: the hash with every arkan-copy line removed
+	local tmp
 	tmp="$(mktemp)"
-	sed '$d' "$1" >"$tmp"
+	grep -vE '^# arkan-copy: [0-9a-f]+$' "$1" >"$tmp" || true
 	file_hash "$tmp"
 	rm -f "$tmp"
 }
 
 stamp_of() { # path
-	local last
-	last="$(tail -n 1 "$1" 2>/dev/null || true)"
-	case "$last" in
-		"# arkan-copy: "*) printf '%s' "${last#"# arkan-copy: "}" ;;
-	esac
+	awk '/^# arkan-copy: [0-9a-f]+$/ { print substr($0, 15); exit }' "$1"
 }
 
 merge_path() {
