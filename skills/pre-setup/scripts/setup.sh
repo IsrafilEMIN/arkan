@@ -205,7 +205,11 @@ check_claude_plugin() {
 }
 
 plugin_record_ok() {
-	local record f
+	local record f list
+	if command -v claude >/dev/null 2>&1 && list="$(claude plugin list --json 2>/dev/null)"; then
+		printf '%s' "$list" | grep -qF '"arkan@arkan"'
+		return
+	fi
 	record="$HOME/.claude/plugins/installed_plugins.json"
 	if [ -f "$record" ]; then
 		grep -qF '"arkan@arkan"' "$record"
