@@ -1,7 +1,7 @@
 # 04: install and update command
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 11
 
 **What to build:** one command installs the arkan skills into `~/.agents/skills/`, and the same command updates them. running it twice changes nothing the second time.
@@ -17,7 +17,7 @@ proposal (superseded 2026-10-19 by ticket 05: the command is the machine part of
 - [x] the command prints the arkan version (tag or commit) it installed
 - [x] works on linux and macos (bash), with no tool beyond git
 - [x] for claude code, arkan installs as a plugin (a `.claude-plugin/plugin.json` manifest, plus a marketplace entry or `--plugin-dir`), not as plain skills in `~/.claude/skills/`. a plain skill named like a built-in command replaces it (arkan `code-review` would replace `/code-review`); a plugin skill is named `arkan:<skill>`, so both stay
-- [ ] proof: in a fresh claude code session, `/code-review` runs the built-in and `/arkan:code-review` runs arkan's
+- [x] proof: in a fresh claude code session, `/code-review` runs the built-in and `/arkan:code-review` runs arkan's
 
 ## Comments
 
@@ -31,3 +31,4 @@ proposal (superseded 2026-10-19 by ticket 05: the command is the machine part of
 - owner verification in this session: `git pull --ff-only` printed `Already up to date.` and `apply claude-plugin` installed `arkan@arkan` at user scope. the check printed `claude-plugin ok version 0.1.0`. the owner moved the old `~/.claude/skills/code-review` link outside the skills directory and reported that both `/code-review` and `/arkan:code-review` exist in a fresh session.
 - source check: the installed arkan plugin contains `skills/code-review/SKILL.md`. the local official marketplace README registers plugin skills as `<plugin-name>:<skill-name>`. the claude changelog for 2.1.147 records the bundled `/code-review` command. this identifies the two registrations without another install.
 - the final proof box stays open. the owner confirmed command availability, not the result of invoking each command. no completed review run is claimed.
+- owner clarification after the evidence PR: "they are different i checked". this confirms the fresh-session distinction between the bundled command and arkan's command. the final proof box is complete. the earlier request to repeat the check was unnecessary.
