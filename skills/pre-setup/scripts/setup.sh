@@ -350,6 +350,31 @@ apply_arkan() {
 	[ "$clashes" = 0 ] || exit 1
 }
 
+file_hash() { # path
+	if command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "$1" | cut -d' ' -f1
+	elif command -v shasum >/dev/null 2>&1; then
+		shasum -a 256 "$1" | cut -d' ' -f1
+	elif command -v cksum >/dev/null 2>&1; then
+		cksum "$1" | cut -d' ' -f1
+	else
+		printf 'setup: no sha256sum, shasum or cksum\n' >&2
+		return 1
+	fi
+}
+
+body_hash() { # path: the hash with every arkan-copy line removed
+	local tmp
+	tmp="$(mktemp)"
+	grep -vE '^# arkan-copy: [0-9a-f]+$' "$1" >"$tmp" || true
+	file_hash "$tmp"
+	rm -f "$tmp"
+}
+
+stamp_of() { # path
+	awk '/^# arkan-copy: [0-9a-f]+$/ { print substr($0, 15); exit }' "$1"
+}
+
 merge_path() {
 	local f="$root/docs/agents/approvals.md" broker="" gate=""
 	[ -f "$f" ] || return 0
@@ -485,7 +510,7 @@ own_ci() {
 }
 
 check_ci() {
-	local name=$1 src=$2 dst=".github/workflows/$2"
+	local name=$1 src=$2 dst=".github/workflows/$2" repo="$root/.github/workflows/$2" want
 	if [ ! -f "$ci/$src" ]; then
 		say "$name" skip "arkan's ci/github/$src not found next to this skill"
 	elif ! has "$dst"; then
@@ -494,10 +519,15 @@ check_ci() {
 		else
 			say "$name" missing "$dst"
 		fi
-	elif cmp -s "$ci/$src" "$root/$dst"; then
-		say "$name" ok "$dst"
 	else
-		say "$name" out-of-date "$dst differs from $ci/$src"
+		want="$(file_hash "$ci/$src")"
+		if [ "$(body_hash "$repo")" = "$want" ]; then
+			say "$name" ok "$dst"
+		elif [ "$(stamp_of "$repo")" = "$want" ]; then
+			say "$name" ok "$dst customized"
+		else
+			say "$name" out-of-date "$dst differs from $ci/$src; update it and merge the repo's settings"
+		fi
 	fi
 }
 
@@ -719,7 +749,10 @@ apply() {
 			for pair in $ci_items; do [ "${pair%%:*}" = "$item" ] && src="${pair#*:}"; done
 			[ -f "$ci/$src" ] || { printf 'setup: %s not found\n' "$ci/$src" >&2; exit 1; }
 			mkdir -p "$root/.github/workflows"
+			local want
+			want="$(file_hash "$ci/$src")" || exit 1
 			cp "$ci/$src" "$root/.github/workflows/$src"
+			printf '# arkan-copy: %s\n' "$want" >>"$root/.github/workflows/$src"
 			;;
 		*)
 			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2

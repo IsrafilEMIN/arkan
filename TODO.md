@@ -25,9 +25,6 @@
 
 ## Todo
 
-- [ ] 47: The broker merges arkan's pull requests #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/47-broker-merges-arkan.md` · blocked by: none
-
 - [ ] 04: Install and update command #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
 
@@ -39,9 +36,6 @@
 
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
-
-- [ ] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
 
 - [ ] 52: A pull request opened by ci starts no checks #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/52-ci-opened-pr-starts-no-checks.md` · blocked by: none
@@ -108,6 +102,9 @@
 - [x] 35: Pr steps work when `gh pr` is blocked #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/35-pr-steps-without-graphql.md` · blocked by: none
 
+- [x] 47: The broker merges arkan's pull requests #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/47-broker-merges-arkan.md` · blocked by: none
+
 - [x] 05: Grill the pre-setup redesign #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/05-pre-setup-redesign.md` · blocked by: none
 
@@ -167,3 +164,6 @@
 
 - [x] 50: Make the 24 principles skills, pstack-shaped #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/50-principles-as-skills.md` · blocked by: none
+
+- [x] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none

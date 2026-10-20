@@ -76,7 +76,7 @@ The pull request the run opens starts no `check`, `arkan-review` or `arkan-risk`
 
 `apply ci-merge` reads that record. Under broker it prints the broker state and copies nothing. With both lines it refuses and says which line to keep. With no record it refuses and asks for a line, because a copy would otherwise leave the path ambiguous. A gate that is already installed with no record counts as the gate: the check reports that copy, and shipping uses it, so an existing gate needs no record to keep working.
 
-An `out-of-date` line is a ci file that differs from arkan's copy, or a gate installed where `docs/agents/approvals.md` records broker. For `hooks`, it means git's effective hooks path shadows the repo hook: show both paths and change nothing. Show the diff or conflict and ask before you change it: the person may have changed a setting (`CHECK_COMMAND`, the `env:` lines). Keep their settings in the new copy.
+An `out-of-date` line is a ci file whose `# arkan-copy:` stamp does not match arkan's current copy, or a gate installed where `docs/agents/approvals.md` records broker. A copy that differs from arkan's file but keeps the `# arkan-copy:` stamp that `apply` wrote reads `ok customized`: the person changed a setting (`CHECK_COMMAND`, the `env:` lines) and arkan's file did not change since. For `hooks`, it means git's effective hooks path shadows the repo hook: show both paths and change nothing. Show the diff or conflict and ask before you change an `out-of-date` file: keep the person's settings in the new copy.
 
 Write nothing over a file the person edited, except an `out-of-date` ci file they agreed to update. A doc that exists is `ok`, whatever its wording.
 
