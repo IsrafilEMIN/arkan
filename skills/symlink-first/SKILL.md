@@ -16,7 +16,7 @@ The global canonical home is `~/.agents/`: `~/.agents/AGENTS.md` and `~/.agents/
 
 | agent | reads `~/.agents/skills/` | global instructions |
 | --- | --- | --- |
-| claude code | no: link `~/.claude/skills/<name>` | link `~/.claude/CLAUDE.md` |
+| claude code | no: link `~/.claude/skills/<name>`, except an arkan skill while the arkan plugin is installed | link `~/.claude/CLAUDE.md` |
 | codex 0.161 | yes | link `${CODEX_HOME:-~/.codex}/AGENTS.md` |
 | pi 1.1 | yes | link `~/.pi/agent/AGENTS.md` |
 | omp 18.8 | yes | reads `~/.agents/AGENTS.md` itself |
@@ -50,7 +50,7 @@ If a tool version changes, check its docs before you trust a row.
    "$HOME/.agents/skills/symlink-first/scripts/link-agents.sh"
    ```
 
-   Use `--check` to report without a change. The script skips an agent whose home folder does not exist. It also skips each skill in its `claude_builtin` list: claude code ships that skill itself, so a link makes a duplicate. For project material, link by hand with a relative target inside the repo: `ln -sn ../.agents/skills/<name> .claude/skills/<name>`.
+   Use `--check` to report without a change. The script skips an agent whose home folder does not exist. It also skips each skill in its `claude_builtin` list: claude code ships that skill itself, so a link makes a duplicate. When `~/.claude/plugins/cache/arkan` exists, it skips each `~/.agents/skills/<name>` whose resolved root has `.claude-plugin/plugin.json`: the arkan plugin gives claude those skills as `arkan:<name>`, and a plain link such as `~/.claude/skills/code-review` would replace the built-in `/code-review`. For project material, link by hand with a relative target inside the repo: `ln -sn ../.agents/skills/<name> .claude/skills/<name>`.
 
 4. **Resolve each report line.** The step is done when the script prints `ok` and exits 0.
    - `COPY ... identical`: delete the copy, then run the script again.

@@ -14,6 +14,8 @@ esac
 home="${HOME:?HOME is not set}"
 canon="$home/.agents"
 problems=0
+arkan_plugin=0
+if [ -d "$home/.claude/plugins/cache/arkan" ]; then arkan_plugin=1; fi
 
 # relative target when both paths are under $HOME (matches the existing ../../.agents/... links), else absolute
 rel() {
@@ -67,6 +69,9 @@ mkdir -p "$mirror"
 for skill in "$canon"/skills/*/; do
 	name="$(basename "$skill")"
 	case "$claude_builtin" in *" $name "*) continue ;; esac
+	if [ "$arkan_plugin" = 1 ]; then
+		if [ -f "$skill/../../.claude-plugin/plugin.json" ]; then continue; fi
+	fi
 	link "$canon/skills/$name" "$mirror/$name"
 done
 

@@ -9,7 +9,7 @@ disable-model-invocation: true
 Set up what the other arkan skills assume. A script checks; you ask the person and write.
 
 - [scripts/setup.sh](./scripts/setup.sh) `check [repo-root]` prints one line per item: `ok`, `missing`, `out-of-date`, `hint` or `skip`. It changes nothing.
-- `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state. `apply arkan` prints the links it made and removed instead.
+- `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state. `apply arkan` prints the names it linked and removed instead.
 - [scripts/board.sh](./scripts/board.sh) `build|check|fields [repo-root]` writes and checks `TODO.md` for a local tracker; `fields` checks only the ticket fields and needs no `TODO.md`. Repos run it from this skill; they get no copy.
 - The seeds are in [references/](./references/).
 
@@ -31,12 +31,12 @@ These two items are about this machine, not the repo. They print from any direct
 
 | item | what to do | ask? |
 |---|---|---|
-| `arkan` | `apply arkan` links every `skills/<name>` of this arkan checkout into `~/.agents/skills/<name>`. It links a missing skill, removes a stale link whose target is under this checkout's `skills/`, and leaves every other entry alone. `check` reads `ok  version <v>; <n> skills linked`, where `<v>` is `git describe --tags --always --dirty`, or `unknown`. `missing` means one or more skills are not linked. `out-of-date` names a stale link, or a clash: an entry that is not a link to this checkout's `skills/<name>`. `apply arkan` reports a clash on stderr, links the rest, and exits 1 | no |
-| `claude-plugin` | `ok` when `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` are in this checkout; `out-of-date` means this is not a current arkan clone, so `git pull` or clone it again. No apply | no |
+| `arkan` | `apply arkan` links every `skills/<name>` of this arkan checkout into `~/.agents/skills/<name>` and records it as `name<TAB>absolute target` in `~/.agents/skills/.arkan-links`. Only names in that file are arkan's links. It links a missing skill, relinks a recorded link that points to another arkan copy or a moved checkout, and removes a recorded link whose skill is gone; it leaves a real directory at a stale name alone and reports it. An entry that is not a link to this checkout is a clash; a user's own link that is not recorded is never touched. `check` reads `ok  version <v>; <n> skills linked`, where `<v>` is `git describe --tags --always --dirty` when this checkout is its own git root, else the `version` in `.claude-plugin/plugin.json` marked `(plugin)`, else `unknown`. `missing` names the skills not linked and how many links point to another arkan copy. `out-of-date` names a stale link, a link to another copy, or a clash. `apply arkan` prints the names it linked and removed, counts clashes, links the rest, and exits 1 on a clash | no |
+| `claude-plugin` | `ok` when `~/.claude/plugins/cache/arkan/arkan/*/` holds a plugin manifest, with the installed version; `missing` when `claude` is on PATH but the cache has none; `skip claude is not installed` when neither. `apply claude-plugin` runs `claude plugin marketplace add <path to arkan>` and `claude plugin install arkan@arkan`, then prints the new state; without `claude` it skips | no |
 
 The `arkan` check line is the version print. A second `apply arkan` with nothing to fix prints `setup: nothing changed; version <v>`.
 
-For claude code, install arkan as a plugin. Run `/plugin marketplace add <path to arkan>`, then `/plugin install arkan@arkan`. Or start claude with `claude --plugin-dir <path to arkan>`. Claude code names each skill `arkan:<skill>`, so arkan's `code-review` and the built-in `/code-review` both stay. A plain skill in `~/.claude/skills/` is not how arkan installs there.
+For claude code, `apply claude-plugin` installs arkan as a plugin: it runs `claude plugin marketplace add <path to arkan>`, then `claude plugin install arkan@arkan`. Or start claude with `claude --plugin-dir <path to arkan>`. Claude code names each skill `arkan:<skill>`, so arkan's `code-review` and the built-in `/code-review` both stay. A plain skill in `~/.claude/skills/` is not how arkan installs there; `symlink-first` skips arkan's skills for claude while this plugin is installed.
 
 #### Repo
 

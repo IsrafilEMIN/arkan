@@ -13,6 +13,7 @@ refs="$skill/references"
 arkan="$(cd "$skill/../.." && pwd -P)"
 ci="$arkan/ci/github"
 home_skills="${HOME:-}/.agents/skills"
+tab="$(printf '\t')"
 
 usage() { printf 'usage: setup.sh check [repo-root] | setup.sh apply <item> [repo-root]\n' >&2; exit 2; }
 
@@ -35,30 +36,31 @@ in_git() { git -C "$root" rev-parse --show-toplevel >/dev/null 2>&1; }
 
 check_file() { if has "$2"; then say "$1" ok "$2"; else say "$1" missing "$2"; fi; }
 
-arkan_version() {
-	local v=""
-	v="$(git -C "$arkan" describe --tags --always --dirty 2>/dev/null)" || v=""
-	[ -n "$v" ] || v=unknown
-	printf '%s' "$v"
+manifest_version() {
+	[ -f "$1" ] || return 0
+	sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" | head -n1
 }
 
-link_owned() {
-	local target
-	[ -L "$1" ] || return 1
-	target="$(readlink "$1")" || return 1
-	case "$target" in
-		/*) ;;
-		*) target="$(dirname "$1")/$target" ;;
-	esac
-	target="$(canon_dir "$target")"
-	case "$target" in
-		"$arkan"/skills/*) return 0 ;;
-	esac
-	return 1
+arkan_version() {
+	local v="" top=""
+	top="$(git -C "$arkan" rev-parse --show-toplevel 2>/dev/null)" || top=""
+	if [ -n "$top" ] && [ "$(canon_dir "$top")" = "$arkan" ]; then
+		v="$(git -C "$arkan" describe --tags --always --dirty 2>/dev/null)" || v=""
+		if [ -n "$v" ]; then
+			printf '%s' "$v"
+			return
+		fi
+	fi
+	v="$(manifest_version "$arkan/.claude-plugin/plugin.json")"
+	if [ -n "$v" ]; then
+		printf '%s (plugin)' "$v"
+		return
+	fi
+	printf 'unknown'
 }
 
 check_arkan() {
-	local src name dest target total=0 linked=0 notlinked=0 missing="" stale="" clash=""
+	local src name dest raw expected marker marker_names=" " total=0 notlinked=0 missing="" stale="" kept="" clash="" owned=0 elsewhere=0 others=0 other_copy="" detail=""
 	if [ -z "${HOME:-}" ]; then
 		say arkan skip "HOME is not set"
 		return
@@ -67,51 +69,120 @@ check_arkan() {
 		say arkan skip "no skills/ in this checkout"
 		return
 	fi
+	marker="$home_skills/.arkan-links"
+	if [ -f "$marker" ]; then
+		while IFS="$tab" read -r name raw || [ -n "$name" ]; do
+			case "$name" in ""|.|..|*/*) continue ;; esac
+			marker_names="$marker_names$name "
+		done <"$marker"
+	fi
 	for src in "$arkan/skills"/*; do
-		[ -d "$src" ] || continue
+		if [ ! -d "$src" ]; then continue; fi
 		total=$((total + 1))
 		name=${src##*/}
 		dest="$home_skills/$name"
-		target=""
-		if [ -L "$dest" ]; then target="$(canon_dir "$dest")"; fi
-		if [ "$target" = "$arkan/skills/$name" ]; then
-			linked=$((linked + 1))
-		elif [ -e "$dest" ] || [ -L "$dest" ]; then
+		expected="$arkan/skills/$name"
+		owned=0
+		case "$marker_names" in *" $name "*) owned=1 ;; esac
+		if [ -L "$dest" ]; then
+			raw="$(readlink "$dest")" || raw=""
+			case "$raw" in */) raw="${raw%/}" ;; esac
+			if [ "$raw" = "$expected" ]; then
+				continue
+			fi
+			if [ "$owned" = 1 ]; then
+				case "$raw" in
+					*/skills/"$name")
+						elsewhere=$((elsewhere + 1))
+						if [ -z "$other_copy" ]; then other_copy="${raw%/skills/"$name"}"; fi
+						;;
+					*) others=$((others + 1)) ;;
+				esac
+			else
+				clash="$clash${clash:+, }$name"
+			fi
+		elif [ -e "$dest" ]; then
 			clash="$clash${clash:+, }$name"
 		else
 			missing="$missing${missing:+, }$name"
 			notlinked=$((notlinked + 1))
 		fi
 	done
-	if [ -d "$home_skills" ]; then
-		for dest in "$home_skills"/*; do
-			[ -L "$dest" ] || continue
-			name=${dest##*/}
-			[ -d "$arkan/skills/$name" ] && continue
-			if link_owned "$dest"; then stale="$stale${stale:+, }$name"; fi
-		done
+	if [ -f "$marker" ]; then
+		while IFS="$tab" read -r name raw || [ -n "$name" ]; do
+			case "$name" in ""|.|..|*/*) continue ;; esac
+			if [ -d "$arkan/skills/$name" ]; then continue; fi
+			stale="$stale${stale:+, }$name"
+			dest="$home_skills/$name"
+			if [ ! -L "$dest" ] && [ -e "$dest" ]; then
+				kept="$kept${kept:+, }$name"
+			fi
+		done <"$marker"
 	fi
 	if [ -n "$clash" ]; then
 		say arkan out-of-date "clash: $clash; left alone"
 	elif [ "$notlinked" -gt 0 ]; then
-		say arkan missing "$notlinked of $total skills not linked; run setup.sh apply arkan"
-	elif [ -n "$stale" ]; then
-		say arkan out-of-date "stale: $stale; run setup.sh apply arkan"
+		detail="$notlinked of $total skills not linked: $missing"
+		if [ "$elsewhere" -gt 0 ]; then
+			detail="$detail; $elsewhere link(s) point to another arkan copy${other_copy:+ ($other_copy)}"
+		fi
+		if [ "$others" -gt 0 ]; then detail="$detail; $others link(s) point elsewhere"; fi
+		say arkan missing "$detail; run setup.sh apply arkan"
+	elif [ -n "$stale" ] || [ "$elsewhere" -gt 0 ] || [ "$others" -gt 0 ]; then
+		if [ "$elsewhere" -gt 0 ]; then
+			detail="$elsewhere link(s) point to another arkan copy${other_copy:+ ($other_copy)}"
+		fi
+		if [ "$others" -gt 0 ]; then detail="$detail${detail:+; }$others link(s) point elsewhere"; fi
+		if [ -n "$stale" ]; then detail="$detail${detail:+; }stale: $stale"; fi
+		if [ -n "$kept" ]; then detail="$detail${detail:+; }not a link: $kept; left alone"; fi
+		say arkan out-of-date "$detail; run setup.sh apply arkan"
 	else
 		say arkan ok "version $(arkan_version); $total skills linked"
 	fi
 }
 
 check_claude_plugin() {
-	if [ -f "$arkan/.claude-plugin/plugin.json" ] && [ -f "$arkan/.claude-plugin/marketplace.json" ]; then
-		say claude-plugin ok "manifest and marketplace entry"
+	local cache f v
+	if [ -z "${HOME:-}" ]; then
+		say claude-plugin skip "HOME is not set"
+		return
+	fi
+	cache="$HOME/.claude/plugins/cache/arkan/arkan"
+	for f in "$cache"/*/; do
+		if [ ! -f "$f/.claude-plugin/plugin.json" ]; then continue; fi
+		v="$(manifest_version "$f/.claude-plugin/plugin.json")"
+		if [ -z "$v" ]; then
+			v="${f%/}"
+			v="${v##*/}"
+		fi
+		say claude-plugin ok "version $v"
+		return
+	done
+	if command -v claude >/dev/null 2>&1; then
+		say claude-plugin missing "run setup.sh apply claude-plugin"
 	else
-		say claude-plugin out-of-date "run setup.sh from a current arkan clone"
+		say claude-plugin skip "claude is not installed"
 	fi
 }
 
+apply_claude_plugin() {
+	if ! command -v claude >/dev/null 2>&1; then
+		say claude-plugin skip "claude is not installed"
+		return
+	fi
+	if ! claude plugin marketplace add "$arkan"; then
+		printf 'setup: claude plugin marketplace add failed\n' >&2
+		exit 1
+	fi
+	if ! claude plugin install arkan@arkan; then
+		printf 'setup: claude plugin install failed\n' >&2
+		exit 1
+	fi
+	check_claude_plugin
+}
+
 apply_arkan() {
-	local src name dest target linked=0 removed=0 clashes=0
+	local src name dest raw expected marker marker_names=" " linked=0 removed=0 clashes=0 owned=0 keep=0 linked_names="" removed_names="" new="" summary=""
 	if [ -z "${HOME:-}" ]; then
 		printf 'setup: HOME is not set\n' >&2
 		exit 2
@@ -121,36 +192,81 @@ apply_arkan() {
 		return
 	fi
 	mkdir -p "$home_skills"
+	marker="$home_skills/.arkan-links"
+	if [ -f "$marker" ]; then
+		while IFS="$tab" read -r name raw || [ -n "$name" ]; do
+			case "$name" in ""|.|..|*/*) continue ;; esac
+			marker_names="$marker_names$name "
+		done <"$marker"
+	fi
 	for src in "$arkan/skills"/*; do
-		[ -d "$src" ] || continue
+		if [ ! -d "$src" ]; then continue; fi
 		name=${src##*/}
 		dest="$home_skills/$name"
-		target=""
-		if [ -L "$dest" ]; then target="$(canon_dir "$dest")"; fi
-		if [ "$target" = "$arkan/skills/$name" ]; then
-			continue
-		fi
-		if [ -e "$dest" ] || [ -L "$dest" ]; then
-			printf 'setup: clash: %s is not a link to %s; left alone\n' "$dest" "$arkan/skills/$name" >&2
+		expected="$arkan/skills/$name"
+		owned=0
+		case "$marker_names" in *" $name "*) owned=1 ;; esac
+		keep=0
+		if [ -L "$dest" ]; then
+			raw="$(readlink "$dest")" || raw=""
+			case "$raw" in */) raw="${raw%/}" ;; esac
+			if [ "$raw" = "$expected" ]; then
+				keep=$owned
+			elif [ "$owned" = 1 ]; then
+				ln -sfn "$expected" "$dest"
+				linked=$((linked + 1))
+				linked_names="$linked_names${linked_names:+, }$name"
+				keep=1
+			else
+				printf 'setup: clash: %s is not a link to %s; left alone\n' "$dest" "$expected" >&2
+				clashes=$((clashes + 1))
+			fi
+		elif [ -e "$dest" ]; then
+			printf 'setup: clash: %s is not a link to %s; left alone\n' "$dest" "$expected" >&2
 			clashes=$((clashes + 1))
-			continue
+			keep=$owned
+		else
+			ln -s "$expected" "$dest"
+			linked=$((linked + 1))
+			linked_names="$linked_names${linked_names:+, }$name"
+			keep=1
 		fi
-		ln -s "$arkan/skills/$name" "$dest"
-		linked=$((linked + 1))
-	done
-	for dest in "$home_skills"/*; do
-		[ -L "$dest" ] || continue
-		name=${dest##*/}
-		[ -d "$arkan/skills/$name" ] && continue
-		if link_owned "$dest"; then
-			rm "$dest"
-			removed=$((removed + 1))
+		if [ "$keep" = 1 ]; then
+			new="$new$name"$'\t'"$expected"$'\n'
 		fi
 	done
-	if [ "$linked" = 0 ] && [ "$removed" = 0 ]; then
+	if [ -f "$marker" ]; then
+		while IFS="$tab" read -r name raw || [ -n "$name" ]; do
+			case "$name" in ""|.|..|*/*) continue ;; esac
+			if [ -d "$arkan/skills/$name" ]; then continue; fi
+			dest="$home_skills/$name"
+			if [ -L "$dest" ]; then
+				rm -f "$dest"
+				removed=$((removed + 1))
+				removed_names="$removed_names${removed_names:+, }$name"
+			elif [ -e "$dest" ]; then
+				printf 'setup: stale: %s is not a link; left alone\n' "$dest" >&2
+			fi
+		done <"$marker"
+	fi
+	if [ -n "$new" ]; then
+		printf '%s' "$new" >"$marker"
+	else
+		rm -f "$marker"
+	fi
+	if [ "$linked" -gt 0 ]; then summary="linked $linked ($linked_names)"; fi
+	if [ "$removed" -gt 0 ]; then summary="$summary${summary:+; }removed $removed ($removed_names)"; fi
+	if [ "$clashes" -gt 0 ]; then
+		if [ "$clashes" = 1 ]; then
+			summary="$summary${summary:+; }1 clash"
+		else
+			summary="$summary${summary:+; }$clashes clashes"
+		fi
+	fi
+	if [ -z "$summary" ]; then
 		printf 'setup: nothing changed; version %s\n' "$(arkan_version)"
 	else
-		printf 'setup: linked %s, removed %s; version %s\n' "$linked" "$removed" "$(arkan_version)"
+		printf 'setup: %s; version %s\n' "$summary" "$(arkan_version)"
 	fi
 	[ "$clashes" = 0 ] || exit 1
 }
@@ -503,6 +619,7 @@ apply() {
 		approvals) seed docs/agents/approvals.md approvals.md ;;
 		review-md) seed REVIEW.md review.md ;;
 		arkan) apply_arkan; return ;;
+		claude-plugin) apply_claude_plugin; return ;;
 		ci-review | ci-check | ci-risk | ci-post-merge | ci-merge)
 			local pair src="" mode=""
 			if [ "$item" = ci-merge ]; then
@@ -526,7 +643,7 @@ apply() {
 			cp "$ci/$src" "$root/.github/workflows/$src"
 			;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, arkan, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
 			exit 2
 			;;
 	esac
