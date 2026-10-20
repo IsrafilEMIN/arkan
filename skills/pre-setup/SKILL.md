@@ -11,6 +11,7 @@ Set up what the other arkan skills assume. A script checks; you ask the person a
 - [scripts/setup.sh](./scripts/setup.sh) `check [repo-root]` prints one line per item: `ok`, `missing`, `out-of-date`, `hint` or `skip`. It changes nothing.
 - `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state. `apply arkan` prints the names it linked and removed instead.
 - [scripts/board.sh](./scripts/board.sh) `build|check|fields [repo-root]` writes and checks `TODO.md` for a local tracker; `fields` checks only the ticket fields and needs no `TODO.md`. Repos run it from this skill; they get no copy.
+- [harnesses.md](./harnesses.md) records where each harness reads skills and instructions. Read it before you set up or remove a harness. It cites each fact's source, or marks it `unverified`.
 - The seeds are in [references/](./references/).
 
 ## Process
@@ -27,16 +28,21 @@ For each item, lead with your recommendation so the person can accept it in one 
 
 #### Machine
 
-These two items are about this machine, not the repo. They print from any directory, before the repo items, and neither asks.
+These three items are about this machine, not the repo. They print from any directory, before the repo items. Only `harnesses` asks.
 
 | item | what to do | ask? |
 |---|---|---|
 | `arkan` | `apply arkan` links every `skills/<name>` of this arkan checkout into `~/.agents/skills/<name>` and records it as `name<TAB>absolute target` in `~/.agents/skills/.arkan-links`. Only names in that file are arkan's links. It links a missing skill and relinks a recorded link that points to another arkan copy or a moved checkout. A recorded current-skill link that points anywhere else is a clash: the link and marker line stay and `apply` exits 1. It removes a recorded link whose skill is gone only when its live target equals the recorded target; a repointed stale link is left alone, its marker line is dropped, and it is reported. A real directory or a missing link at a stale name is left alone, reported, and its marker line is dropped. A user's own link that is not recorded is never touched. `check` reads `ok  version <v>; <n> skills linked`, where `<v>` is `git describe --tags --always --dirty` when this checkout is its own git root, else the `version` in `.claude-plugin/plugin.json` marked `(plugin)`, else `unknown`. `missing` names the skills not linked and how many links point to another arkan copy. `out-of-date` names a stale link, a link to another copy, a link that points elsewhere, or a clash. `apply arkan` prints the names it linked and removed, counts clashes and marker changes, links the rest, and exits 1 on a clash | no |
 | `claude-plugin` | `ok` when the install record has an `arkan@arkan` entry, with its version when it carries one, else `installed`; the record is `claude plugin list --json` when `claude` is on PATH, else `~/.claude/plugins/installed_plugins.json`. `missing` when `claude` is on PATH but the record has no arkan entry; `skip claude is not installed` when there is no `claude` and no entry. The cache is read only when no record file exists. `apply claude-plugin` runs `claude plugin marketplace add <path to arkan>` and `claude plugin install arkan@arkan`, then prints the new state; without `claude` it skips | no |
+| `harnesses` | detects each harness home or command: `claude` on PATH or an installed plugin, `${CODEX_HOME:-~/.codex}`, `${DSH_HOME:-~/.dsh}`, `~/.pi`, `~/.cursor`, `~/.config/opencode` or `opencode` on PATH, `omp` on PATH, `~/.hermes`. A harness that reads `~/.agents/skills/` needs nothing; claude code needs the plugin; hermes with no `skills.external_dirs` entry, or dsh with `DSH_AGENTS_HOME` set to another root, reads `hint` with what to change. `ok` names the detected harnesses when all are covered, `missing` when claude code has no plugin, `skip` when none is detected. It reads the install record and the cache only, never runs `claude`; it has no apply | yes, which harnesses |
 
 The `arkan` check line is the version print. A second `apply arkan` with nothing to fix prints `setup: nothing changed; version <v>`.
 
 For claude code, `apply claude-plugin` installs arkan as a plugin: it runs `claude plugin marketplace add <path to arkan>`, then `claude plugin install arkan@arkan`. Or start claude with `claude --plugin-dir <path to arkan>`. Claude code names each skill `arkan:<skill>`, so arkan's `code-review` and the built-in `/code-review` both stay. A plain skill in `~/.claude/skills/` is not how arkan installs there; `symlink-first` skips arkan's skills for claude while this plugin is installed.
+
+Ask the person which harnesses they use as a multi-select, with the detected ones pre-selected. A harness that reads `~/.agents/skills/` needs no change. Claude code gets the plugin, with no link in `~/.claude/skills/`. For a harness that does not read `~/.agents/skills/`, link each arkan skill where that harness reads skills, and only after a yes. Remove a harness's links only after a yes. [harnesses.md](./harnesses.md) gives each harness's paths, instruction file, frontmatter and manual-only mark.
+
+`harnesses` reads the install record and the cache, so it never runs `claude`. A plugin installed through the CLI alone can read `ok` on `claude-plugin` and `missing` on `harnesses`: trust `claude-plugin`, and run it again if the person wants the record updated.
 
 #### Repo
 
@@ -50,6 +56,7 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | `domain` | single-context: write `docs/agents/domain.md` from `references/domain.md`. Offer multi-context only when the repo has monorepo signals (`pnpm-workspace.yaml`, `workspaces` in `package.json`, a populated `packages/*`) | only with monorepo signals |
 | `gitattributes` | `apply gitattributes` (adds `GLOSSARY.md merge=union`) | no |
 | `agents-block` | write the block below into `AGENTS.md`. With a local tracker, the `### Board` line must name `board.sh build` and `board.sh check`; the check reads `out-of-date` when it does not | no |
+| `claude-md` | with claude code detected and `AGENTS.md` in the repo, a missing `CLAUDE.md` is `missing`; `apply claude-md` creates the relative link `CLAUDE.md -> AGENTS.md`. An existing `CLAUDE.md` of any kind is `ok` and untouched. With no `AGENTS.md`, or no claude code, it is `skip` | no |
 | `board` | `apply board` (seeds `TODO.md`, creates `.scratch/` for a local tracker, removes a `TODO.md` line from `.gitignore`). With a local tracker, the check runs `board.sh check` and reads `ok` only on `check-board: ok`; then run `board.sh build` and `board.sh check` until it passes. With github or gitlab, the board is written by hand, as that tracker's seed says | no |
 | `sensitive-paths` | start from `references/sensitive-paths.md` and add what the repo has: installer scripts, auth, billing, release workflows. Show the list | yes, the person approves or edits the list |
 | `approvals` | `apply approvals` (the fixed rule: `auto` and `manual`) | no |
