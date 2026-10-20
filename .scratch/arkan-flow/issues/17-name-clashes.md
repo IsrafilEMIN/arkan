@@ -1,7 +1,7 @@
 # 17: no two skills or commands share a name
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 15
 
 **What to build:** across all the harnesses a user has, no arkan skill shares a name with another skill or a built-in command, so the agent never picks the wrong one.
@@ -15,9 +15,9 @@ proposal:
 - add the `arkan-` prefix only where a clash with a harness's built-in command is left. no blanket prefix.
 - `pre-setup` (machine scope) scans each chosen harness's skill folders and built-in commands, and reports each clash before it links anything.
 
-- [ ] the owner accepts or changes the proposal
-- [ ] after ticket 03, no name in `skills/` equals a built-in command of a supported harness
-- [ ] pre-setup reports a planted clash in a test setup
+- [x] the owner accepts or changes the proposal
+- [x] after ticket 03, no name in `skills/` equals a built-in command of a supported harness
+- [x] pre-setup reports a planted clash in a test setup
 
 ## Comments
 
@@ -28,3 +28,9 @@ proposal:
   - omp: skills are called with `/skill:name`. two skills with one name: the higher-ranked keeps the plain name, the other becomes `<namespace>/<name>`.
   left for this ticket: the scan that reports a skill-against-skill clash (pi drops one), in the machine-scope setup built with 04.
   sources read 2026-10-18: claude code <https://code.claude.com/docs/en/skills>; codex source `codex-rs/skills/src/` in <https://github.com/openai/codex> (its docs page was blocked from the cloud session); pi <https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/skills.md>; omp <https://github.com/can1357/oh-my-pi/blob/main/docs/skills.md>.
+
+- 2026-10-19, agent: built the scan in `skills/pre-setup/scripts/name-scan.sh`, called by `setup.sh check` as the `names` item and by `apply arkan` before its first write. shape compared: one inline `check_names()` in `setup.sh` keeps detection and `say` in one file, but puts the root table, frontmatter parser and grouping in an already 892-line script and gives no direct chosen-harness entry. the helper keeps `setup.sh` to a wrapper, is read-only, and takes harness labels as argv, so detection stays in `setup.sh` (`detect_harnesses`) and the roots live in one small table. chose the helper.
+  record `(harness, namespace, declared name, canonical source, root)`; group by `(harness, namespace, declared name)`; two distinct canonical sources are a clash. links resolve with `cd -P` and `pwd -P`, so a mirror is one source. the `name:` frontmatter is read only in the first `---` block; a missing name is a hint, never a clash. codex `.system` is excluded from user skills. claude plugin skills are `plugin:arkan` from `$arkan/skills` when the install record or cache says installed; they are never compared to builtins or plain skills. the builtin check is the minimum `simplify code-review security-review` list from `symlink-first/scripts/link-agents.sh`, applied only to claude plain skills.
+  scope: the machine user roots in `harnesses.md` (claude `~/.claude/skills`; codex `~/.agents/skills` and `${CODEX_HOME:-~/.codex}/skills`; dsh `${DSH_AGENTS_HOME:-~/.agents}/skills`; pi `~/.agents/skills`; omp `~/.agents/skills`, `~/.claude/skills`, `~/.codex/skills`; cursor the same three; opencode the first two; hermes only `skills.external_dirs`). project roots, the hermes local root and plugin caches are unverified or namespaced and were not scanned; the scan says so in `SKILL.md` and `harnesses.md`. dsh is scanned when `DSH_AGENTS_HOME` names an existing skills root even if `${DSH_HOME:-~/.dsh}` is absent; the `harnesses` item keeps its old detection output.
+  proof on `/bin/bash` 3.2.57 and temp homes only: 58 smoke assertions in `/tmp/arkan17-smoke.sh` (0 fail), including the planted `.agents`/`.claude` clash, codex and `CODEX_HOME` clashes, mirror alias ok, cross-harness ok, frontmatter name over directory name, missing name hint, plugin namespace against a plain builtin shadow, codex and omp/cursor `.system` exclusion, paths with spaces, HOME unset, absent roots, chosen harnesses, and Hermes inline and list external dirs. tree hash before and after `name-scan.sh` plus `setup.sh check` on the evidence home: both `320bd4dc014361515b483a382d6b1542a4af7a47584d2e70bf1afc8c7843410b`. `apply arkan` on a planted clash printed `names out-of-date` on line 1 and `setup: linked ...` on line 3, so the preflight precedes the first write. `scripts/check.sh` -> `check-board: ok (54 cards)`, `check-seam: ok`, `review-eval: ok (1 case(s))`, `check: ok`.
+  box 2: `code-review` and `security-review` still equal claude code's builtin names by the owner's decision. they reach claude as `arkan:<name>` through the plugin; the only bare-name case is a plain skill in `~/.claude/skills`, which the scan reports as a shadow. no rename and no prefix.

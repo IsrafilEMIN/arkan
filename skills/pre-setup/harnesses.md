@@ -4,6 +4,8 @@ Where each harness reads skills and instructions, and how pre-setup sets it up. 
 
 Sources: `skills/symlink-first/SKILL.md`'s agent map (verified 2026-10 against each harness's docs or source), the sources ticket 04 read on 2026-10-18, and tickets 05 and 06. A fact with no source below is `unverified`: check the harness's own docs before you rely on it.
 
+`pre-setup`'s `names` scan reads only the machine user skill roots below. Project roots, a Hermes local skill root and plugin caches are outside that scope: they are unverified or namespaced, not duplicate sources.
+
 ## Claude code
 
 - user skills: `~/.claude/skills/<name>/` as a link, or the arkan plugin, which names each skill `arkan:<name>`. Source: `skills/symlink-first/SKILL.md`, agent map (verified 2026-10); ticket 06.
