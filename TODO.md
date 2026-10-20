@@ -40,9 +40,6 @@
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
 
-- [ ] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
-
 - [ ] 52: A pull request opened by ci starts no checks #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/52-ci-opened-pr-starts-no-checks.md` · blocked by: none
 
@@ -167,3 +164,6 @@
 
 - [x] 50: Make the 24 principles skills, pstack-shaped #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/50-principles-as-skills.md` · blocked by: none
+
+- [x] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none

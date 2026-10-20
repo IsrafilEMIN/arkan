@@ -34,6 +34,35 @@ in_git() { git -C "$root" rev-parse --show-toplevel >/dev/null 2>&1; }
 
 check_file() { if has "$2"; then say "$1" ok "$2"; else say "$1" missing "$2"; fi; }
 
+file_hash() { # path
+	if command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "$1" | cut -d' ' -f1
+	else
+		shasum -a 256 "$1" | cut -d' ' -f1
+	fi
+}
+
+body_hash() { # path: the hash without a trailing arkan-copy line
+	local last tmp
+	last="$(tail -n 1 "$1" 2>/dev/null || true)"
+	case "$last" in
+		"# arkan-copy: "*) ;;
+		*) file_hash "$1"; return ;;
+	esac
+	tmp="$(mktemp)"
+	sed '$d' "$1" >"$tmp"
+	file_hash "$tmp"
+	rm -f "$tmp"
+}
+
+stamp_of() { # path
+	local last
+	last="$(tail -n 1 "$1" 2>/dev/null || true)"
+	case "$last" in
+		"# arkan-copy: "*) printf '%s' "${last#"# arkan-copy: "}" ;;
+	esac
+}
+
 merge_path() {
 	local f="$root/docs/agents/approvals.md" broker="" gate=""
 	[ -f "$f" ] || return 0
@@ -169,7 +198,7 @@ own_ci() {
 }
 
 check_ci() {
-	local name=$1 src=$2 dst=".github/workflows/$2"
+	local name=$1 src=$2 dst=".github/workflows/$2" repo="$root/.github/workflows/$2" want
 	if [ ! -f "$ci/$src" ]; then
 		say "$name" skip "arkan's ci/github/$src not found next to this skill"
 	elif ! has "$dst"; then
@@ -178,10 +207,15 @@ check_ci() {
 		else
 			say "$name" missing "$dst"
 		fi
-	elif cmp -s "$ci/$src" "$root/$dst"; then
-		say "$name" ok "$dst"
 	else
-		say "$name" out-of-date "$dst differs from $ci/$src"
+		want="$(file_hash "$ci/$src")"
+		if [ "$(body_hash "$repo")" = "$want" ]; then
+			say "$name" ok "$dst"
+		elif [ "$(stamp_of "$repo")" = "$want" ]; then
+			say "$name" ok "$dst customized"
+		else
+			say "$name" out-of-date "$dst differs from $ci/$src; update it and merge the repo's settings"
+		fi
 	fi
 }
 
@@ -400,6 +434,7 @@ apply() {
 			[ -f "$ci/$src" ] || { printf 'setup: %s not found\n' "$ci/$src" >&2; exit 1; }
 			mkdir -p "$root/.github/workflows"
 			cp "$ci/$src" "$root/.github/workflows/$src"
+			printf '# arkan-copy: %s\n' "$(file_hash "$ci/$src")" >>"$root/.github/workflows/$src"
 			;;
 		*)
 			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
