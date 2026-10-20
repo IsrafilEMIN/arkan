@@ -45,13 +45,20 @@ name="$1" ref="$2" prompt="$3"
 dir="$RUNS/$name" log="$RUNS/$name.log.jsonl"
 [ ! -e "$dir" ] || die "$dir already exists; delete it or pick another name"
 command -v claude >/dev/null || die "claude is not on PATH"
-if [ "${AGENT_SANDBOX:-}" = 1 ]; then
-	command -v agent-gh >/dev/null || die "AGENT_SANDBOX=1 needs the broker client on PATH"
+route=direct
+broker_socket="${AGENT_GH_SOCKET:-$HOME/.agents/sandbox/broker/gh.sock}"
+if [ "${AGENT_SANDBOX:-}" = 1 ] ||
+	{ command -v agent-gh >/dev/null && [ -S "$broker_socket" ]; }; then
+	command -v agent-gh >/dev/null || die "guarded run needs the broker client on PATH"
+	[ -S "$broker_socket" ] || die "guarded run needs the broker socket: $broker_socket"
+	route=broker
+fi
+if [ "$route" = broker ]; then
 	slug="${REPO%/}"
 	slug="${slug%.git}"
 	slug="${slug#https://github.com/}"
 	slug="${slug#git@github.com:}"
-	[[ $slug =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || die "AGENT_SANDBOX=1 needs a GitHub SANDBOX_REPO: $REPO"
+	[[ $slug =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || die "broker route needs a GitHub SANDBOX_REPO: $REPO"
 	forge_tools=("Bash(agent-gh:*)")
 else
 	forge_tools=("Bash(gh:*)" "Bash(curl:*)")
@@ -76,7 +83,7 @@ model=()
 # environment facts a real repo would document; no hint about the task
 trunk="agent/run-$name"
 # each run gets its own trunk, so one run's merges never touch another's
-if [ "${AGENT_SANDBOX:-}" = 1 ]; then
+if [ "$route" = broker ]; then
 	git branch -q -f "$trunk" "$sha"
 	agent-gh push "$slug" "$PWD" "$trunk" "$sha" || die "agent-gh push did not create $trunk; no run started"
 	forge="(2) Every push and pull request goes through the broker clients, never git push, gh or the REST API: push with agent-gh push $slug <worktree> <agent/ branch> <head sha>; open a pr with agent-gh pr-create $slug $trunk <agent/ branch> <title> <body>; read it with agent-gh pr-view $slug N; read checks with agent-gh pr-checks $slug N."
