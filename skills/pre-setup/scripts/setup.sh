@@ -223,8 +223,33 @@ claude_detected() {
 	plugin_record_ok
 }
 
+hermes_dirs_ok() { # config file: external_dirs names the canonical skills dir
+	local raw line d
+	raw="$(awk '
+		/^[[:space:]]*external_dirs:/ {
+			found = 1
+			sub(/^[^:]*:[[:space:]]*/, "")
+			if ($0 != "") print
+			next
+		}
+		found && /^[[:space:]]*-/ { print; next }
+		found { exit }
+	' "$1" 2>/dev/null)" || raw=""
+	[ -n "$raw" ] || return 1
+	for line in $raw; do
+		for d in $(printf '%s' "$line" | tr ',' ' '); do
+			d="$(printf '%s' "$d" | tr -d '[:space:]"'\''[]-')"
+			d="${d%/}"
+			case "$d" in
+				"~/.agents/skills"|"\$HOME/.agents/skills"|"${HOME}/.agents/skills") return 0 ;;
+			esac
+		done
+	done
+	return 1
+}
+
 check_harnesses() {
-	local detected="" claude=0 detail="" hint="" dsh_root="" hermes_ok=0 cfg=""
+	local detected="" claude=0 detail="" hint="" dsh_root=""
 	if [ -z "${HOME:-}" ]; then
 		say harnesses skip "HOME is not set"
 		return
@@ -253,14 +278,8 @@ check_harnesses() {
 	if command -v omp >/dev/null 2>&1; then detected="$detected${detected:+, }omp"; fi
 	if [ -d "$HOME/.hermes" ]; then
 		detected="$detected${detected:+, }hermes"
-		hermes_ok=0
-		cfg="$HOME/.hermes/config.yaml"
-		if [ -f "$cfg" ]; then
-			if grep -qE '^[[:space:]]*external_dirs:[[:space:]]*$' "$cfg" && grep -qE '^[[:space:]]*-[[:space:]]*.*agents/skills[[:space:]]*$' "$cfg"; then hermes_ok=1; fi
-			if grep -qE '^[[:space:]]*external_dirs:[[:space:]]*\[.*agents/skills' "$cfg"; then hermes_ok=1; fi
-		fi
-		if [ "$hermes_ok" = 0 ]; then
-			hint="${hint:+$hint; }hermes needs a nested skills.external_dirs in ~/.hermes/config.yaml; see harnesses.md"
+		if ! hermes_dirs_ok "$HOME/.hermes/config.yaml"; then
+			hint="${hint:+$hint; }hermes needs skills.external_dirs to name ~/.agents/skills in ~/.hermes/config.yaml; see harnesses.md"
 		fi
 	fi
 	if [ -z "$detected" ]; then
