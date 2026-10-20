@@ -4,7 +4,7 @@
 #   setup.sh apply <item> [repo-root]  install one item that needs no choice
 # states: ok, missing, out-of-date, hint (a pointer only), skip (does not apply here).
 # check changes nothing. apply touches only local files; nothing here talks to a host.
-# harness items and name clashes plug in here with tickets 06 and 17.
+# name clashes plug in here with ticket 17.
 set -eu
 
 skill="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -202,6 +202,74 @@ check_claude_plugin() {
 	else
 		say claude-plugin skip "claude is not installed"
 	fi
+}
+
+plugin_record_ok() {
+	local record f
+	record="$HOME/.claude/plugins/installed_plugins.json"
+	if [ -f "$record" ]; then
+		grep -qF '"arkan@arkan"' "$record"
+		return
+	fi
+	for f in "$HOME/.claude/plugins/cache/arkan/arkan"/*/; do
+		if [ -f "$f/.claude-plugin/plugin.json" ]; then return 0; fi
+	done
+	return 1
+}
+
+claude_detected() { [ -n "${HOME:-}" ] && [ -d "$HOME/.claude" ]; }
+
+check_harnesses() {
+	local detected="" claude=0 detail=""
+	if [ -z "${HOME:-}" ]; then
+		say harnesses skip "HOME is not set"
+		return
+	fi
+	if claude_detected; then
+		detected="claude code"
+		claude=1
+	fi
+	if [ -d "${CODEX_HOME:-$HOME/.codex}" ]; then detected="$detected${detected:+, }codex"; fi
+	if [ -d "$HOME/.pi" ]; then detected="$detected${detected:+, }pi"; fi
+	if [ -d "$HOME/.cursor" ]; then detected="$detected${detected:+, }cursor"; fi
+	if [ -d "$HOME/.config/opencode" ] || command -v opencode >/dev/null 2>&1; then detected="$detected${detected:+, }opencode"; fi
+	if command -v omp >/dev/null 2>&1; then detected="$detected${detected:+, }omp"; fi
+	if [ -d "$HOME/.hermes" ]; then detected="$detected${detected:+, }hermes"; fi
+	if [ -z "$detected" ]; then
+		say harnesses skip "no harness detected"
+		return
+	fi
+	if [ "$claude" = 1 ] && ! plugin_record_ok; then
+		say harnesses missing "claude code needs the plugin; run setup.sh apply claude-plugin"
+		return
+	fi
+	detail="detected $detected"
+	if [ "$claude" = 1 ]; then
+		if [ "$detected" = "claude code" ]; then
+			detail="$detail; claude code uses the plugin"
+		else
+			detail="$detail; claude code uses the plugin; reads ~/.agents/skills"
+		fi
+	else
+		detail="$detail; reads ~/.agents/skills"
+	fi
+	say harnesses ok "$detail"
+}
+
+check_claude_md() {
+	if ! claude_detected; then
+		say claude-md skip "claude code is not detected"
+		return
+	fi
+	if ! has AGENTS.md; then
+		say claude-md skip "no AGENTS.md"
+		return
+	fi
+	if [ -e "$root/CLAUDE.md" ] || [ -L "$root/CLAUDE.md" ]; then
+		say claude-md ok CLAUDE.md
+		return
+	fi
+	say claude-md missing "CLAUDE.md -> AGENTS.md"
 }
 
 apply_claude_plugin() {
@@ -626,6 +694,7 @@ hook_covers() { # language hook-file: a non-comment line names that language's t
 check() {
 	check_arkan
 	check_claude_plugin
+	check_harnesses
 	if in_git; then say git ok; else say git missing "not a git repo"; fi
 	check_tracker
 	check_file labels docs/agents/triage-labels.md
@@ -643,6 +712,7 @@ check() {
 	else
 		say agents-block ok AGENTS.md
 	fi
+	check_claude_md
 	check_board
 	check_file sensitive-paths docs/agents/sensitive-paths.md
 	check_file approvals docs/agents/approvals.md
@@ -727,6 +797,11 @@ apply() {
 			;;
 		approvals) seed docs/agents/approvals.md approvals.md ;;
 		review-md) seed REVIEW.md review.md ;;
+		claude-md)
+			if claude_detected && has AGENTS.md && [ ! -e "$root/CLAUDE.md" ] && [ ! -L "$root/CLAUDE.md" ]; then
+				ln -s AGENTS.md "$root/CLAUDE.md"
+			fi
+			;;
 		arkan) apply_arkan; return ;;
 		claude-plugin) apply_claude_plugin; return ;;
 		ci-review | ci-check | ci-risk | ci-post-merge | ci-merge)
@@ -755,7 +830,7 @@ apply() {
 			printf '# arkan-copy: %s\n' "$want" >>"$root/.github/workflows/$src"
 			;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, claude-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
 			exit 2
 			;;
 	esac
