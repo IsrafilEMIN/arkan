@@ -32,14 +32,14 @@ Version 0.161.
 
 Version 0.2.
 
-- user skills: `~/.agents/skills/`. Source: agent map (verified 2026-10).
+- user skills: `${DSH_AGENTS_HOME:-~/.agents}/skills/`. Source: agent map (verified 2026-10).
 - project skills: `unverified`.
 - instruction file: `${DSH_HOME:-~/.dsh}/AGENTS.md` for the user. The project file is `unverified`. Source: agent map (verified 2026-10).
 - frontmatter: `unverified`.
 - manual only: `unverified`.
-- symlinks: follows them. It reads the linked `~/.agents/skills/` tree. Source: agent map (verified 2026-10).
+- symlinks: follows them. It reads the linked skills tree. Source: agent map (verified 2026-10).
 - docs: `unverified`. The agent map records no link.
-- setup: nothing. It already reads `~/.agents/skills/`.
+- setup: nothing when `DSH_AGENTS_HOME` is unset or names `~/.agents`. Another value makes `harnesses` read `hint`: dsh then reads that root's `skills/`, not arkan's.
 
 ## Pi
 
@@ -97,11 +97,19 @@ Version 2.0.
 
 Version 0.21.
 
-- user skills: through config, not a link. `skills.external_dirs: [~/.agents/skills]` in `~/.hermes/config.yaml`. Source: agent map (verified 2026-10).
+- user skills: through config, not a link. A nested `skills.external_dirs` list in `~/.hermes/config.yaml` names `~/.agents/skills`:
+
+  ```yaml
+  skills:
+    external_dirs:
+      - ~/.agents/skills
+  ```
+
+  Source: agent map (verified 2026-10).
 - project skills: `unverified`.
 - instruction file: `unverified`. The agent map records its global instructions as not checked.
 - frontmatter: `unverified`.
 - manual only: `unverified`.
 - symlinks: it reads the external directory, and its curator can edit a linked skill, so a write can reach the canonical copy. Source: agent map (verified 2026-10).
 - docs: `unverified`. The agent map records no link.
-- setup: nothing when its config names `~/.agents/skills` as an external directory. Without that line, `harnesses` reads `hint` with the exact yaml to add. A local hermes skill with the same name wins over the external one.
+- setup: nothing when the config's `skills.external_dirs` names `~/.agents/skills`. Without it, `harnesses` reads `hint`; the skill writes the block above after a yes. A local hermes skill with the same name wins over the external one.

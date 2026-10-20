@@ -234,7 +234,13 @@ check_harnesses() {
 		claude=1
 	fi
 	if [ -d "${CODEX_HOME:-$HOME/.codex}" ]; then detected="$detected${detected:+, }codex"; fi
-	if [ -d "${DSH_HOME:-$HOME/.dsh}" ]; then detected="$detected${detected:+, }dsh"; fi
+	if [ -d "${DSH_HOME:-$HOME/.dsh}" ]; then
+		detected="$detected${detected:+, }dsh"
+		case "${DSH_AGENTS_HOME:-$HOME/.agents}" in
+			"$HOME/.agents"|"$HOME/.agents/") ;;
+			*) hint="${hint:+$hint; }dsh reads ${DSH_AGENTS_HOME%/}/skills, not ~/.agents/skills; unset DSH_AGENTS_HOME or point it at ~/.agents" ;;
+		esac
+	fi
 	if [ -d "$HOME/.pi" ]; then detected="$detected${detected:+, }pi"; fi
 	if [ -d "$HOME/.cursor" ]; then detected="$detected${detected:+, }cursor"; fi
 	if [ -d "$HOME/.config/opencode" ] || command -v opencode >/dev/null 2>&1; then detected="$detected${detected:+, }opencode"; fi
@@ -242,7 +248,7 @@ check_harnesses() {
 	if [ -d "$HOME/.hermes" ]; then
 		detected="$detected${detected:+, }hermes"
 		if ! grep -q 'external_dirs' "$HOME/.hermes/config.yaml" 2>/dev/null || ! grep -q 'agents/skills' "$HOME/.hermes/config.yaml" 2>/dev/null; then
-			hint="hermes needs skills.external_dirs: [~/.agents/skills] in ~/.hermes/config.yaml"
+			hint="${hint:+$hint; }hermes needs a nested skills.external_dirs in ~/.hermes/config.yaml; see harnesses.md"
 		fi
 	fi
 	if [ -z "$detected" ]; then
