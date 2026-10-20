@@ -63,7 +63,7 @@ done
 
 # skills: claude code is the only agent that cannot read ~/.agents/skills.
 # claude_builtin: skills claude code ships itself; ~/.agents holds them for the other agents only.
-claude_builtin=" simplify "
+claude_builtin=" simplify code-review security-review "
 mirror="$home/.claude/skills"
 mkdir -p "$mirror"
 for skill in "$canon"/skills/*/; do
