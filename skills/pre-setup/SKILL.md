@@ -9,7 +9,7 @@ disable-model-invocation: true
 Set up what the other arkan skills assume. A script checks; you ask the person and write.
 
 - [scripts/setup.sh](./scripts/setup.sh) `check [repo-root]` prints one line per item: `ok`, `missing`, `out-of-date`, `hint` or `skip`. It changes nothing.
-- `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state.
+- `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state. `apply arkan` prints the names it linked and removed instead.
 - [scripts/board.sh](./scripts/board.sh) `build|check|fields [repo-root]` writes and checks `TODO.md` for a local tracker; `fields` checks only the ticket fields and needs no `TODO.md`. Repos run it from this skill; they get no copy.
 - The seeds are in [references/](./references/).
 
@@ -24,6 +24,21 @@ On a re-run, this list is the whole job. When every line is `ok`, `skip` or `hin
 ### 2. Work the items in order
 
 For each item, lead with your recommendation so the person can accept it in one word. Ask only where the table says so. Install a no-choice item with `setup.sh apply <item>` without asking.
+
+#### Machine
+
+These two items are about this machine, not the repo. They print from any directory, before the repo items, and neither asks.
+
+| item | what to do | ask? |
+|---|---|---|
+| `arkan` | `apply arkan` links every `skills/<name>` of this arkan checkout into `~/.agents/skills/<name>` and records it as `name<TAB>absolute target` in `~/.agents/skills/.arkan-links`. Only names in that file are arkan's links. It links a missing skill and relinks a recorded link that points to another arkan copy or a moved checkout. A recorded current-skill link that points anywhere else is a clash: the link and marker line stay and `apply` exits 1. It removes a recorded link whose skill is gone only when its live target equals the recorded target; a repointed stale link is left alone, its marker line is dropped, and it is reported. A real directory or a missing link at a stale name is left alone, reported, and its marker line is dropped. A user's own link that is not recorded is never touched. `check` reads `ok  version <v>; <n> skills linked`, where `<v>` is `git describe --tags --always --dirty` when this checkout is its own git root, else the `version` in `.claude-plugin/plugin.json` marked `(plugin)`, else `unknown`. `missing` names the skills not linked and how many links point to another arkan copy. `out-of-date` names a stale link, a link to another copy, a link that points elsewhere, or a clash. `apply arkan` prints the names it linked and removed, counts clashes and marker changes, links the rest, and exits 1 on a clash | no |
+| `claude-plugin` | `ok` when the install record has an `arkan@arkan` entry, with its version when it carries one, else `installed`; the record is `claude plugin list --json` when `claude` is on PATH, else `~/.claude/plugins/installed_plugins.json`. `missing` when `claude` is on PATH but the record has no arkan entry; `skip claude is not installed` when there is no `claude` and no entry. The cache is read only when no record file exists. `apply claude-plugin` runs `claude plugin marketplace add <path to arkan>` and `claude plugin install arkan@arkan`, then prints the new state; without `claude` it skips | no |
+
+The `arkan` check line is the version print. A second `apply arkan` with nothing to fix prints `setup: nothing changed; version <v>`.
+
+For claude code, `apply claude-plugin` installs arkan as a plugin: it runs `claude plugin marketplace add <path to arkan>`, then `claude plugin install arkan@arkan`. Or start claude with `claude --plugin-dir <path to arkan>`. Claude code names each skill `arkan:<skill>`, so arkan's `code-review` and the built-in `/code-review` both stay. A plain skill in `~/.claude/skills/` is not how arkan installs there; `symlink-first` skips arkan's skills for claude while this plugin is installed.
+
+#### Repo
 
 Any change on the host (github, gitlab) asks first, even when there is no choice: show the exact change (the command, or the setting and its new value), then wait for a yes.
 

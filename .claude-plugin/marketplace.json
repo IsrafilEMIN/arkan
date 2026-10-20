@@ -1,0 +1,14 @@
+{
+  "name": "arkan",
+  "description": "One bundle of agent skills, principles and playbooks for engineering work.",
+  "owner": {
+    "name": "IsrafilEMIN"
+  },
+  "plugins": [
+    {
+      "name": "arkan",
+      "source": "./",
+      "description": "One bundle of agent skills, principles and playbooks for engineering work."
+    }
+  ]
+}
