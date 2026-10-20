@@ -28,6 +28,19 @@ Version 0.161.
 - docs: the codex skills page was blocked from the cloud session on 2026-10-18; the read source was `codex-rs/skills/src/` in <https://github.com/openai/codex>, read 2026-10-18. <https://learn.chatgpt.com/docs/build-skills>, verified 2026-10.
 - setup: nothing. It already reads `~/.agents/skills/`.
 
+## dsh
+
+Version 0.2.
+
+- user skills: `~/.agents/skills/`. Source: agent map (verified 2026-10).
+- project skills: `unverified`.
+- instruction file: `${DSH_HOME:-~/.dsh}/AGENTS.md` for the user. The project file is `unverified`. Source: agent map (verified 2026-10).
+- frontmatter: `unverified`.
+- manual only: `unverified`.
+- symlinks: follows them. It reads the linked `~/.agents/skills/` tree. Source: agent map (verified 2026-10).
+- docs: `unverified`. The agent map records no link.
+- setup: nothing. It already reads `~/.agents/skills/`.
+
 ## Pi
 
 Version 1.1.
@@ -91,4 +104,4 @@ Version 0.21.
 - manual only: `unverified`.
 - symlinks: it reads the external directory, and its curator can edit a linked skill, so a write can reach the canonical copy. Source: agent map (verified 2026-10).
 - docs: `unverified`. The agent map records no link.
-- setup: nothing. Its config names `~/.agents/skills` as an external directory. A local hermes skill with the same name wins over the external one.
+- setup: nothing when its config names `~/.agents/skills` as an external directory. Without that line, `harnesses` reads `hint` with the exact yaml to add. A local hermes skill with the same name wins over the external one.

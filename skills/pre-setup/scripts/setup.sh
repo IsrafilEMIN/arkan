@@ -205,11 +205,7 @@ check_claude_plugin() {
 }
 
 plugin_record_ok() {
-	local record f list
-	if command -v claude >/dev/null 2>&1 && list="$(claude plugin list --json 2>/dev/null)"; then
-		printf '%s' "$list" | grep -qF '"arkan@arkan"'
-		return
-	fi
+	local record f
 	record="$HOME/.claude/plugins/installed_plugins.json"
 	if [ -f "$record" ]; then
 		grep -qF '"arkan@arkan"' "$record"
@@ -221,10 +217,14 @@ plugin_record_ok() {
 	return 1
 }
 
-claude_detected() { [ -n "${HOME:-}" ] && [ -d "$HOME/.claude" ]; }
+claude_detected() {
+	[ -n "${HOME:-}" ] || return 1
+	if command -v claude >/dev/null 2>&1; then return 0; fi
+	plugin_record_ok
+}
 
 check_harnesses() {
-	local detected="" claude=0 detail=""
+	local detected="" claude=0 detail="" hint=""
 	if [ -z "${HOME:-}" ]; then
 		say harnesses skip "HOME is not set"
 		return
@@ -234,11 +234,17 @@ check_harnesses() {
 		claude=1
 	fi
 	if [ -d "${CODEX_HOME:-$HOME/.codex}" ]; then detected="$detected${detected:+, }codex"; fi
+	if [ -d "${DSH_HOME:-$HOME/.dsh}" ]; then detected="$detected${detected:+, }dsh"; fi
 	if [ -d "$HOME/.pi" ]; then detected="$detected${detected:+, }pi"; fi
 	if [ -d "$HOME/.cursor" ]; then detected="$detected${detected:+, }cursor"; fi
 	if [ -d "$HOME/.config/opencode" ] || command -v opencode >/dev/null 2>&1; then detected="$detected${detected:+, }opencode"; fi
 	if command -v omp >/dev/null 2>&1; then detected="$detected${detected:+, }omp"; fi
-	if [ -d "$HOME/.hermes" ]; then detected="$detected${detected:+, }hermes"; fi
+	if [ -d "$HOME/.hermes" ]; then
+		detected="$detected${detected:+, }hermes"
+		if ! grep -q 'external_dirs' "$HOME/.hermes/config.yaml" 2>/dev/null || ! grep -q 'agents/skills' "$HOME/.hermes/config.yaml" 2>/dev/null; then
+			hint="hermes needs skills.external_dirs: [~/.agents/skills] in ~/.hermes/config.yaml"
+		fi
+	fi
 	if [ -z "$detected" ]; then
 		say harnesses skip "no harness detected"
 		return
@@ -257,7 +263,11 @@ check_harnesses() {
 	else
 		detail="$detail; reads ~/.agents/skills"
 	fi
-	say harnesses ok "$detail"
+	if [ -n "$hint" ]; then
+		say harnesses hint "$detail; $hint"
+	else
+		say harnesses ok "$detail"
+	fi
 }
 
 check_claude_md() {
