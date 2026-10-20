@@ -125,8 +125,7 @@ scan_root() {
 			hint "dangling skill link $entry; not grouped"
 			continue
 		fi
-		dir="$entry"
-		if [ "$harness" != "claude code" ]; then dir="$(modeled_dir "$entry")"; fi
+		dir="$(modeled_dir "$entry")"
 		scan_entry "$harness" "$root" "${entry##*/}" "$dir"
 	done
 }

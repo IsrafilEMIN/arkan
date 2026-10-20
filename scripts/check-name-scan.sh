@@ -73,6 +73,25 @@ ln -s "$base/old/skills/pre-setup" "$HOME/.claude/skills/old-direct"
 scan --pending "$repo/skills" omp
 has 'omp: pre-setup from ' 'direct foreign link to old checkout must stay independent'
 
+new_home claude-upgrade
+mkdir -p "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex"
+ln -s "$base/old/skills/pre-setup" "$HOME/.agents/skills/pre-setup"
+printf 'pre-setup\t%s\n' "$base/old/skills/pre-setup" >"$HOME/.agents/skills/.arkan-links"
+ln -s ../../.agents/skills/pre-setup "$HOME/.claude/skills/pre-setup"
+ln -s "$repo/skills/pre-setup" "$HOME/.claude/skills/current"
+scan 'claude code'
+has 'claude code: pre-setup from ' 'plain claude check must retain old on-disk source'
+scan --pending "$repo/skills" 'claude code'
+has 'no same-name sources' 'pending claude mirrors must resolve to incoming owned source'
+lacks 'out-of-date' 'pending claude inventory must dedupe mirror and direct incoming link'
+out="$(/bin/bash "$setup" apply arkan "$repo")"
+scan 'claude code'
+has 'no same-name sources' 'actual post-apply claude inventory must dedupe'
+skill "$HOME/.claude/skills/foreign" pre-setup
+scan --pending "$repo/skills" 'claude code'
+has 'claude code: pre-setup from ' 'real foreign claude directory must remain independent'
+has "$HOME/.claude/skills/foreign" 'claude clash must name foreign source'
+
 new_home foreign
 skill "$HOME/.agents/skills/pre-setup" pre-setup
 skill "$base/foreign/skills/tdd" tdd

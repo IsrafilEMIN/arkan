@@ -18,7 +18,7 @@ Records are `(harness, namespace, effective name, canonical source, discovery ro
 
 This is a candidate-name inventory, not a loader clone. It reads simple scalar `name:` frontmatter, not arbitrary YAML. It does not validate every metadata field, apply enable flags, or prove that every candidate is enabled. Codex requires a description to load a skill. Omp can disable foreign user providers and individual skills. Those controls do not change the inventory. A reported clash can therefore involve an invalid or disabled candidate.
 
-`apply arkan` adds incoming candidates only for Codex and Omp. Its preflight follows link chains and substitutes the incoming source at owned `.agents/skills/<name>` links that apply will replace. A `.claude` mirror through such a link sees the same incoming source. A direct link to an old checkout, an unowned link or a real directory remains independent. Plain `check` never adds incoming candidates.
+`apply arkan` adds incoming candidates only for Codex and Omp. Its preflight follows link chains and substitutes the incoming source at owned `.agents/skills/<name>` links that apply will replace. Existing `.claude` mirrors through such links see the same incoming source in both Claude code and Omp inventories. This does not add incoming candidates to Claude code. A direct link to an old checkout, an unowned link or a real directory remains independent. Plain `check` never adds incoming candidates.
 
 Sources read 2026-10-20:
 
