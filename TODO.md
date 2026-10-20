@@ -37,9 +37,6 @@
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: none
 
-- [ ] 46: Commit hooks for any language #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/46-commit-hooks-for-any-language.md` · blocked by: none
-
 - [ ] 48: Pre-setup checks what a file says, not only that it exists #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/48-pre-setup-checks-content.md` · blocked by: none
 
@@ -152,6 +149,9 @@
 
 - [x] 45: Incidents become review evals #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/45-incidents-become-review-evals.md` · blocked by: none
+
+- [x] 46: Commit hooks for any language #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/46-commit-hooks-for-any-language.md` · blocked by: none
 
 - [x] 49: Restore tdd and test-to-break, keep the test principle skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/49-restore-tdd-and-test-to-break.md` · blocked by: none
