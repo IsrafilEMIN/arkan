@@ -4,22 +4,22 @@ the kit for ticket `arkan-flow` 19: run arkan, unattended, on planted scenarios 
 
 ## build the sandbox
 
-`eval/scenarios/build.sh build <destination>` writes a fresh sandbox repo from `sandbox/history.bundle` and arkan's current `skills/` and `scripts/board.sh`. it refuses a destination that is not empty or that sits inside the arkan checkout.
+`eval/scenarios/build.sh build <destination>` writes a fresh sandbox repo from `sandbox/history.bundle` and arkan's committed `skills/` tree at `HEAD`. it refuses a destination that is not empty, a destination inside the arkan checkout, or a dirty `skills/`.
 
 ```sh
 eval/scenarios/build.sh build /tmp/arkan-sandbox
 ```
 
-the build materializes `main` and `pre-break` with the scenario history, plants the two sandbox workflows, puts arkan's skills in `.claude/skills/`, replaces the two old board scripts with `scripts/board.sh`, regenerates `TODO.md` on both branches, and validates:
+the build materializes `main` and `pre-break` with the scenario history, plants the two sandbox workflows, puts arkan's skills in `.claude/skills/`, replaces the two old board scripts with a `scripts/board.sh` symlink to `../.claude/skills/pre-setup/scripts/board.sh`, regenerates `TODO.md` on both branches, and validates:
 
 - `pre-break` prints `ok` from `scripts/check.sh`;
 - `main` fails `test_parses_one_decimal_place_as_tens_of_cents`, the planted post-merge break;
-- `.claude/skills/` is byte-identical to arkan's `skills/`;
+- `.claude/skills/` is byte-identical to arkan's `HEAD:skills` tree;
 - neither branch has `ANSWERS.md` or an old board script.
 
 the same inputs give the same branch tips and trees.
 
-`build.sh refresh <checkout> [base]` replaces only `.claude/skills/` on a new `agent/refresh-skills-<arkan-sha>` branch and opens its pull request through `agent-gh`. it refuses a dirty checkout or a change outside `.claude/skills/`; `base` defaults to `pre-break`. the broker must allow the target repository, so a guarded run stops on a refusal instead of falling back to `gh`.
+`build.sh refresh <checkout> [base]` replaces only `.claude/skills/` on a new `agent/refresh-skills-<arkan-sha>` branch and opens its pull request through `agent-gh`. it fetches and compares against `origin/<base>`, refuses a dirty checkout, a dirty `skills/`, or a change outside `.claude/skills/`, and removes its temporary worktree and branch when a push fails. a retry at the same arkan sha makes the same commit. `base` defaults to `pre-break`. the broker must allow the target repository, so a guarded run stops on a refusal instead of falling back to `gh`.
 
 ## the sandbox
 
