@@ -41,6 +41,13 @@ manifest_version() {
 	sed -n 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" | head -n1
 }
 
+json_arkan_version() {
+	local block v
+	block="$(sed -n '/"arkan@arkan"/,/^[[:space:]]*}[[:space:]]*,*[[:space:]]*$/p')"
+	v="$(printf '%s\n' "$block" | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | sed -n '1p')"
+	printf '%s' "$v"
+}
+
 arkan_version() {
 	local v="" top=""
 	top="$(git -C "$arkan" rev-parse --show-toplevel 2>/dev/null)" || top=""
@@ -126,13 +133,13 @@ check_arkan() {
 		if [ "$elsewhere" -gt 0 ]; then
 			detail="$detail; $elsewhere link(s) point to another arkan copy${other_copy:+ ($other_copy)}"
 		fi
-		if [ "$others" -gt 0 ]; then detail="$detail; $others link(s) point elsewhere"; fi
+		if [ "$others" -gt 0 ]; then detail="$detail; $others link(s) point elsewhere; left alone"; fi
 		say arkan missing "$detail; run setup.sh apply arkan"
 	elif [ -n "$stale" ] || [ "$elsewhere" -gt 0 ] || [ "$others" -gt 0 ]; then
 		if [ "$elsewhere" -gt 0 ]; then
 			detail="$elsewhere link(s) point to another arkan copy${other_copy:+ ($other_copy)}"
 		fi
-		if [ "$others" -gt 0 ]; then detail="$detail${detail:+; }$others link(s) point elsewhere"; fi
+		if [ "$others" -gt 0 ]; then detail="$detail${detail:+; }$others link(s) point elsewhere; left alone"; fi
 		if [ -n "$stale" ]; then detail="$detail${detail:+; }stale: $stale"; fi
 		if [ -n "$kept" ]; then detail="$detail${detail:+; }not a link: $kept; left alone"; fi
 		say arkan out-of-date "$detail; run setup.sh apply arkan"
@@ -142,9 +149,41 @@ check_arkan() {
 }
 
 check_claude_plugin() {
-	local cache f v
+	local record out cache f v
 	if [ -z "${HOME:-}" ]; then
 		say claude-plugin skip "HOME is not set"
+		return
+	fi
+	record="$HOME/.claude/plugins/installed_plugins.json"
+	if command -v claude >/dev/null 2>&1; then
+		if out="$(claude plugin list --json 2>/dev/null)" && [ -n "$out" ]; then
+			case "$out" in
+				*'"arkan@arkan"'*)
+					v="$(printf '%s\n' "$out" | json_arkan_version)"
+					if [ -n "$v" ]; then
+						say claude-plugin ok "version $v"
+					else
+						say claude-plugin ok installed
+					fi
+					;;
+				*) say claude-plugin missing "run setup.sh apply claude-plugin" ;;
+			esac
+			return
+		fi
+	fi
+	if [ -f "$record" ]; then
+		if grep -qF '"arkan@arkan"' "$record"; then
+			v="$(json_arkan_version <"$record")"
+			if [ -n "$v" ]; then
+				say claude-plugin ok "version $v"
+			else
+				say claude-plugin ok installed
+			fi
+		elif command -v claude >/dev/null 2>&1; then
+			say claude-plugin missing "run setup.sh apply claude-plugin"
+		else
+			say claude-plugin skip "claude is not installed"
+		fi
 		return
 	fi
 	cache="$HOME/.claude/plugins/cache/arkan/arkan"
@@ -181,8 +220,15 @@ apply_claude_plugin() {
 	check_claude_plugin
 }
 
+marker_target() {
+	local n raw
+	while IFS="$tab" read -r n raw || [ -n "$n" ]; do
+		if [ "$n" = "$2" ]; then printf '%s' "$raw"; return 0; fi
+	done <"$1"
+}
+
 apply_arkan() {
-	local src name dest raw expected marker marker_names=" " linked=0 removed=0 clashes=0 owned=0 keep=0 linked_names="" removed_names="" new="" summary=""
+	local src name dest raw live recorded expected marker marker_names=" " linked=0 removed=0 clashes=0 owned=0 keep=0 linked_names="" removed_names="" new="" summary="" tmp_marker="" marker_existed=0 marker_changed=0 line_target=""
 	if [ -z "${HOME:-}" ]; then
 		printf 'setup: HOME is not set\n' >&2
 		exit 2
@@ -194,6 +240,7 @@ apply_arkan() {
 	mkdir -p "$home_skills"
 	marker="$home_skills/.arkan-links"
 	if [ -f "$marker" ]; then
+		marker_existed=1
 		while IFS="$tab" read -r name raw || [ -n "$name" ]; do
 			case "$name" in ""|.|..|*/*) continue ;; esac
 			marker_names="$marker_names$name "
@@ -204,6 +251,7 @@ apply_arkan() {
 		name=${src##*/}
 		dest="$home_skills/$name"
 		expected="$arkan/skills/$name"
+		line_target="$expected"
 		owned=0
 		case "$marker_names" in *" $name "*) owned=1 ;; esac
 		keep=0
@@ -213,10 +261,21 @@ apply_arkan() {
 			if [ "$raw" = "$expected" ]; then
 				keep=$owned
 			elif [ "$owned" = 1 ]; then
-				ln -sfn "$expected" "$dest"
-				linked=$((linked + 1))
-				linked_names="$linked_names${linked_names:+, }$name"
-				keep=1
+				case "$raw" in
+					*/skills/"$name")
+						ln -sfn "$expected" "$dest"
+						linked=$((linked + 1))
+						linked_names="$linked_names${linked_names:+, }$name"
+						keep=1
+						;;
+					*)
+						printf 'setup: clash: %s is not a link to %s; left alone\n' "$dest" "$expected" >&2
+						clashes=$((clashes + 1))
+						recorded="$(marker_target "$marker" "$name")"
+						line_target="${recorded:-$expected}"
+						keep=1
+						;;
+				esac
 			else
 				printf 'setup: clash: %s is not a link to %s; left alone\n' "$dest" "$expected" >&2
 				clashes=$((clashes + 1))
@@ -232,7 +291,7 @@ apply_arkan() {
 			keep=1
 		fi
 		if [ "$keep" = 1 ]; then
-			new="$new$name"$'\t'"$expected"$'\n'
+			new="$new$name"$'\t'"$line_target"$'\n'
 		fi
 	done
 	if [ -f "$marker" ]; then
@@ -241,21 +300,41 @@ apply_arkan() {
 			if [ -d "$arkan/skills/$name" ]; then continue; fi
 			dest="$home_skills/$name"
 			if [ -L "$dest" ]; then
-				rm -f "$dest"
-				removed=$((removed + 1))
-				removed_names="$removed_names${removed_names:+, }$name"
+				live="$(readlink "$dest")" || live=""
+				case "$live" in */) live="${live%/}" ;; esac
+				recorded="$raw"
+				case "$recorded" in */) recorded="${recorded%/}" ;; esac
+				if [ "$live" = "$recorded" ]; then
+					rm -f "$dest"
+					removed=$((removed + 1))
+					removed_names="$removed_names${removed_names:+, }$name"
+				else
+					printf "setup: stale: %s (not arkan's link; left alone)\n" "$name" >&2
+				fi
 			elif [ -e "$dest" ]; then
-				printf 'setup: stale: %s is not a link; left alone\n' "$dest" >&2
+				printf 'setup: stale: %s (not a link; left alone)\n' "$name" >&2
+			else
+				printf 'setup: stale: %s (no link; left alone)\n' "$name" >&2
 			fi
 		done <"$marker"
 	fi
 	if [ -n "$new" ]; then
+		if [ "$marker_existed" = 0 ]; then
+			marker_changed=1
+		else
+			tmp_marker="$(mktemp)"
+			printf '%s' "$new" >"$tmp_marker"
+			if ! cmp -s "$marker" "$tmp_marker"; then marker_changed=1; fi
+			rm -f "$tmp_marker"
+		fi
 		printf '%s' "$new" >"$marker"
 	else
+		if [ "$marker_existed" = 1 ]; then marker_changed=1; fi
 		rm -f "$marker"
 	fi
 	if [ "$linked" -gt 0 ]; then summary="linked $linked ($linked_names)"; fi
 	if [ "$removed" -gt 0 ]; then summary="$summary${summary:+; }removed $removed ($removed_names)"; fi
+	if [ "$marker_changed" = 1 ]; then summary="$summary${summary:+; }marker updated"; fi
 	if [ "$clashes" -gt 0 ]; then
 		if [ "$clashes" = 1 ]; then
 			summary="$summary${summary:+; }1 clash"

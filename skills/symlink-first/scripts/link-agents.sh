@@ -15,7 +15,21 @@ home="${HOME:?HOME is not set}"
 canon="$home/.agents"
 problems=0
 arkan_plugin=0
-if [ -d "$home/.claude/plugins/cache/arkan" ]; then arkan_plugin=1; fi
+plugin_record="$home/.claude/plugins/installed_plugins.json"
+if command -v claude >/dev/null 2>&1; then
+	plugin_json="$(claude plugin list --json 2>/dev/null)" || plugin_json=""
+	if [ -n "$plugin_json" ]; then
+		case "$plugin_json" in *'"arkan@arkan"'*) arkan_plugin=1 ;; esac
+	elif [ -f "$plugin_record" ]; then
+		if grep -qF '"arkan@arkan"' "$plugin_record"; then arkan_plugin=1; fi
+	elif [ -d "$home/.claude/plugins/cache/arkan" ]; then
+		arkan_plugin=1
+	fi
+elif [ -f "$plugin_record" ]; then
+	if grep -qF '"arkan@arkan"' "$plugin_record"; then arkan_plugin=1; fi
+elif [ -d "$home/.claude/plugins/cache/arkan" ]; then
+	arkan_plugin=1
+fi
 
 # relative target when both paths are under $HOME (matches the existing ../../.agents/... links), else absolute
 rel() {
@@ -70,7 +84,10 @@ for skill in "$canon"/skills/*/; do
 	name="$(basename "$skill")"
 	case "$claude_builtin" in *" $name "*) continue ;; esac
 	if [ "$arkan_plugin" = 1 ]; then
-		if [ -f "$skill/../../.claude-plugin/plugin.json" ]; then continue; fi
+		plugin_root="$(cd -P "$skill" 2>/dev/null && cd -P ../.. && pwd -P)" || plugin_root=""
+		if [ -n "$plugin_root" ] && [ -f "$plugin_root/.claude-plugin/plugin.json" ] && grep -qE '"name"[[:space:]]*:[[:space:]]*"arkan"' "$plugin_root/.claude-plugin/plugin.json"; then
+			continue
+		fi
 	fi
 	link "$canon/skills/$name" "$mirror/$name"
 done
