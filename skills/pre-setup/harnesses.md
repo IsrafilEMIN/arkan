@@ -47,7 +47,7 @@ Version 0.2.
 
 Version 1.1.
 
-- user skills: `~/.agents/skills/`; it finds `SKILL.md` recursively. Source: agent map (verified 2026-10); ticket 17 (verified 2026-10-20, <https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md>).
+- user skills: `~/.agents/skills/`; it finds `SKILL.md` recursively, stops below a skill directory, and skips dot names and `node_modules`. Source: agent map (verified 2026-10); ticket 17 (verified 2026-10-20, <https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md>).
 - project skills: `unverified`.
 - instruction file: `~/.pi/agent/AGENTS.md` for the user. The project file is `unverified`. Source: agent map (verified 2026-10).
 - frontmatter: `unverified`.

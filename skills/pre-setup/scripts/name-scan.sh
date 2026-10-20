@@ -85,8 +85,43 @@ hermes_dirs() {
 record() { printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$5" >>"$records"; }
 hint() { printf '%s\n' "$1" >>"$hints"; }
 
+add_skill() {
+	local harness="$1" root="$2" entry="$3" canonical name
+	[ -d "$entry" ] || return 0
+	[ -f "$entry/SKILL.md" ] || return 0
+	canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
+	if [ -z "$canonical" ]; then
+		hint "skill source $entry unreadable; not grouped"
+		return 0
+	fi
+	name="$(declared_name "$entry/SKILL.md")"
+	if [ -z "$name" ]; then
+		hint "skill without frontmatter name: $entry; not grouped"
+		return 0
+	fi
+	record "$harness" plain "$name" "$canonical" "$root"
+}
+
+pending_owned_link() {
+	local root="$1" entry="$2" name raw listed rest
+	[ -n "$pending" ] || return 1
+	[ "$root" = "$home/.agents/skills" ] || return 1
+	[ "${entry%/*}" = "$root" ] || return 1
+	name="${entry##*/}"
+	[ -e "$pending/$name" ] || return 1
+	[ -f "$home/.agents/skills/.arkan-links" ] || return 1
+	[ -L "$home/.agents/skills/$name" ] || return 1
+	raw="$(readlink "$home/.agents/skills/$name")" || raw=""
+	case "$raw" in */) raw="${raw%/}" ;; esac
+	case "$raw" in */skills/"$name") ;; *) return 1 ;; esac
+	while IFS="$tab" read -r listed rest || [ -n "$listed" ]; do
+		[ "$listed" = "$name" ] && return 0
+	done <"$home/.agents/skills/.arkan-links"
+	return 1
+}
+
 scan_root() {
-	local harness="$1" root="$2" skip_system="$3" entry canonical name
+	local harness="$1" root="$2" skip_system="$3" entry
 	[ -n "$root" ] || return 0
 	[ -d "$root" ] || return 0
 	for entry in "$root"/*; do
@@ -96,56 +131,36 @@ scan_root() {
 			hint "dangling skill link $entry; not grouped"
 			continue
 		fi
-		[ -d "$entry" ] || continue
-		[ -f "$entry/SKILL.md" ] || continue
-		canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
-		if [ -z "$canonical" ]; then
-			hint "skill source $entry unreadable; not grouped"
-			continue
-		fi
-		name="$(declared_name "$entry/SKILL.md")"
-		if [ -z "$name" ]; then
-			hint "skill without frontmatter name: $entry; not grouped"
-			continue
-		fi
-		record "$harness" plain "$name" "$canonical" "$root"
+		if pending_owned_link "$root" "$entry"; then continue; fi
+		add_skill "$harness" "$root" "$entry"
 	done
 }
 
 scan_tree() {
-	local harness="$1" root="$2" entry canonical name
+	local harness="$1" root="$2" entry
 	[ -d "$root" ] || return 0
 	while IFS= read -r -d '' entry; do
-		[ -f "$entry/SKILL.md" ] || continue
-		canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
-		if [ -z "$canonical" ]; then
-			hint "skill source $entry unreadable; not grouped"
-			continue
-		fi
-		name="$(declared_name "$entry/SKILL.md")"
-		if [ -z "$name" ]; then
-			hint "skill without frontmatter name: $entry; not grouped"
-			continue
-		fi
-		record "$harness" plain "$name" "$canonical" "$root"
-	done < <(find -L "$root" -mindepth 1 -type d -print0 2>/dev/null)
+		if pending_owned_link "$root" "$entry"; then continue; fi
+		add_skill "$harness" "$root" "$entry"
+	done < <(find -L "$root" -mindepth 1 \
+		\( -name '.*' -o -name node_modules \) -prune -o \
+		-type d -exec test -f '{}/SKILL.md' \; -print0 -prune -o \
+		-type d -print0 2>/dev/null)
 }
 
 clean_hermes_dir() {
 	local d
 	d="$(trim "$1")"
+	d="${d#\[}"
+	d="$(trim "$d")"
 	case "$d" in
 		\"*) d="${d#\"}"; d="${d%%\"*}" ;;
 		\'*) d="${d#\'}"; d="${d%%\'*}" ;;
 		*)
 			case "$d" in *[[:space:]]#*) d="${d%%[[:space:]]#*}" ;; esac
-			d="$(trim "$d")"
+			d="$(trim "${d%\]}")"
 			;;
 	esac
-	d="${d#\[}"; d="${d%\]}"
-	d="$(trim "$d")"
-	d="${d#\"}"; d="${d%\"}"
-	d="${d#\'}"; d="${d%\'}"
 	d="${d%/}"
 	printf '%s' "$d"
 }
@@ -221,24 +236,12 @@ pending_reads_agents() {
 }
 
 scan_pending() {
-	local harness="$1" root="$home/.agents/skills" entry canonical name
+	local harness="$1" root="$home/.agents/skills" entry
 	[ -n "$pending" ] || return 0
 	[ -d "$pending" ] || return 0
 	pending_reads_agents "$harness" || return 0
 	for entry in "$pending"/*; do
-		[ -d "$entry" ] || continue
-		[ -f "$entry/SKILL.md" ] || continue
-		canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
-		if [ -z "$canonical" ]; then
-			hint "skill source $entry unreadable; not grouped"
-			continue
-		fi
-		name="$(declared_name "$entry/SKILL.md")"
-		if [ -z "$name" ]; then
-			hint "skill without frontmatter name: $entry; not grouped"
-			continue
-		fi
-		record "$harness" plain "$name" "$canonical" "$root"
+		add_skill "$harness" "$root" "$entry"
 	done
 }
 
