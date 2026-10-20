@@ -223,6 +223,28 @@ claude_detected() {
 	plugin_record_ok
 }
 
+dsh_agents_root() {
+	local r="${DSH_AGENTS_HOME:-$HOME/.agents}"
+	case "$r" in *[![:space:]]*) ;; *) r="$HOME/.agents" ;; esac
+	case "$r" in
+		"~") r="$HOME" ;;
+		"~/"*) r="$HOME/${r#\~/}" ;;
+	esac
+	printf '%s' "${r%/}"
+}
+
+detect_harnesses() {
+	[ -n "${HOME:-}" ] || return 0
+	if claude_detected; then printf 'claude code\n'; fi
+	if [ -d "${CODEX_HOME:-$HOME/.codex}" ]; then printf 'codex\n'; fi
+	if [ -d "${DSH_HOME:-$HOME/.dsh}" ]; then printf 'dsh\n'; fi
+	if [ -d "$HOME/.pi" ]; then printf 'pi\n'; fi
+	if [ -d "$HOME/.cursor" ]; then printf 'cursor\n'; fi
+	if [ -d "$HOME/.config/opencode" ] || command -v opencode >/dev/null 2>&1; then printf 'opencode\n'; fi
+	if command -v omp >/dev/null 2>&1; then printf 'omp\n'; fi
+	if [ -d "$HOME/.hermes" ]; then printf 'hermes\n'; fi
+}
+
 hermes_dirs_ok() {
 	local raw line d
 	raw="$(awk '
@@ -249,39 +271,32 @@ hermes_dirs_ok() {
 }
 
 check_harnesses() {
-	local detected="" claude=0 detail="" hint="" dsh_root=""
+	local detected="" claude=0 detail="" hint="" dsh_root="" harness
 	if [ -z "${HOME:-}" ]; then
 		say harnesses skip "HOME is not set"
 		return
 	fi
-	if claude_detected; then
-		detected="claude code"
-		claude=1
-	fi
-	if [ -d "${CODEX_HOME:-$HOME/.codex}" ]; then detected="$detected${detected:+, }codex"; fi
-	if [ -d "${DSH_HOME:-$HOME/.dsh}" ]; then
-		detected="$detected${detected:+, }dsh"
-		dsh_root="${DSH_AGENTS_HOME:-$HOME/.agents}"
-		case "$dsh_root" in *[![:space:]]*) ;; *) dsh_root="$HOME/.agents" ;; esac
-		case "$dsh_root" in
-			"~") dsh_root="$HOME" ;;
-			"~/"*) dsh_root="$HOME/${dsh_root#\~/}" ;;
+	while IFS= read -r harness; do
+		[ -n "$harness" ] || continue
+		detected="$detected${detected:+, }$harness"
+		case "$harness" in
+			"claude code") claude=1 ;;
+			dsh)
+				dsh_root="$(dsh_agents_root)"
+				case "$dsh_root" in
+					"$HOME/.agents"|"$HOME/.agents/") ;;
+					*) hint="${hint:+$hint; }dsh reads ${dsh_root%/}/skills, not ~/.agents/skills; unset DSH_AGENTS_HOME or point it at ~/.agents" ;;
+				esac
+				;;
+			hermes)
+				if ! hermes_dirs_ok "$HOME/.hermes/config.yaml"; then
+					hint="${hint:+$hint; }hermes needs skills.external_dirs to name ~/.agents/skills in ~/.hermes/config.yaml; see harnesses.md"
+				fi
+				;;
 		esac
-		case "$dsh_root" in
-			"$HOME/.agents"|"$HOME/.agents/") ;;
-			*) hint="${hint:+$hint; }dsh reads ${dsh_root%/}/skills, not ~/.agents/skills; unset DSH_AGENTS_HOME or point it at ~/.agents" ;;
-		esac
-	fi
-	if [ -d "$HOME/.pi" ]; then detected="$detected${detected:+, }pi"; fi
-	if [ -d "$HOME/.cursor" ]; then detected="$detected${detected:+, }cursor"; fi
-	if [ -d "$HOME/.config/opencode" ] || command -v opencode >/dev/null 2>&1; then detected="$detected${detected:+, }opencode"; fi
-	if command -v omp >/dev/null 2>&1; then detected="$detected${detected:+, }omp"; fi
-	if [ -d "$HOME/.hermes" ]; then
-		detected="$detected${detected:+, }hermes"
-		if ! hermes_dirs_ok "$HOME/.hermes/config.yaml"; then
-			hint="${hint:+$hint; }hermes needs skills.external_dirs to name ~/.agents/skills in ~/.hermes/config.yaml; see harnesses.md"
-		fi
-	fi
+	done <<EOF
+$(detect_harnesses)
+EOF
 	if [ -z "$detected" ]; then
 		say harnesses skip "no harness detected"
 		return
@@ -304,6 +319,32 @@ check_harnesses() {
 		say harnesses hint "$detail; $hint"
 	else
 		say harnesses ok "$detail"
+	fi
+}
+
+check_names() {
+	local pending="${1:-}" list harness
+	local -a scan
+	scan=()
+	if [ -z "${HOME:-}" ]; then
+		say names skip "HOME is not set"
+		return
+	fi
+	list="$(detect_harnesses)"
+	while IFS= read -r harness; do
+		[ -n "$harness" ] || continue
+		scan[${#scan[@]}]="$harness"
+	done <<EOF
+$list
+EOF
+	if [ "${#scan[@]}" = 0 ]; then
+		say names skip "no harness detected"
+		return
+	fi
+	if [ -n "$pending" ]; then
+		"$skill/scripts/name-scan.sh" --pending "$pending" "${scan[@]}"
+	else
+		"$skill/scripts/name-scan.sh" "${scan[@]}"
 	fi
 }
 
@@ -356,6 +397,7 @@ apply_arkan() {
 		say arkan skip "no skills/ in this checkout"
 		return
 	fi
+	check_names "$arkan/skills"
 	mkdir -p "$home_skills"
 	marker="$home_skills/.arkan-links"
 	if [ -f "$marker" ]; then
@@ -746,6 +788,7 @@ check() {
 	check_arkan
 	check_claude_plugin
 	check_harnesses
+	check_names
 	if in_git; then say git ok; else say git missing "not a git repo"; fi
 	check_tracker
 	check_file labels docs/agents/triage-labels.md

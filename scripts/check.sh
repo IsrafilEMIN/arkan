@@ -12,6 +12,8 @@ scripts/check-seam.sh || fail=1
 
 ci/review-eval.sh --check || fail=1
 
+scripts/check-name-scan.sh || fail=1
+
 # every shell script parses.
 while IFS= read -r f; do
 	bash -n "$f" || { printf 'check: %s does not parse\n' "$f" >&2; fail=1; }
