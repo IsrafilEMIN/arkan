@@ -18,6 +18,7 @@ Row 2's verbs, as `agent-gh <verb>`: `push`, `worktree-remove`, `pr-create`, `pr
 - A verdict is a pull request review on the head commit whose body starts with `PASS`.
 - The broker adds the agent mark to every verdict an agent posts; an agent cannot post one without it.
 - A pull request whose risk marker for the current head says `auto` merges on a marked or an unmarked `PASS`. Any other pull request (`manual`, no marker, or a marker for an older head) merges only on an unmarked `PASS`: the person's. On a `manual` pull request, an agent's marked `PASS` never substitutes for the person's.
+- The reviewer's `PASS` counts only when the reviewer holds `admin`, `maintain` or `write` permission on the repository. Both merge paths read that permission and fail closed.
 - Both merge paths obey it: a repo's `arkan-merge` workflow, and the broker's `pr-merge` (and its merge loop, where deployed). arkan uses the broker and installs no gate; `ci/github/arkan-merge.yml` stays as the gate a consumer repo can install.
 
 The merge path is a local `pre-setup` choice recorded in `docs/agents/approvals.md` as `**Merge path:** gate` or `**Merge path:** broker`; arkan's line says broker. The broker never reads that file: it applies the rule above from the marker and the review on the head.
