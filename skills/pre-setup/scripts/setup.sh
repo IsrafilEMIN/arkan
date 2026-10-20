@@ -4,7 +4,7 @@
 #   setup.sh apply <item> [repo-root]  install one item that needs no choice
 # states: ok, missing, out-of-date, hint (a pointer only), skip (does not apply here).
 # check changes nothing. apply touches only local files; nothing here talks to a host.
-# machine items (arkan installed, harnesses, name clashes) plug in here with tickets 04, 06 and 17.
+# harness items and name clashes plug in here with tickets 06 and 17.
 set -eu
 
 skill="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -12,6 +12,7 @@ refs="$skill/references"
 # the arkan checkout or plugin copy this skill came from, for the ci files.
 arkan="$(cd "$skill/../.." && pwd -P)"
 ci="$arkan/ci/github"
+home_skills="${HOME:-}/.agents/skills"
 
 usage() { printf 'usage: setup.sh check [repo-root] | setup.sh apply <item> [repo-root]\n' >&2; exit 2; }
 
@@ -33,6 +34,126 @@ has() { [ -f "$root/$1" ]; }
 in_git() { git -C "$root" rev-parse --show-toplevel >/dev/null 2>&1; }
 
 check_file() { if has "$2"; then say "$1" ok "$2"; else say "$1" missing "$2"; fi; }
+
+arkan_version() {
+	local v=""
+	v="$(git -C "$arkan" describe --tags --always --dirty 2>/dev/null)" || v=""
+	[ -n "$v" ] || v=unknown
+	printf '%s' "$v"
+}
+
+link_owned() {
+	local target
+	[ -L "$1" ] || return 1
+	target="$(readlink "$1")" || return 1
+	case "$target" in
+		/*) ;;
+		*) target="$(dirname "$1")/$target" ;;
+	esac
+	target="$(canon_dir "$target")"
+	case "$target" in
+		"$arkan"/skills/*) return 0 ;;
+	esac
+	return 1
+}
+
+check_arkan() {
+	local src name dest target total=0 linked=0 notlinked=0 missing="" stale="" clash=""
+	if [ -z "${HOME:-}" ]; then
+		say arkan skip "HOME is not set"
+		return
+	fi
+	if [ ! -d "$arkan/skills" ]; then
+		say arkan skip "no skills/ in this checkout"
+		return
+	fi
+	for src in "$arkan/skills"/*; do
+		[ -d "$src" ] || continue
+		total=$((total + 1))
+		name=${src##*/}
+		dest="$home_skills/$name"
+		target=""
+		if [ -L "$dest" ]; then target="$(canon_dir "$dest")"; fi
+		if [ "$target" = "$arkan/skills/$name" ]; then
+			linked=$((linked + 1))
+		elif [ -e "$dest" ] || [ -L "$dest" ]; then
+			clash="$clash${clash:+, }$name"
+		else
+			missing="$missing${missing:+, }$name"
+			notlinked=$((notlinked + 1))
+		fi
+	done
+	if [ -d "$home_skills" ]; then
+		for dest in "$home_skills"/*; do
+			[ -L "$dest" ] || continue
+			name=${dest##*/}
+			[ -d "$arkan/skills/$name" ] && continue
+			if link_owned "$dest"; then stale="$stale${stale:+, }$name"; fi
+		done
+	fi
+	if [ -n "$clash" ]; then
+		say arkan out-of-date "clash: $clash; left alone"
+	elif [ "$notlinked" -gt 0 ]; then
+		say arkan missing "$notlinked of $total skills not linked; run setup.sh apply arkan"
+	elif [ -n "$stale" ]; then
+		say arkan out-of-date "stale: $stale; run setup.sh apply arkan"
+	else
+		say arkan ok "version $(arkan_version); $total skills linked"
+	fi
+}
+
+check_claude_plugin() {
+	if [ -f "$arkan/.claude-plugin/plugin.json" ] && [ -f "$arkan/.claude-plugin/marketplace.json" ]; then
+		say claude-plugin ok "manifest and marketplace entry"
+	else
+		say claude-plugin out-of-date "run setup.sh from a current arkan clone"
+	fi
+}
+
+apply_arkan() {
+	local src name dest target linked=0 removed=0 clashes=0
+	if [ -z "${HOME:-}" ]; then
+		printf 'setup: HOME is not set\n' >&2
+		exit 2
+	fi
+	if [ ! -d "$arkan/skills" ]; then
+		say arkan skip "no skills/ in this checkout"
+		return
+	fi
+	mkdir -p "$home_skills"
+	for src in "$arkan/skills"/*; do
+		[ -d "$src" ] || continue
+		name=${src##*/}
+		dest="$home_skills/$name"
+		target=""
+		if [ -L "$dest" ]; then target="$(canon_dir "$dest")"; fi
+		if [ "$target" = "$arkan/skills/$name" ]; then
+			continue
+		fi
+		if [ -e "$dest" ] || [ -L "$dest" ]; then
+			printf 'setup: clash: %s is not a link to %s; left alone\n' "$dest" "$arkan/skills/$name" >&2
+			clashes=$((clashes + 1))
+			continue
+		fi
+		ln -s "$arkan/skills/$name" "$dest"
+		linked=$((linked + 1))
+	done
+	for dest in "$home_skills"/*; do
+		[ -L "$dest" ] || continue
+		name=${dest##*/}
+		[ -d "$arkan/skills/$name" ] && continue
+		if link_owned "$dest"; then
+			rm "$dest"
+			removed=$((removed + 1))
+		fi
+	done
+	if [ "$linked" = 0 ] && [ "$removed" = 0 ]; then
+		printf 'setup: nothing changed; version %s\n' "$(arkan_version)"
+	else
+		printf 'setup: linked %s, removed %s; version %s\n' "$linked" "$removed" "$(arkan_version)"
+	fi
+	[ "$clashes" = 0 ] || exit 1
+}
 
 merge_path() {
 	local f="$root/docs/agents/approvals.md" broker="" gate=""
@@ -278,6 +399,8 @@ hook_covers() { # language hook-file: a non-comment line names that language's t
 }
 
 check() {
+	check_arkan
+	check_claude_plugin
 	if in_git; then say git ok; else say git missing "not a git repo"; fi
 	check_tracker
 	check_file labels docs/agents/triage-labels.md
@@ -379,6 +502,7 @@ apply() {
 			;;
 		approvals) seed docs/agents/approvals.md approvals.md ;;
 		review-md) seed REVIEW.md review.md ;;
+		arkan) apply_arkan; return ;;
 		ci-review | ci-check | ci-risk | ci-post-merge | ci-merge)
 			local pair src="" mode=""
 			if [ "$item" = ci-merge ]; then
@@ -402,7 +526,7 @@ apply() {
 			cp "$ci/$src" "$root/.github/workflows/$src"
 			;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, arkan, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
 			exit 2
 			;;
 	esac

@@ -9,7 +9,7 @@ disable-model-invocation: true
 Set up what the other arkan skills assume. A script checks; you ask the person and write.
 
 - [scripts/setup.sh](./scripts/setup.sh) `check [repo-root]` prints one line per item: `ok`, `missing`, `out-of-date`, `hint` or `skip`. It changes nothing.
-- `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state.
+- `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state. `apply arkan` prints the links it made and removed instead.
 - [scripts/board.sh](./scripts/board.sh) `build|check|fields [repo-root]` writes and checks `TODO.md` for a local tracker; `fields` checks only the ticket fields and needs no `TODO.md`. Repos run it from this skill; they get no copy.
 - The seeds are in [references/](./references/).
 
@@ -24,6 +24,21 @@ On a re-run, this list is the whole job. When every line is `ok`, `skip` or `hin
 ### 2. Work the items in order
 
 For each item, lead with your recommendation so the person can accept it in one word. Ask only where the table says so. Install a no-choice item with `setup.sh apply <item>` without asking.
+
+#### Machine
+
+These two items are about this machine, not the repo. They print from any directory, before the repo items, and neither asks.
+
+| item | what to do | ask? |
+|---|---|---|
+| `arkan` | `apply arkan` links every `skills/<name>` of this arkan checkout into `~/.agents/skills/<name>`. It links a missing skill, removes a stale link whose target is under this checkout's `skills/`, and leaves every other entry alone. `check` reads `ok  version <v>; <n> skills linked`, where `<v>` is `git describe --tags --always --dirty`, or `unknown`. `missing` means one or more skills are not linked. `out-of-date` names a stale link, or a clash: an entry that is not a link to this checkout's `skills/<name>`. `apply arkan` reports a clash on stderr, links the rest, and exits 1 | no |
+| `claude-plugin` | `ok` when `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` are in this checkout; `out-of-date` means this is not a current arkan clone, so `git pull` or clone it again. No apply | no |
+
+The `arkan` check line is the version print. A second `apply arkan` with nothing to fix prints `setup: nothing changed; version <v>`.
+
+For claude code, install arkan as a plugin. Run `/plugin marketplace add <path to arkan>`, then `/plugin install arkan@arkan`. Or start claude with `claude --plugin-dir <path to arkan>`. Claude code names each skill `arkan:<skill>`, so arkan's `code-review` and the built-in `/code-review` both stay. A plain skill in `~/.claude/skills/` is not how arkan installs there.
+
+#### Repo
 
 Any change on the host (github, gitlab) asks first, even when there is no choice: show the exact change (the command, or the setting and its new value), then wait for a yes.
 
