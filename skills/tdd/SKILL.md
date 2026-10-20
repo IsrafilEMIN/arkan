@@ -24,6 +24,12 @@ Tests verify behavior through public interfaces, not implementation details. Cod
 
 See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for mocking guidelines.
 
+## When a test is impractical
+
+Prefer no new test over a bad test. Skip the test when it needs broad harness setup, brittle mocks, slow end-to-end infrastructure, production-only state, vague reproduction steps, or large unrelated fixture churn. Use the closest executable check instead: a script, a manual repro command, browser automation, a snapshot comparison, a log assertion, or a focused integration check.
+
+Choose the narrowest check. Prefer the closest unit, component, integration or regression test that the code path already uses. Do not create a new harness only to satisfy this skill.
+
 ## Anti-patterns
 
 - **Implementation-coupled**: mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.
@@ -33,5 +39,7 @@ See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for mocking g
 ## Rules of the loop
 
 - **Red before green.** Write the failing test first, then only enough code to pass it. Don't anticipate future tests or add speculative features.
+- **Confirm the failure.** Run the new test before the fix. It must fail for the intended reason. If it passes, or fails for an unrelated reason, correct the test before you change the code.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
 - **Refactoring is not part of the loop.** It belongs to the review stage (see the `code-review` skill), not the red → green implementation cycle.
+- **Do not edit a test to match a wrong implementation.** Do not weaken an existing assertion unless the expected behavior changed and the reason is clear.

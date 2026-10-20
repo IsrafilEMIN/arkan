@@ -49,7 +49,7 @@ Commit it when the work is ambitious enough that a reviewer needs the trail to t
 ## Rules
 
 - Append-only. A wrong call gets a new row that supersedes it. Never edit or delete history.
-- Prefer evidence from committed scripts over one-off commands (**encode lessons in structure**, `arkan-mode/principles/agents.md`).
+- Prefer evidence from committed scripts over one-off commands (**encode lessons in structure**, `principle-encode-lessons-in-structure`).
 
 ## Audit the log before you hand back
 

@@ -38,7 +38,7 @@ The server POSTs with:
 - timeout: 8 seconds
 - one try, no retry
 
-Before telling the person the UI is live, probe once with a harmless payload: an action the prompt ignores. A 2xx means the wake landed. That probe is the proof (`arkan-mode/principles/verification.md`); report its status code.
+Before telling the person the UI is live, probe once with a harmless payload: an action the prompt ignores. A 2xx means the wake landed. That probe is the proof (`principle-prove-it-works`); report its status code.
 
 If a POST can fail, append the same JSON to a local log and drain that log from the agent's next wake. Don't poll as the main path. Don't send media bytes on the webhook; send a path or a link.
 
