@@ -24,6 +24,12 @@ A merged change broke something. You make main safe, then turn the **miss** (the
 
 6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket, then start `retro` (proposals only). In ci, return the ticket content; the workflow publishes it after it opens the PR. _Done when_ the ticket exists and its link or path is in your reply.
 
+7. **Save the miss as a review eval.** Write one case under `docs/agents/review-evals/<NN>-<slug>/`, numbered from `01` with the next free number. It holds:
+   - `bad.diff`: the change that shipped the bug. Use the bad commit from step 3 and its first parent: `git diff <bad>^ <bad> -- <path>`, or the whole `git diff <bad>^ <bad>` when the cause crosses files.
+   - `case.md`: the format in the repo's `docs/agents/review-evals/README.md`. With no such doc, use these lines: `# <NN>: <one-line bug>`, then `**Bug:**` (one sentence), `**Path:**` (one path in backticks), `**Lines:**` (the defect's range in the new side of the diff), `**Bad PR:**` (the pull request that shipped it, or `none` when a commit went straight to main), `**Fix PR:**` (step 4's fix, or its commit when there was no pull request), and `**Broke main:**` (the merge or commit that shipped it).
+
+   Then run `ci/review-eval.sh` from the repo root. If the repo has no script, save the case and say the eval is not installed. _Done when_ the case is saved and the script prints `<case> caught` or `<case> missed`. A caught case goes into `docs/agents/review-evals/baseline.txt` (`ci/review-eval.sh --update-baseline`); the update adds cases and never drops one. A missed case stays out: it is a known gap, not a regression.
+
 ## In ci
 
 [`ci/github/arkan-post-merge.yml`](../../ci/github/arkan-post-merge.yml) starts this skill with no person. It runs:
@@ -50,12 +56,6 @@ So in ci:
 - title the pull request `post-merge: ...`, and start the commit `post-merge: revert ...` or `post-merge: fix ...`. That word keeps the landed merge from starting the workflow again.
 - when the trigger is a revert and main is green, open no branch: the revert already made main safe. Return the ticket for the miss.
 - when nothing is broken, return `broken` false and `action` none with the signals you read, and stop.
-
-7. **Save the miss as a review eval.** Write one case under `docs/agents/review-evals/<NN>-<slug>/`, numbered from `01` with the next free number. It holds:
-   - `bad.diff`: the change that shipped the bug. Use the bad commit from step 3 and its first parent: `git diff <bad>^ <bad> -- <path>`, or the whole `git diff <bad>^ <bad>` when the cause crosses files.
-   - `case.md`: the format in the repo's `docs/agents/review-evals/README.md`. With no such doc, use these lines: `# <NN>: <one-line bug>`, then `**Bug:**` (one sentence), `**Path:**` (one path in backticks), `**Lines:**` (the defect's range in the new side of the diff), `**Bad PR:**` (the pull request that shipped it, or `none` when a commit went straight to main), `**Fix PR:**` (step 4's fix, or its commit when there was no pull request), and `**Broke main:**` (the merge or commit that shipped it).
-
-   Then run `ci/review-eval.sh` from the repo root. If the repo has no script, save the case and say the eval is not installed. _Done when_ the case is saved and the script prints `<case> caught` or `<case> missed`. A caught case goes into `docs/agents/review-evals/baseline.txt` (`ci/review-eval.sh --update-baseline`); the update adds cases and never drops one. A missed case stays out: it is a known gap, not a regression.
 
 ## Reply
 
