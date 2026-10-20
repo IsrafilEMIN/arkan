@@ -224,7 +224,7 @@ claude_detected() {
 }
 
 check_harnesses() {
-	local detected="" claude=0 detail="" hint=""
+	local detected="" claude=0 detail="" hint="" dsh_root="" hermes_ok=0 cfg=""
 	if [ -z "${HOME:-}" ]; then
 		say harnesses skip "HOME is not set"
 		return
@@ -236,9 +236,15 @@ check_harnesses() {
 	if [ -d "${CODEX_HOME:-$HOME/.codex}" ]; then detected="$detected${detected:+, }codex"; fi
 	if [ -d "${DSH_HOME:-$HOME/.dsh}" ]; then
 		detected="$detected${detected:+, }dsh"
-		case "${DSH_AGENTS_HOME:-$HOME/.agents}" in
+		dsh_root="${DSH_AGENTS_HOME:-$HOME/.agents}"
+		case "$dsh_root" in *[![:space:]]*) ;; *) dsh_root="$HOME/.agents" ;; esac
+		case "$dsh_root" in
+			"~") dsh_root="$HOME" ;;
+			"~/"*) dsh_root="$HOME/${dsh_root#\~/}" ;;
+		esac
+		case "$dsh_root" in
 			"$HOME/.agents"|"$HOME/.agents/") ;;
-			*) hint="${hint:+$hint; }dsh reads ${DSH_AGENTS_HOME%/}/skills, not ~/.agents/skills; unset DSH_AGENTS_HOME or point it at ~/.agents" ;;
+			*) hint="${hint:+$hint; }dsh reads ${dsh_root%/}/skills, not ~/.agents/skills; unset DSH_AGENTS_HOME or point it at ~/.agents" ;;
 		esac
 	fi
 	if [ -d "$HOME/.pi" ]; then detected="$detected${detected:+, }pi"; fi
@@ -247,7 +253,13 @@ check_harnesses() {
 	if command -v omp >/dev/null 2>&1; then detected="$detected${detected:+, }omp"; fi
 	if [ -d "$HOME/.hermes" ]; then
 		detected="$detected${detected:+, }hermes"
-		if ! grep -q 'external_dirs' "$HOME/.hermes/config.yaml" 2>/dev/null || ! grep -q 'agents/skills' "$HOME/.hermes/config.yaml" 2>/dev/null; then
+		hermes_ok=0
+		cfg="$HOME/.hermes/config.yaml"
+		if [ -f "$cfg" ]; then
+			if grep -qE '^[[:space:]]*external_dirs:[[:space:]]*$' "$cfg" && grep -qE '^[[:space:]]*-[[:space:]]*.*agents/skills[[:space:]]*$' "$cfg"; then hermes_ok=1; fi
+			if grep -qE '^[[:space:]]*external_dirs:[[:space:]]*\[.*agents/skills' "$cfg"; then hermes_ok=1; fi
+		fi
+		if [ "$hermes_ok" = 0 ]; then
 			hint="${hint:+$hint; }hermes needs a nested skills.external_dirs in ~/.hermes/config.yaml; see harnesses.md"
 		fi
 	fi
