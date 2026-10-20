@@ -208,6 +208,75 @@ check_merge() {
 	esac
 }
 
+canon_dir() {
+	if [ -d "$1" ]; then
+		cd -- "$1" && pwd -P
+		return
+	fi
+	local parent base
+	parent=$(dirname "$1")
+	base=$(basename "$1")
+	if [ -d "$parent" ]; then
+		printf '%s/%s\n' "$(cd -- "$parent" && pwd -P)" "$base"
+	else
+		printf '%s\n' "$1"
+	fi
+}
+
+repo_hooks_dir() {
+	local path top common
+	top=$(git -C "$root" rev-parse --show-toplevel)
+	top=$(canon_dir "$top")
+	if path="$(git -C "$root" config --local --path --get core.hooksPath 2>/dev/null)" && [ -n "$path" ]; then
+		case "$path" in
+			/*) ;;
+			*) path="$top/$path" ;;
+		esac
+	else
+		common=$(git -C "$root" rev-parse --git-common-dir)
+		case "$common" in
+			/*) ;;
+			*) common="$top/$common" ;;
+		esac
+		path="$common/hooks"
+	fi
+	canon_dir "$path"
+}
+
+common_hooks_dir() {
+	local top common
+	top=$(git -C "$root" rev-parse --show-toplevel)
+	top=$(canon_dir "$top")
+	common=$(git -C "$root" rev-parse --git-common-dir)
+	case "$common" in
+		/*) ;;
+		*) common="$top/$common" ;;
+	esac
+	canon_dir "$common/hooks"
+}
+
+git_hooks_dir() {
+	local path
+	path="$(git -C "$root" rev-parse --git-path hooks)"
+	case "$path" in
+		/*) ;;
+		*) path="$root/$path" ;;
+	esac
+	canon_dir "$path"
+}
+
+hook_covers() { # language hook-file: a non-comment line names that language's tool
+	local lines
+	lines="$(grep -v '^[[:space:]]*#' "$2" 2>/dev/null)" || true
+	case "$1" in
+		rust) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])(cargo[[:space:]]+(fmt|clippy)|rustfmt)([[:space:]]|$)' ;;
+		python) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])ruff([[:space:]]|$)' ;;
+		go) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])(gofmt|go[[:space:]]+vet)([[:space:]]|$)' ;;
+		js/ts) printf '%s\n' "$lines" | grep -qE '(^|[[:space:];&|(/])lint-staged([[:space:]]|$)' ;;
+		*) return 1 ;;
+	esac
+}
+
 check() {
 	if in_git; then say git ok; else say git missing "not a git repo"; fi
 	check_tracker
@@ -244,12 +313,39 @@ check() {
 	else
 		say verify hint "no verify skill: run create-verification"
 	fi
-	if ! has package.json; then
-		say hooks skip "not a js/ts repo"
-	elif [ -d "$root/.husky" ] || { in_git && git -C "$root" config core.hooksPath >/dev/null; }; then
-		say hooks ok
+	local langs="" target="" common="" effective="" hook_file="" husky=0 missing="" lang covered=0 covered_any=0
+	has Cargo.toml && langs="$langs rust"
+	has pyproject.toml && langs="$langs python"
+	has go.mod && langs="$langs go"
+	has package.json && langs="$langs js/ts"
+	if [ -z "$langs" ]; then
+		say hooks skip "no Cargo.toml, pyproject.toml, go.mod or package.json"
+	elif in_git; then
+		target="$(repo_hooks_dir)"
+		common="$(common_hooks_dir)"
+		effective="$(git_hooks_dir)"
+		if [ "$target" != "$effective" ] && ! { [ "$target" = "$common" ] && [ -x "$effective/pre-commit" ] && grep -q 'git-common-dir' "$effective/pre-commit" 2>/dev/null; }; then
+			say hooks out-of-date "git uses $effective, so $target/pre-commit will not run; change the hooks path or add a delegating hook"
+		else
+			hook_file="$target/pre-commit"
+			if [ ! -x "$hook_file" ]; then hook_file=""; fi
+			if [ -f "$root/.husky/pre-commit" ]; then husky=1; fi
+			for lang in $langs; do
+				covered=0
+				if [ -n "$hook_file" ] && hook_covers "$lang" "$hook_file"; then covered=1; fi
+				if [ "$lang" = js/ts ] && [ "$husky" = 1 ]; then covered=1; fi
+				if [ "$covered" = 1 ]; then covered_any=1; else missing="$missing $lang"; fi
+			done
+			if [ -z "$missing" ]; then
+				say hooks ok
+			elif [ "$covered_any" = 0 ] && [ -n "$hook_file" ]; then
+				say hooks hint "hook exists but does not name ${langs# }: run setup-pre-commit or check its config"
+			else
+				say hooks hint "no commit hook for${missing}: run setup-pre-commit"
+			fi
+		fi
 	else
-		say hooks hint "js/ts repo with no commit hooks: run setup-pre-commit"
+		say hooks hint "no commit hook for${langs}: run setup-pre-commit"
 	fi
 }
 
