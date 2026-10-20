@@ -161,7 +161,7 @@ a repo that chose the gate path follows these steps; a repo on the broker path s
    - require a pull request before merging.
    - require the status checks `check` (the repo's tests) and `arkan-review` to pass.
    - leave the bypass list empty, so nobody, the owner included, can merge around the rules.
-   - if new branches that the rule covers are created by a push (for example `run/**` trunks), turn on "do not require status checks on creation", or the first push is refused.
+   - if new branches that the rule covers are created by a push (for example the scenario kit's `agent/run-*` trunks), turn on "do not require status checks on creation", or the first push is refused.
 
 ### gate or broker
 

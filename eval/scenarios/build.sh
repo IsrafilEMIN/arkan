@@ -112,8 +112,8 @@ commit_tree() {
 stage_branch() {
 	local repo="$1" branch="$2" skills="$3"
 	local stage index
-	stage="$cleanup_root/$branch"
-	index="$cleanup_root/index-$branch"
+	stage="$cleanup_root/${branch##*/}"
+	index="$cleanup_root/index-${branch##*/}"
 	mkdir -p "$stage"
 	git -C "$repo" archive "$branch" | tar -x -C "$stage"
 	replace_board_mentions "$stage"
@@ -135,7 +135,7 @@ finish_refresh() {
 
 build() {
 	local dest="$1" parent repo main_before pre_before main_tip pre_tip
-	local skills stage link count arkan_skills stage_skills
+	local skills stage dir link count arkan_skills stage_skills
 	[ -n "$dest" ] || usage
 	if [ -e "$dest" ]; then
 		[ -d "$dest" ] || die "destination is not a directory: $dest"
@@ -161,33 +161,34 @@ build() {
 	git -C "$repo" init -q
 	git -C "$repo" fetch -q "$seed" '+refs/heads/*:refs/seed/*'
 	git -C "$repo" update-ref refs/heads/main "$(git -C "$repo" rev-parse refs/seed/main)"
-	git -C "$repo" update-ref refs/heads/pre-break "$(git -C "$repo" rev-parse refs/seed/pre-break)"
+	git -C "$repo" update-ref refs/heads/agent/pre-break "$(git -C "$repo" rev-parse refs/seed/pre-break)"
 	git -C "$repo" update-ref -d refs/seed/main
 	git -C "$repo" update-ref -d refs/seed/pre-break
 	main_before=$(git -C "$repo" rev-parse --verify refs/heads/main)
-	pre_before=$(git -C "$repo" rev-parse --verify refs/heads/pre-break)
+	pre_before=$(git -C "$repo" rev-parse --verify refs/heads/agent/pre-break)
 	[ "$main_before" = "294acb1dc039ab87ddfab7d5c7c77c20404efdf3" ] || die "seed main is $main_before"
 	[ "$pre_before" = "af4922bffa6fee961cac2df2a1d50de1324c8083" ] || die "seed pre-break is $pre_before"
 
-	for stage in main pre-break; do
+	for stage in main agent/pre-break; do
 		stage_branch "$repo" "$stage" "$skills"
 		case "$stage" in
 			main) main_tip=$staged_commit ;;
-			pre-break) pre_tip=$staged_commit ;;
+			agent/pre-break) pre_tip=$staged_commit ;;
 		esac
 	done
 
-	for stage in main pre-break; do
+	for stage in main agent/pre-break; do
+		dir="$cleanup_root/${stage##*/}"
 		stage_skills=$(git -C "$repo" rev-parse "$stage:.claude/skills") ||
 			die "$stage has no .claude/skills tree"
 		[ "$stage_skills" = "$arkan_skills" ] ||
 			die "$stage .claude/skills does not match arkan HEAD"
-		grep -q 'scripts/board.sh build' "$cleanup_root/$stage/AGENTS.md" ||
+		grep -q 'scripts/board.sh build' "$dir/AGENTS.md" ||
 			die "$stage AGENTS.md does not name board.sh build"
-		grep -q 'scripts/board.sh check' "$cleanup_root/$stage/AGENTS.md" ||
+		grep -q 'scripts/board.sh check' "$dir/AGENTS.md" ||
 			die "$stage AGENTS.md does not name board.sh check"
-		[ ! -e "$cleanup_root/$stage/scripts/build-board.sh" ] || die "$stage has build-board.sh"
-		[ ! -e "$cleanup_root/$stage/scripts/check-board.sh" ] || die "$stage has check-board.sh"
+		[ ! -e "$dir/scripts/build-board.sh" ] || die "$stage has build-board.sh"
+		[ ! -e "$dir/scripts/check-board.sh" ] || die "$stage has check-board.sh"
 		if git -C "$repo" cat-file -e "$stage:ANSWERS.md" 2>/dev/null; then
 			die "$stage has ANSWERS.md"
 		fi
@@ -201,20 +202,20 @@ build() {
 			die "$stage has no scripts/board.sh"
 		link=$(git -C "$repo" cat-file -p "$stage:scripts/board.sh")
 		[ "$link" = "$board_link" ] || die "$stage board.sh is not the skills symlink"
-		[ -f "$cleanup_root/$stage/scripts/board.sh" ] || die "$stage board.sh symlink is broken"
-		[ -x "$cleanup_root/$stage/scripts/board.sh" ] || die "$stage board.sh is not executable"
-		git -C "$repo" ls-tree -r --name-only "$stage" scripts >"$cleanup_root/scripts-$stage"
-		count=$(wc -l <"$cleanup_root/scripts-$stage" | tr -d ' ')
+		[ -f "$dir/scripts/board.sh" ] || die "$stage board.sh symlink is broken"
+		[ -x "$dir/scripts/board.sh" ] || die "$stage board.sh is not executable"
+		git -C "$repo" ls-tree -r --name-only "$stage" scripts >"$dir.scripts"
+		count=$(wc -l <"$dir.scripts" | tr -d ' ')
 		[ "$count" = 3 ] || die "$stage scripts/ has $count entries"
-		grep -qx 'scripts/board.sh' "$cleanup_root/scripts-$stage" || die "$stage scripts/board.sh missing"
-		grep -qx 'scripts/check.sh' "$cleanup_root/scripts-$stage" || die "$stage scripts/check.sh missing"
-		grep -qx 'scripts/style.py' "$cleanup_root/scripts-$stage" || die "$stage scripts/style.py missing"
+		grep -qx 'scripts/board.sh' "$dir.scripts" || die "$stage scripts/board.sh missing"
+		grep -qx 'scripts/check.sh' "$dir.scripts" || die "$stage scripts/check.sh missing"
+		grep -qx 'scripts/style.py' "$dir.scripts" || die "$stage scripts/style.py missing"
 	done
 	git -C "$repo" log --all --format= --name-only >"$cleanup_root/history-paths"
 	if grep -qx 'ANSWERS.md' "$cleanup_root/history-paths"; then
 		die "ANSWERS.md is in the exposed history"
 	fi
-	(cd "$cleanup_root/pre-break" && bash scripts/check.sh) || die "pre-break check failed"
+	(cd "$cleanup_root/pre-break" && bash scripts/check.sh) || die "agent/pre-break check failed"
 	if (cd "$cleanup_root/main" && bash scripts/check.sh) >"$cleanup_root/main.log" 2>&1; then
 		die "main check passed; the planted money regression is gone"
 	fi
@@ -234,14 +235,14 @@ build() {
 
 	printf 'build: wrote %s\n' "$dest"
 	printf 'build: main %s\n' "$main_tip"
-	printf 'build: pre-break %s\n' "$pre_tip"
+	printf 'build: agent/pre-break %s\n' "$pre_tip"
 	printf 'build: skills from arkan %s\n' "$(git -C "$arkan_root" rev-parse HEAD)"
-	printf 'build: pre-break check ok, main fails test_parses_one_decimal_place_as_tens_of_cents\n'
+	printf 'build: agent/pre-break check ok, main fails test_parses_one_decimal_place_as_tens_of_cents\n'
 }
 
 refresh() {
-	local target="$1" base="${2:-pre-break}" branch short base_short source_sha slug
-	local base_sha changed head title body path status count remote_branch remote_sha pr_out pr_code
+	local target="$1" base="${2:-agent/pre-break}" branch short base_short source_sha slug
+	local base_sha changed head title body path status count remote_branch remote_sha
 	target=$(absolute_dir "$target")
 	git -C "$target" rev-parse --git-dir >/dev/null 2>&1 || die "not a git checkout: $target"
 	[ -d "$target/.claude/skills" ] || die "checkout has no .claude/skills: $target"
@@ -324,25 +325,11 @@ git diff --name-only $base_sha..$head lists only .claude/skills/ paths."
 			die "remote branch $branch is at $remote_sha, not $head; not forcing"
 		printf 'refresh: remote branch %s already at %s; skipping push\n' "$branch" "$head"
 	else
-		agent-gh push "$slug" "$refresh_worktree" "$branch" "$head"
+		agent-gh push "$slug" "$refresh_worktree" "$branch" "$head" ||
+			die "agent-gh push failed for $branch at $head; no pr was requested"
 	fi
-	set +e
-	pr_out=$(agent-gh pr-create "$slug" "$base" "$branch" "$title" "$body" 2>&1)
-	pr_code=$?
-	set -e
-	if [ "$pr_code" -eq 0 ]; then
-		printf '%s\n' "$pr_out"
-	elif grep -qi 'already exists' <<<"$pr_out"; then
-		printf '%s\n' "$pr_out"
-		printf 'refresh: branch %s at %s already has a pull request; no new pr was opened. No broker client verb looks up a pr by head, so the broker output above is the report.\n' "$branch" "$head"
-		finish_refresh
-		count=$(awk 'END {print NR}' <<<"$changed")
-		printf 'refresh: branch %s at %s, %s files\n' "$branch" "$head" "$count"
-		return 0
-	else
-		printf '%s\n' "$pr_out" >&2
-		die "agent-gh pr-create failed; branch $branch is at $head on the remote"
-	fi
+	agent-gh pr-create "$slug" "$base" "$branch" "$title" "$body" ||
+		die "agent-gh pr-create failed; branch $branch is verified at $head on the remote; pr state unknown"
 	finish_refresh
 	count=$(awk 'END {print NR}' <<<"$changed")
 	printf 'refresh: branch %s at %s, %s files\n' "$branch" "$head" "$count"
