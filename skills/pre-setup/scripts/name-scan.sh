@@ -2,247 +2,159 @@
 set -eu
 
 tab="$(printf '\t')"
+sep="$(printf '\037')"
 home="${HOME:-}"
 pending=""
-hermes_agents=0
+agents_root=""
+fm_closed="" fm_name=""
 
 say() { printf '%-16s %s%s\n' "$1" "$2" "${3:+  $3}"; }
 
-usage() { printf 'usage: name-scan.sh [--pending <skills-dir>] <harness>...  (claude code, codex, dsh, pi, omp, cursor, opencode, hermes)\n' >&2; exit 2; }
-
-trim() {
-	local s="$1"
-	s="${s#"${s%%[![:space:]]*}"}"
-	printf '%s' "${s%"${s##*[![:space:]]}"}"
-}
-
-expand_home() {
-	case "$1" in
-		"~") printf '%s' "$home" ;;
-		"~/"*) printf '%s/%s' "$home" "${1#\~/}" ;;
-		'$HOME') printf '%s' "$home" ;;
-		'$HOME/'*) printf '%s/%s' "$home" "${1#\$HOME/}" ;;
-		'${HOME}') printf '%s' "$home" ;;
-		'${HOME}/'*) printf '%s/%s' "$home" "${1#\$\{HOME\}/}" ;;
-		/*) printf '%s' "$1" ;;
-	esac
-}
-
-dsh_agents_root() {
-	local r="${DSH_AGENTS_HOME:-$home/.agents}"
-	case "$r" in *[![:space:]]*) ;; *) r="$home/.agents" ;; esac
-	case "$r" in
-		"~") r="$home" ;;
-		"~/"*) r="$home/${r#\~/}" ;;
-		'$HOME') r="$home" ;;
-		'$HOME/'*) r="$home/${r#\$HOME/}" ;;
-	esac
-	printf '%s' "${r%/}"
-}
-
-declared_name() {
-	local value
-	value="$(awk '
-		NR == 1 { if ($0 != "---") exit; next }
-		/^---[[:space:]]*$/ { exit }
-		/^name:[[:space:]]*/ {
-			sub(/^name:[[:space:]]*/, "")
-			sub(/[[:space:]]#.*$/, "")
-			sub(/[[:space:]]+$/, "")
-			print
-			exit
-		}
-	' "$1")"
-	case "$value" in
-		\"*\") value="${value#\"}"; value="${value%\"}" ;;
-		\'*\') value="${value#\'}"; value="${value%\'}" ;;
-	esac
-	printf '%s' "$value"
-}
-
-hermes_dirs() {
-	awk '
-		/^[[:space:]]*external_dirs:[[:space:]]*/ {
-			found = 1
-			line = $0
-			sub(/^[^:]*:[[:space:]]*/, "", line)
-			if (line != "") print line
-			next
-		}
-		found == 1 {
-			if ($0 ~ /^[[:space:]]*-[[:space:]]*/) {
-				line = $0
-				sub(/^[[:space:]]*-[[:space:]]*/, "", line)
-				print line
-				next
-			}
-			if ($0 ~ /^[[:space:]]*(#|$)/) next
-			exit
-		}
-	' "$1" 2>/dev/null || true
-}
+usage() { printf 'usage: name-scan.sh [--pending <skills-dir>] <harness>...  (claude code, codex, omp)\n' >&2; exit 2; }
 
 record() { printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" "$5" >>"$records"; }
 hint() { printf '%s\n' "$1" >>"$hints"; }
 
-add_skill() {
-	local harness="$1" root="$2" entry="$3" canonical name
-	if pending_owned_link "$root" "$entry"; then return 0; fi
-	[ -d "$entry" ] || return 0
-	[ -f "$entry/SKILL.md" ] || return 0
-	canonical="$(cd -P -- "$entry" 2>/dev/null && pwd -P)" || canonical=""
-	if [ -z "$canonical" ]; then
-		hint "skill source $entry unreadable; not grouped"
-		return 0
-	fi
-	name="$(declared_name "$entry/SKILL.md")"
-	if [ -z "$name" ]; then
-		hint "skill without frontmatter name: $entry; not grouped"
-		return 0
-	fi
-	record "$harness" plain "$name" "$canonical" "$root"
+read_frontmatter() {
+	local out
+	out="$(awk -v sep="$sep" '
+		function clean(v) {
+			sub(/^[^:]*:[[:space:]]*/, "", v)
+			if (v ~ /^"/) { sub(/^"/, "", v); sub(/".*$/, "", v); return v }
+			if (v ~ /^'\''/) { sub(/^'\''/, "", v); sub(/'\''.*$/, "", v); return v }
+			sub(/[[:space:]]#.*$/, "", v)
+			sub(/[[:space:]]+$/, "", v)
+			return v
+		}
+		NR == 1 { if ($0 !~ /^---[[:space:]]*$/) exit; next }
+		/^---[[:space:]]*$/ { closed = 1; exit }
+		/^name:/ && !seen_name { seen_name = 1; name = clean($0); next }
+		END { if (closed) printf "yes%s%s\n", sep, name }
+	' "$1" 2>/dev/null)" || out=""
+	fm_closed="" fm_name=""
+	[ -n "$out" ] || return 0
+	IFS="$sep" read -r fm_closed fm_name <<EOF
+$out
+EOF
 }
 
-pending_owned_link() {
-	local root="$1" entry="$2" name raw listed rest
-	[ -n "$pending" ] || return 1
-	[ "$root" = "$home/.agents/skills" ] || return 1
-	[ "${entry%/*}" = "$root" ] || return 1
-	name="${entry##*/}"
-	[ -e "$pending/$name" ] || return 1
+owned_change() {
+	local name="$1" raw listed recorded
 	[ -f "$home/.agents/skills/.arkan-links" ] || return 1
 	[ -L "$home/.agents/skills/$name" ] || return 1
-	raw="$(readlink "$home/.agents/skills/$name")" || raw=""
-	case "$raw" in */) raw="${raw%/}" ;; esac
-	case "$raw" in */skills/"$name") ;; *) return 1 ;; esac
-	while IFS="$tab" read -r listed rest || [ -n "$listed" ]; do
-		[ "$listed" = "$name" ] && return 0
+	raw="$(readlink "$home/.agents/skills/$name")" || return 1
+	while IFS="$tab" read -r listed recorded || [ -n "$listed" ]; do
+		[ "$listed" = "$name" ] || continue
+		if [ -d "$pending/$name" ]; then
+			case "${raw%/}" in
+				*/skills/"$name") printf '%s' "$pending/$name"; return 0 ;;
+			esac
+		elif [ "${raw%/}" = "${recorded%/}" ]; then
+			return 0
+		fi
+		return 1
 	done <"$home/.agents/skills/.arkan-links"
 	return 1
 }
 
+modeled_dir() {
+	local p="$1" parent raw replacement hops=0
+	if [ -n "$pending" ] && [ -n "$agents_root" ]; then
+		while [ "$hops" -lt 40 ]; do
+			parent="$(cd -P -- "${p%/*}" 2>/dev/null && pwd -P)" || break
+			p="$parent/${p##*/}"
+			if [ "$parent" = "$agents_root" ] && replacement="$(owned_change "${p##*/}")"; then
+				printf '%s' "$replacement"
+				return 0
+			fi
+			[ -L "$p" ] || break
+			raw="$(readlink "$p")" || break
+			case "$raw" in /*) p="${raw%/}" ;; *) p="$parent/${raw%/}" ;; esac
+			hops=$((hops + 1))
+		done
+	fi
+	printf '%s' "$1"
+}
+
+add_skill() {
+	local harness="$1" root="$2" entry_name="$3" dir="$4" canonical name
+	canonical="$(cd -P -- "$dir" 2>/dev/null && pwd -P)" || canonical=""
+	if [ -z "$canonical" ]; then
+		hint "skill source $dir unreadable; not grouped"
+		return 0
+	fi
+	read_frontmatter "$dir/SKILL.md"
+	case "$harness" in
+		codex)
+			if [ "$fm_closed" != yes ]; then
+				hint "codex skips $dir: SKILL.md has no frontmatter"
+				return 0
+			fi
+			name="$(printf '%s' "$fm_name" | tr -s '[:space:]' ' ')"
+			name="${name# }"
+			name="${name% }"
+			[ -n "$name" ] || name="${canonical##*/}"
+			;;
+		*)
+			name="$fm_name"
+			[ -n "$name" ] || name="$entry_name"
+			;;
+	esac
+	record "$harness" plain "$name" "$canonical" "$root"
+}
+
+scan_entry() {
+	local harness="$1" root="$2" entry_name="$3" dir="$4" file
+	[ -d "$dir" ] || return 0
+	if [ "$harness" = codex ]; then
+		while IFS= read -r -d '' file; do
+			add_skill codex "$root" "$entry_name" "${file%/SKILL.md}"
+		done < <(find -L "$dir" -maxdepth 5 -name '.*' -prune -o -type f -name SKILL.md -print0 2>/dev/null)
+		return 0
+	fi
+	[ -f "$dir/SKILL.md" ] || return 0
+	add_skill "$harness" "$root" "$entry_name" "$dir"
+}
+
 scan_root() {
-	local harness="$1" root="$2" skip_system="$3" entry
-	[ -n "$root" ] || return 0
+	local harness="$1" root="$2" entry dir
 	[ -d "$root" ] || return 0
 	for entry in "$root"/*; do
 		[ -e "$entry" ] || [ -L "$entry" ] || continue
-		if [ "$skip_system" = 1 ] && [ "${entry##*/}" = .system ]; then continue; fi
 		if [ -L "$entry" ] && [ ! -e "$entry" ]; then
 			hint "dangling skill link $entry; not grouped"
 			continue
 		fi
-		add_skill "$harness" "$root" "$entry"
+		dir="$entry"
+		if [ "$harness" != "claude code" ]; then dir="$(modeled_dir "$entry")"; fi
+		scan_entry "$harness" "$root" "${entry##*/}" "$dir"
 	done
 }
 
-scan_tree() {
-	local harness="$1" root="$2" entry
-	[ -d "$root" ] || return 0
-	while IFS= read -r -d '' entry; do
-		add_skill "$harness" "$root" "$entry"
-	done < <(find -L "$root" -mindepth 1 \
-		\( -name '.*' -o -name node_modules \) -prune -o \
-		-type d -exec test -f '{}/SKILL.md' \; -print0 -prune -o \
-		-type d -print0 2>/dev/null)
-}
-
-clean_hermes_dir() {
-	local d
-	d="$(trim "$1")"
-	d="${d#\[}"
-	d="$(trim "$d")"
-	case "$d" in
-		\"*) d="${d#\"}"; d="${d%%\"*}" ;;
-		\'*) d="${d#\'}"; d="${d%%\'*}" ;;
-		*)
-			case "$d" in *[[:space:]]#*) d="${d%%[[:space:]]#*}" ;; esac
-			d="$(trim "$d")"
-			d="$(trim "${d%\]}")"
-			;;
-	esac
-	d="${d%/}"
-	printf '%s' "$d"
-}
-
-scan_hermes_dir() {
-	local d path
-	d="$(clean_hermes_dir "$1")"
-	case "$d" in ""|"[]") return 0 ;; esac
-	path="$(expand_home "$d")"
-	if [ -z "$path" ]; then
-		hint "hermes external dir $d unverified; not scanned"
-		return 0
-	fi
-	if [ "$path" = "$home/.agents/skills" ]; then hermes_agents=1; fi
-	scan_root hermes "$path" 0
-}
-
-scan_hermes() {
-	local line part
-	hint "hermes local skill root unverified; scanned skills.external_dirs only"
-	if [ ! -f "$home/.hermes/config.yaml" ]; then return 0; fi
-	while IFS= read -r line; do
-		[ -n "$line" ] || continue
-		case "$line" in
-			*,*)
-				while IFS= read -r part; do
-					scan_hermes_dir "$part"
-				done <<EOF
-$(printf '%s\n' "$line" | tr ',' '\n')
-EOF
-				;;
-			*) scan_hermes_dir "$line" ;;
-		esac
-	done <<EOF
-$(hermes_dirs "$home/.hermes/config.yaml")
-EOF
+scan_incoming() {
+	local harness="$1" src
+	[ -n "$pending" ] || return 0
+	[ -d "$pending" ] || return 0
+	for src in "$pending"/*; do
+		scan_entry "$harness" "$home/.agents/skills" "${src##*/}" "$src"
+	done
 }
 
 scan_harness() {
 	case "$1" in
-		"claude code") scan_root "claude code" "$home/.claude/skills" 0 ;;
+		"claude code") scan_root "claude code" "$home/.claude/skills" ;;
 		codex)
-			scan_root codex "$home/.agents/skills" 0
-			scan_root codex "${CODEX_HOME:-$home/.codex}/skills" 1
+			scan_root codex "$home/.agents/skills"
+			scan_root codex "${CODEX_HOME:-$home/.codex}/skills"
+			scan_incoming codex
 			;;
-		dsh) scan_root dsh "$(dsh_agents_root)/skills" 0 ;;
-		pi) scan_tree pi "$home/.agents/skills" ;;
 		omp)
-			scan_root omp "$home/.agents/skills" 0
-			scan_root omp "$home/.claude/skills" 0
-			scan_root omp "$home/.codex/skills" 1
+			scan_root omp "$home/.agents/skills"
+			scan_root omp "$home/.claude/skills"
+			scan_root omp "$home/.codex/skills"
+			scan_incoming omp
 			;;
-		cursor)
-			scan_root cursor "$home/.agents/skills" 0
-			scan_root cursor "$home/.claude/skills" 0
-			scan_root cursor "$home/.codex/skills" 1
-			;;
-		opencode)
-			scan_root opencode "$home/.agents/skills" 0
-			scan_root opencode "$home/.claude/skills" 0
-			;;
-		hermes) scan_hermes ;;
 	esac
-}
-
-pending_reads_agents() {
-	case "$1" in
-		codex|pi|omp|cursor|opencode) return 0 ;;
-		dsh) [ "$(dsh_agents_root)" = "$home/.agents" ] ;;
-		hermes) [ "$hermes_agents" = 1 ] ;;
-		*) return 1 ;;
-	esac
-}
-
-scan_pending() {
-	local harness="$1" root="$home/.agents/skills" entry
-	[ -n "$pending" ] || return 0
-	[ -d "$pending" ] || return 0
-	pending_reads_agents "$harness" || return 0
-	for entry in "$pending"/*; do
-		add_skill "$harness" "$root" "$entry"
-	done
 }
 
 report() {
@@ -317,12 +229,10 @@ if [ -z "$home" ]; then
 	exit 0
 fi
 [ "$#" -gt 0 ] || usage
-for h in "$@"; do
-	case "$h" in
-		"claude code"|codex|dsh|pi|omp|cursor|opencode|hermes) ;;
-		*) say names skip "unknown harness $h; no sourced skill root"; exit 0 ;;
-	esac
-done
+if [ -n "$pending" ]; then
+	pending="${pending%/}"
+	agents_root="$(cd -P -- "$home/.agents/skills" 2>/dev/null && pwd -P)" || agents_root=""
+fi
 
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/arkan-names.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
@@ -331,10 +241,16 @@ hints="$tmp/hints"
 : >"$records"
 : >"$hints"
 
+unverified=""
 for h in "$@"; do
-	scan_harness "$h"
-	scan_pending "$h"
+	case "$h" in
+		"claude code"|codex|omp) scan_harness "$h" ;;
+		*) unverified="$unverified${unverified:+, }$h" ;;
+	esac
 done
+if [ -n "$unverified" ]; then
+	hint "unverified: $unverified; not scanned (the scan covers claude code, codex and omp)"
+fi
 
 if [ -s "$records" ]; then
 	report

@@ -323,7 +323,7 @@ EOF
 }
 
 check_names() {
-	local pending="${1:-}" list harness dsh_seen=0
+	local pending="${1:-}" list harness
 	local -a scan
 	scan=()
 	if [ -z "${HOME:-}" ]; then
@@ -334,13 +334,9 @@ check_names() {
 	while IFS= read -r harness; do
 		[ -n "$harness" ] || continue
 		scan[${#scan[@]}]="$harness"
-		if [ "$harness" = dsh ]; then dsh_seen=1; fi
 	done <<EOF
 $list
 EOF
-	if [ "$dsh_seen" = 0 ] && [ -n "${DSH_AGENTS_HOME:-}" ] && [ -d "$(dsh_agents_root)/skills" ]; then
-		scan[${#scan[@]}]=dsh
-	fi
 	if [ "${#scan[@]}" = 0 ]; then
 		say names skip "no harness detected"
 		return
