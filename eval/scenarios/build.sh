@@ -127,6 +127,12 @@ stage_branch() {
 		"rebuild: current arkan skills, one board entry point, sandbox ci")
 }
 
+finish_refresh() {
+	refresh_keep=1
+	git -C "$refresh_target" worktree remove "$refresh_worktree"
+	remove_tree "$refresh_root"
+}
+
 build() {
 	local dest="$1" parent repo main_before pre_before main_tip pre_tip
 	local skills stage link count arkan_skills stage_skills
@@ -234,8 +240,8 @@ build() {
 }
 
 refresh() {
-	local target="$1" base="${2:-pre-break}" branch short source_sha slug
-	local base_sha changed head title body path status count
+	local target="$1" base="${2:-pre-break}" branch short base_short source_sha slug
+	local base_sha changed head title body path status count remote_branch remote_sha pr_out pr_code
 	target=$(absolute_dir "$target")
 	git -C "$target" rev-parse --git-dir >/dev/null 2>&1 || die "not a git checkout: $target"
 	[ -d "$target/.claude/skills" ] || die "checkout has no .claude/skills: $target"
@@ -247,6 +253,7 @@ refresh() {
 		die "cannot fetch origin/$base"
 	base_sha=$(git -C "$target" rev-parse --verify "refs/remotes/origin/$base" 2>/dev/null) ||
 		die "origin/$base is missing"
+	base_short=$(printf '%s' "$base_sha" | cut -c1-12)
 	slug=$(git -C "$target" config --get remote.origin.url 2>/dev/null) || die "checkout has no origin"
 	slug="${slug%/}"
 	slug="${slug%.git}"
@@ -258,7 +265,7 @@ refresh() {
 		*/*) : ;;
 		*) die "cannot read owner/repo from origin: $slug" ;;
 	esac
-	branch="agent/refresh-skills-$short"
+	branch="agent/refresh-skills-$short-$base_short"
 	[ -z "$(git -C "$target" rev-parse --verify "refs/heads/$branch" 2>/dev/null)" ] ||
 		die "local branch exists: $branch"
 	command -v agent-gh >/dev/null || die "broker client missing on PATH"
@@ -310,11 +317,33 @@ Scenario runs use the refreshed skills; the stock code and tests are unchanged.
 
 ## Verification
 git diff --name-only $base_sha..$head lists only .claude/skills/ paths."
-	agent-gh push "$slug" "$refresh_worktree" "$branch" "$head"
-	agent-gh pr-create "$slug" "$base" "$branch" "$title" "$body"
-	refresh_keep=1
-	git -C "$target" worktree remove "$refresh_worktree"
-	remove_tree "$refresh_root"
+	remote_branch=$(git -C "$target" ls-remote --heads origin "refs/heads/$branch" 2>/dev/null || true)
+	remote_sha=${remote_branch%%[[:space:]]*}
+	if [ -n "$remote_sha" ]; then
+		[ "$remote_sha" = "$head" ] ||
+			die "remote branch $branch is at $remote_sha, not $head; not forcing"
+		printf 'refresh: remote branch %s already at %s; skipping push\n' "$branch" "$head"
+	else
+		agent-gh push "$slug" "$refresh_worktree" "$branch" "$head"
+	fi
+	set +e
+	pr_out=$(agent-gh pr-create "$slug" "$base" "$branch" "$title" "$body" 2>&1)
+	pr_code=$?
+	set -e
+	if [ "$pr_code" -eq 0 ]; then
+		printf '%s\n' "$pr_out"
+	elif grep -qi 'already exists' <<<"$pr_out"; then
+		printf '%s\n' "$pr_out"
+		printf 'refresh: branch %s at %s already has a pull request; no new pr was opened. No broker client verb looks up a pr by head, so the broker output above is the report.\n' "$branch" "$head"
+		finish_refresh
+		count=$(awk 'END {print NR}' <<<"$changed")
+		printf 'refresh: branch %s at %s, %s files\n' "$branch" "$head" "$count"
+		return 0
+	else
+		printf '%s\n' "$pr_out" >&2
+		die "agent-gh pr-create failed; branch $branch is at $head on the remote"
+	fi
+	finish_refresh
 	count=$(awk 'END {print NR}' <<<"$changed")
 	printf 'refresh: branch %s at %s, %s files\n' "$branch" "$head" "$count"
 }
