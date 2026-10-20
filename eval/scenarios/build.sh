@@ -218,7 +218,7 @@ refresh() {
 	esac
 	branch="agent/refresh-skills-$source_version"
 	[ -z "$(git -C "$target" rev-parse --verify "refs/heads/$branch" 2>/dev/null)" ] || die "local branch exists: $branch"
-	command -v agent-gh >/dev/null || die "agent-gh is not on PATH; the broker route is required"
+	command -v agent-gh >/dev/null || die "broker client missing on PATH"
 
 	worktree=$(mktemp -d "${TMPDIR:-/tmp}/arkan-refresh.XXXXXX")
 	git -C "$target" worktree add -q -b "$branch" "$worktree" "$base_sha"
