@@ -37,11 +37,17 @@
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: none
 
-- [ ] 48: Pre-setup checks what a file says, not only that it exists #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/48-pre-setup-checks-content.md` · blocked by: none
-
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
+
+- [ ] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
+
+- [ ] 52: A pull request opened by ci starts no checks #arkan-flow #ready-for-human
+  `.scratch/arkan-flow/issues/52-ci-opened-pr-starts-no-checks.md` · blocked by: none
+
+- [ ] 53: The model keeps its key in the shell environment #arkan-flow #ready-for-human
+  `.scratch/arkan-flow/issues/53-model-credential-in-shell-env.md` · blocked by: none
 
 ## Done
 
@@ -152,6 +158,9 @@
 
 - [x] 46: Commit hooks for any language #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/46-commit-hooks-for-any-language.md` · blocked by: none
+
+- [x] 48: Pre-setup checks what a file says, not only that it exists #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/48-pre-setup-checks-content.md` · blocked by: none
 
 - [x] 49: Restore tdd and test-to-break, keep the test principle skill #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/49-restore-tdd-and-test-to-break.md` · blocked by: none

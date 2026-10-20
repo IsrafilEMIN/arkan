@@ -10,7 +10,7 @@ Set up what the other arkan skills assume. A script checks; you ask the person a
 
 - [scripts/setup.sh](./scripts/setup.sh) `check [repo-root]` prints one line per item: `ok`, `missing`, `out-of-date`, `hint` or `skip`. It changes nothing.
 - `setup.sh apply <item> [repo-root]` installs an item that needs no choice, then prints the item's new state.
-- [scripts/board.sh](./scripts/board.sh) `build|check [repo-root]` writes and checks `TODO.md` for a local tracker. Repos run it from this skill; they get no copy.
+- [scripts/board.sh](./scripts/board.sh) `build|check|fields [repo-root]` writes and checks `TODO.md` for a local tracker; `fields` checks only the ticket fields and needs no `TODO.md`. Repos run it from this skill; they get no copy.
 - The seeds are in [references/](./references/).
 
 ## Process
@@ -30,16 +30,16 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | item | what to do | ask? |
 |---|---|---|
 | `git` | `apply git` (runs `git init`) | yes |
-| `tracker` | GitHub if a remote points at github, GitLab if at gitlab, else local markdown; "other" gets a one-paragraph description. Write `docs/agents/issue-tracker.md` from `references/issue-tracker-<kind>.md`. For "other", write it from the description and copy the `## Board` section from the github seed | yes, which kind |
+| `tracker` | GitHub if a remote points at github, GitLab if at gitlab, else local markdown; "other" gets a one-paragraph description. Write `docs/agents/issue-tracker.md` from `references/issue-tracker-<kind>.md`. For "other", write it from the description and copy the `## Board` section from the github seed. With a local tracker, the check also runs `board.sh fields`: a ticket that breaks the field contract reads `out-of-date` | yes, which kind |
 | `labels` | write `docs/agents/triage-labels.md` from `references/triage-labels.md`, as it is. With a github or gitlab tracker, also create the five labels on the host | only before creating labels on the host |
 | `domain` | single-context: write `docs/agents/domain.md` from `references/domain.md`. Offer multi-context only when the repo has monorepo signals (`pnpm-workspace.yaml`, `workspaces` in `package.json`, a populated `packages/*`) | only with monorepo signals |
 | `gitattributes` | `apply gitattributes` (adds `GLOSSARY.md merge=union`) | no |
-| `agents-block` | write the block below into `AGENTS.md` | no |
-| `board` | `apply board` (seeds `TODO.md`, removes a `TODO.md` line from `.gitignore`). With a local tracker, then run `board.sh build` and `board.sh check`; it must print `ok`. With github or gitlab, the board is written by hand, as that tracker's seed says | no |
+| `agents-block` | write the block below into `AGENTS.md`. With a local tracker, the `### Board` line must name `board.sh build` and `board.sh check`; the check reads `out-of-date` when it does not | no |
+| `board` | `apply board` (seeds `TODO.md`, creates `.scratch/` for a local tracker, removes a `TODO.md` line from `.gitignore`). With a local tracker, the check runs `board.sh check` and reads `ok` only on `check-board: ok`; then run `board.sh build` and `board.sh check` until it passes. With github or gitlab, the board is written by hand, as that tracker's seed says | no |
 | `sensitive-paths` | start from `references/sensitive-paths.md` and add what the repo has: installer scripts, auth, billing, release workflows. Show the list | yes, the person approves or edits the list |
 | `approvals` | `apply approvals` (the fixed rule: `auto` and `manual`) | no |
 | `review-md` | `apply review-md` (seeds `REVIEW.md`). Fill in the failure line from what the repo is, if it is plain | no |
-| `ci-review`, `ci-check`, `ci-risk` | `apply <item>` copies arkan's file into `.github/workflows/`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
+| `ci-review`, `ci-check`, `ci-risk`, `ci-post-merge` | `apply <item>` copies arkan's file into `.github/workflows/`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
 | `ci-merge` | ask gate or broker. Record the answer as the exact line in `docs/agents/approvals.md`: broker installs no gate; gate does. See [Merge path](#merge-path) | yes, which path |
 | `codeowners` | write `.github/CODEOWNERS`: each sensitive path, owned by the repo owner. With the gate path, then offer the branch rule from `ci/README.md` (`arkan-merge`): require a pull request, require `check` and `arkan-review`, dismiss stale approvals, empty bypass list | before the branch rule |
 | `verify`, `hooks` (`hint`, `out-of-date`) | tell the person once: "no verify skill: run `create-verification`"; for hooks, "no commit hook for <languages>: run `setup-pre-commit`", or show the hooks path git uses and say the repo hook will not run. Change nothing | no |
@@ -47,6 +47,10 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 A `hint` on `ci-check` means the repo already runs its own ci: keep it, and copy `check.yml` only if the person wants arkan's `check` job beside it.
 
 Offer `ci-review` only when the person has added the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`) and arkan's skills in `.claude/skills/` on the default branch. Without them `arkan-review` fails on every pull request, and the gate refuses every merge. Otherwise skip it and say why.
+
+Offer `ci-post-merge` under the same conditions. It runs the `post-merge` skill when main's `check` fails or a revert lands, and once a day for slow signals. A repo that still has an older `arkan-post-merge-daily.yml` removes it after a yes, because the daily trigger is in the one file now. A repo whose own ci workflow has another name edits the copy's `workflows:` line before the push. The file takes `CHECK_COMMAND`, `MAIN`, and an optional `SIGNAL_COMMAND`. A github tracker needs no extra setting: the run creates the ticket as an issue, and a local tracker gets it committed on the branch. The run never merges the pull request it opens; the repo's merge path still lands it.
+
+The pull request the run opens starts no `check`, `arkan-review` or `arkan-risk` run when it uses `github.token`. To get those runs, add the optional `POST_MERGE_TOKEN` secret as `ci/README.md` says: a fine-grained token, or an App installation token minted in a step, never a stored App token. A run that uses `github.token` also needs the setting "Allow GitHub Actions to create and approve pull requests" before it can open the pull request at all. On the gate path, a merge made with `github.token` starts no `check` run on main, so the event trigger never fires; the daily run still runs the check and catches a red main.
 
 #### Merge path
 

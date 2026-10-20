@@ -51,4 +51,4 @@ Operations:
 - **Add** (a ticket or spec is published): in the branch that publishes it, write the ticket with its fields and run the script.
 - **Resolve** (the ticket closes): in the branch that does the work, set `**Closed:** yes` and run the script. It ticks the card, moves it to `Done`, drops this ticket from the note of each card it blocked, and moves each card it unblocked.
 - **Change role**: change the `**Role:**` line and run the script.
-- **Worktrees**: each branch edits only its own tickets. If two PRs conflict on `TODO.md`, the later one rebases on `main`, runs the script in place of a hand merge, and passes its checks again before it merges.
+- **Worktrees**: each branch edits only its own tickets. If two PRs conflict on `TODO.md`, the later one merges `main` into its branch (the broker push is fast-forward only), runs the script in place of a hand merge, and passes its checks again before it merges.
