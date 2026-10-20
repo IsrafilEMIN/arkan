@@ -2,9 +2,28 @@
 
 the kit for ticket `arkan-flow` 19: run arkan, unattended, on planted scenarios in a sandbox repo, and score each run against a sheet the run never sees.
 
+## build the sandbox
+
+`eval/scenarios/build.sh build <destination>` writes a fresh sandbox repo from `sandbox/history.bundle` and arkan's current `skills/` and `scripts/board.sh`. it refuses a destination that is not empty or that sits inside the arkan checkout.
+
+```sh
+eval/scenarios/build.sh build /tmp/arkan-sandbox
+```
+
+the build materializes `main` and `pre-break` with the scenario history, plants the two sandbox workflows, puts arkan's skills in `.claude/skills/`, replaces the two old board scripts with `scripts/board.sh`, regenerates `TODO.md` on both branches, and validates:
+
+- `pre-break` prints `ok` from `scripts/check.sh`;
+- `main` fails `test_parses_one_decimal_place_as_tens_of_cents`, the planted post-merge break;
+- `.claude/skills/` is byte-identical to arkan's `skills/`;
+- neither branch has `ANSWERS.md` or an old board script.
+
+the same inputs give the same branch tips and trees.
+
+`build.sh refresh <checkout> [base]` replaces only `.claude/skills/` on a new `agent/refresh-skills-<arkan-sha>` branch and opens its pull request through `agent-gh`. it refuses a dirty checkout or a change outside `.claude/skills/`; `base` defaults to `pre-break`. the broker must allow the target repository, so a guarded run stops on a refusal instead of falling back to `gh`.
+
 ## the sandbox
 
-[`IsrafilEMIN/arkan-sandbox`](https://github.com/IsrafilEMIN/arkan-sandbox), public: `stock`, a small stdlib-only python inventory cli with tests, set up the way `pre-setup` would (local-markdown tracker, triage labels, `GLOSSARY.md`, `CODING_STANDARDS.md`, the generated board) and arkan's skills in `.claude/skills/`. its tickets are written like a real user's and never hint at the trap.
+the public reference is still [`IsrafilEMIN/arkan-sandbox`](https://github.com/IsrafilEMIN/arkan-sandbox): `stock`, a small stdlib-only python inventory cli with tests, set up the way `pre-setup` would (local-markdown tracker, triage labels, `GLOSSARY.md`, `CODING_STANDARDS.md`, the generated board) and arkan's skills in `.claude/skills/`. its tickets are written like a real user's and never hint at the trap.
 
 - **branches.** `pre-break` is the clean start for every scenario but one. `main` holds a planted bad merge for the `post-merge` scenario, so its tests fail on purpose. each run gets its own trunk, `run/<name>`, pushed from its start ref, so one run's merges never touch another's.
 - **ci.** [`sandbox/check.yml`](sandbox/check.yml) runs `scripts/check.sh` on each push and pr. arkan's [`ci/github/arkan-review.yml`](../../ci/github/arkan-review.yml) reviews each push; in the sandbox it runs on sonnet 5.5, so the owner's pro plan lasts a whole round.
@@ -16,9 +35,11 @@ the kit for ticket `arkan-flow` 19: run arkan, unattended, on planted scenarios 
 ```sh
 RUN_ROUND=r2 eval/scenarios/driver.sh            # every scenario, one at a time
 eval/scenarios/run-one.sh bug-r2 pre-break "/arkan-mode do ticket value-report 01"
+SANDBOX_REPO=/tmp/arkan-sandbox eval/scenarios/run-one.sh bug-local pre-break "/arkan-mode do ticket value-report 01"
 ```
 
 - each run is a fresh headless `claude -p` session in a fresh clone, with a narrow tool allowlist and `acceptEdits`, never `bypassPermissions`.
+- `SANDBOX_REPO` selects the clone source. it defaults to the public sandbox; point it at a locally built one for a local run. a local sandbox has no GitHub CI or pull requests, so a full scored round uses the public repository.
 - `run-one.sh` tells the run only environment facts: its trunk, the rest endpoints for prs (the cloud proxy blocks the graphql api behind `gh pr ...`), the ci jobs, how a verdict is posted, and that the owner is away. nothing about the scenario.
 - logs go to `$RUNS_DIR` (default `$TMPDIR/arkan-scenarios/runs`), outside this tree.
 
@@ -28,6 +49,5 @@ eval/scenarios/run-one.sh bug-r2 pre-break "/arkan-mode do ticket value-report 0
 
 ## limits
 
-- the sandbox was built by hand in one session; rebuilding it from this folder is not scripted yet.
-- the sandbox's `.claude/skills/` is a copy of arkan's skills from when it was built. refresh it before a round, or results test old skills.
+- the public sandbox's `.claude/skills/` is a copy of arkan's skills from when it was built. run `build.sh refresh` to replace it before a round, or run a locally built sandbox.
 - a fork pr and the post-merge revert's merge cannot run there: there is no fork, and `main` cannot take the merge workflows while its tests fail.

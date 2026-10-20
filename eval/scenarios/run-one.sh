@@ -12,11 +12,11 @@
 # Local `main` is set to <ref> so "branch off main" starts there; `origin/main` is untouched.
 # Runs are sequential: a second run waits for the first (the git proxy allows 2 git ops).
 #
-# env: RUN_TIMEOUT (default 30m), RUN_MODEL (passed as --model when set),
-#      RUN_TOOLS (overrides the allowed tool list below).
+# env: SANDBOX_REPO (default: the public sandbox), RUN_TIMEOUT (default 30m),
+#      RUN_MODEL (passed as --model when set), RUN_TOOLS (overrides the allowed tool list below).
 set -euo pipefail
 
-REPO=https://github.com/IsrafilEMIN/arkan-sandbox
+REPO="${SANDBOX_REPO:-https://github.com/IsrafilEMIN/arkan-sandbox}"
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 # runs and their logs stay out of the arkan tree
 RUNS="${RUNS_DIR:-${TMPDIR:-/tmp}/arkan-scenarios/runs}"
@@ -28,9 +28,6 @@ DEFAULT_TOOLS=(
 	"Bash(git:*)" "Bash(gh:*)" "Bash(python3:*)"
 	"Bash(scripts/check.sh:*)" "Bash(scripts/board.sh:*)"
 	"Bash(./scripts/check.sh:*)" "Bash(./scripts/board.sh:*)"
-	# the hand-built sandbox ships these two until the arkan-flow 37 rebuild
-	"Bash(scripts/build-board.sh:*)" "Bash(scripts/check-board.sh:*)"
-	"Bash(./scripts/build-board.sh:*)" "Bash(./scripts/check-board.sh:*)"
 	"Bash(cd:*)" "Bash(ls:*)" "Bash(cat:*)" "Bash(head:*)" "Bash(tail:*)"
 	"Bash(grep:*)" "Bash(find:*)" "Bash(wc:*)" "Bash(sort:*)" "Bash(diff:*)" "Bash(echo:*)"
 	"Bash(printf:*)" "Bash(mkdir:*)" "Bash(mktemp:*)" "Bash(pwd)" "Bash(test:*)" "Bash(sed:*)"

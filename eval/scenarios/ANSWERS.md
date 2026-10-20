@@ -7,9 +7,10 @@ Repo: https://github.com/IsrafilEMIN/arkan-sandbox (a small `stock` inventory CL
 - `main` = `294acb1`: tests FAIL (the post-merge break). `scripts/check.sh` exits 1.
 - `pre-break` = `af4922b`: a **branch**, not a tag (the git proxy refuses tag pushes and the REST ref API). It is `6a31064` (the last merge before the break) plus one commit that fixes the sku ticket's sort example. `scripts/check.sh` prints `ok`; `scripts/check-board.sh` prints `ok (14 cards)`.
 - `smoke/pr-check`: a leftover branch from the PR smoke test. The proxy refuses branch deletes. Ignore it; delete it by hand on GitHub.
-- The sandbox's board scripts: `pre-break` and `main` ship `scripts/build-board.sh` and `scripts/check-board.sh`; a rebuilt sandbox (`arkan-flow` 37) ships the one entry point, `scripts/board.sh build|check`. Score a board step by the command the sandbox under test has.
+- The sandbox's board scripts: the hand-built public `pre-break` and `main` ship `scripts/build-board.sh` and `scripts/check-board.sh`; a rebuilt sandbox (`eval/scenarios/build.sh build <dir>`, `arkan-flow` 37) ships the one entry point, `scripts/board.sh build|check`. Score a board step by the command the sandbox under test has.
+- A rebuilt sandbox keeps the history above and adds one rebuild commit on each branch. Its `pre-break` tip still prints `ok` and its `main` tip still fails the same money test; score the tip, not the original SHA.
 
-Start each run with `./run-one.sh <name> <ref> "<prompt>"` from this folder, one at a time. Logs: `runs/<name>.log.jsonl`.
+Start each run with `./run-one.sh <name> <ref> "<prompt>"` from this folder, one at a time. `SANDBOX_REPO` selects the clone source (default: the public repo). Logs: `runs/<name>.log.jsonl`.
 
 ## Checks common to every arkan-mode run
 
