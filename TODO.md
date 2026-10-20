@@ -3,10 +3,7 @@
 ## Backlog
 
 - [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/07-readme-run-pre-setup-first.md` · blocked by: 04, 06
-
-- [ ] 17: No two skills or commands share a name #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/17-name-clashes.md` · blocked by: 04
+  `.scratch/arkan-flow/issues/07-readme-run-pre-setup-first.md` · blocked by: 06
 
 - [ ] Review and ci, parked (was 11, 12, 13, 14, 16) #review-ci #spec
   `.scratch/review-ci/spec.md` · blocked by: none
@@ -17,22 +14,19 @@
 - [ ] 28: Feature flags in the flow #arkan-flow #needs-info
   `.scratch/arkan-flow/issues/28-feature-flags.md` · blocked by: none
 
-- [ ] 37: Rebuild the scenario sandbox from arkan #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/37-rebuild-the-sandbox-from-arkan.md` · blocked by: 04
-
 - [ ] 01: Implement mental models into the arkan skillset #mental-models #needs-triage
   `.scratch/mental-models/issues/01-implement-mental-models.md` · blocked by: none
 
 ## Todo
-
-- [ ] 04: Install and update command #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
 
 - [ ] 06: Pre-setup sets up each harness the user has #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/06-pre-setup-harness-setup.md` · blocked by: none
 
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: none
+
+- [ ] 37: Rebuild the scenario sandbox from arkan #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/37-rebuild-the-sandbox-from-arkan.md` · blocked by: none
 
 - [ ] 42: Risk tier picks auto or manual #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/42-risk-tier-auto-or-manual.md` · blocked by: none
@@ -110,6 +104,12 @@
 
 - [x] 41: Build the pre-setup redesign #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/41-build-the-pre-setup-redesign.md` · blocked by: none
+
+- [x] 04: Install and update command #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
+
+- [x] 17: No two skills or commands share a name #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/17-name-clashes.md` · blocked by: none
 
 - [x] 36: Red-first commits clash with "checks green before each commit" #arkan-flow #needs-triage
   `.scratch/arkan-flow/issues/36-red-first-commit-vs-green-before-commit.md` · blocked by: none
