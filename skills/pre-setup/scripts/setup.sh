@@ -40,7 +40,7 @@ file_hash() { # path
 	elif command -v shasum >/dev/null 2>&1; then
 		shasum -a 256 "$1" | cut -d' ' -f1
 	elif command -v cksum >/dev/null 2>&1; then
-		cksum "$1" | tr ' ' '-'
+		cksum "$1" | cut -d' ' -f1
 	else
 		printf 'setup: no sha256sum, shasum or cksum\n' >&2
 		return 1
@@ -429,8 +429,10 @@ apply() {
 			for pair in $ci_items; do [ "${pair%%:*}" = "$item" ] && src="${pair#*:}"; done
 			[ -f "$ci/$src" ] || { printf 'setup: %s not found\n' "$ci/$src" >&2; exit 1; }
 			mkdir -p "$root/.github/workflows"
+			local want
+			want="$(file_hash "$ci/$src")" || exit 1
 			cp "$ci/$src" "$root/.github/workflows/$src"
-			printf '# arkan-copy: %s\n' "$(file_hash "$ci/$src")" >>"$root/.github/workflows/$src"
+			printf '# arkan-copy: %s\n' "$want" >>"$root/.github/workflows/$src"
 			;;
 		*)
 			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
