@@ -2,9 +2,6 @@
 
 ## Backlog
 
-- [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/07-readme-run-pre-setup-first.md` · blocked by: 06
-
 - [ ] Review and ci, parked (was 11, 12, 13, 14, 16) #review-ci #spec
   `.scratch/review-ci/spec.md` · blocked by: none
 
@@ -19,8 +16,8 @@
 
 ## Todo
 
-- [ ] 06: Pre-setup sets up each harness the user has #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/06-pre-setup-harness-setup.md` · blocked by: none
+- [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/07-readme-run-pre-setup-first.md` · blocked by: none
 
 - [ ] 21: What starts post-merge #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/21-post-merge-triggers.md` · blocked by: none
@@ -107,6 +104,9 @@
 
 - [x] 04: Install and update command #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/04-install-and-update-command.md` · blocked by: none
+
+- [x] 06: Pre-setup sets up each harness the user has #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/06-pre-setup-harness-setup.md` · blocked by: none
 
 - [x] 17: No two skills or commands share a name #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/17-name-clashes.md` · blocked by: none
