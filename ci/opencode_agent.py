@@ -6,12 +6,16 @@ import http.client
 import json
 import os
 import re
+import shutil
+import signal
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 API_URL = "https://opencode.ai/inference/go/openai/v1/chat/completions"
 USER_AGENT = "arkan-ci/1.0"
@@ -31,6 +35,85 @@ MAX_LIST = 200
 MAX_SEARCH = 100
 MAX_DIFF_CHARS = 262144
 MAX_PRIOR_CHARS = 20000
+NATIVE_TIMEOUT = 300
+NATIVE_ENV_KEYS = (
+    "PATH",
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "SHELL",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TERM",
+    "TMPDIR",
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+    "NODE_EXTRA_CA_CERTS",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "NO_PROXY",
+    "https_proxy",
+    "http_proxy",
+    "no_proxy",
+)
+CODEX_FEATURES_OFF = (
+    "shell_tool",
+    "unified_exec",
+    "code_mode",
+    "code_mode_host",
+    "multi_agent",
+    "apps",
+    "plugins",
+    "remote_plugin",
+    "hooks",
+    "skill_search",
+    "skill_mcp_dependency_install",
+    "browser_use",
+    "browser_use_external",
+    "computer_use",
+    "image_generation",
+    "view_image",
+    "workspace_dependencies",
+    "tool_suggest",
+    "sleep_tool",
+)
+UNAVAILABLE_RE = re.compile(
+    r"connect|network|timed? ?out|dns|tls|stream disconnected|routing discovery|"
+    r"unauthori[sz]ed|oauth|token (?:has )?expired|could not be refreshed|refresh token|"
+    r"invalid api key|/login|log ?in again|not logged in|"
+    r"usage limit|rate limit|quota|credit balance|out of credits|spend cap|upgrade to plus|"
+    r"overloaded|service unavailable|at capacity|high demand|"
+    r"(?:\bhttp(?:/[\d.]+)?|\bstatus(?: code)?|\berror code)[\s:=]*(?:401|429|5\d\d)\b",
+    re.IGNORECASE,
+)
+STARTUP_UNAVAILABLE_RE = re.compile(r"cannot create a settings file|operation not permitted", re.IGNORECASE)
+ENVELOPE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "content": {"type": "string"},
+        "tool_calls": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "type": {"type": "string", "enum": ["function"]},
+                    "function": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string"}, "arguments": {"type": "string"}},
+                        "required": ["name", "arguments"],
+                        "additionalProperties": False,
+                    },
+                },
+                "required": ["id", "type", "function"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["content", "tool_calls"],
+    "additionalProperties": False,
+}
 
 
 class RunnerError(RuntimeError):
@@ -46,6 +129,14 @@ class ProviderError(RuntimeError):
 
 
 class RetryableProviderError(ProviderError):
+    pass
+
+
+class AvailabilityError(RuntimeError):
+    pass
+
+
+class ChainExhaustedError(RunnerError):
     pass
 
 
@@ -475,8 +566,10 @@ class Chat:
         if not self.model:
             raise RunnerError("the model is empty")
         key = api_key if api_key is not None else os.environ.get("OPENCODE_API_KEY", "")
-        if not key or key != key.strip() or "\n" in key or "\r" in key:
-            raise RunnerError("OPENCODE_API_KEY is missing or malformed")
+        if not key:
+            raise AvailabilityError("OPENCODE_API_KEY is missing")
+        if key != key.strip() or "\n" in key or "\r" in key:
+            raise RunnerError("OPENCODE_API_KEY is malformed")
         self.api_key = key
 
     def next(self, session: str, messages: list[dict], tools: list[dict], force: str | None = None) -> dict:
@@ -493,9 +586,9 @@ class Chat:
         for attempt in range(2):
             try:
                 return self._request(body, session)
-            except RetryableProviderError:
+            except RetryableProviderError as exc:
                 if attempt == 1:
-                    raise
+                    raise AvailabilityError(str(exc)) from exc
         raise RetryableProviderError("the provider request failed")
 
     def _request(self, body: dict, session: str) -> dict:
@@ -517,12 +610,387 @@ class Chat:
                     return _message_from_json(response.read())
                 return _message_from_stream(response)
         except urllib.error.HTTPError as exc:
-            detail = sanitize(exc.read(400).decode("utf-8", "replace"), 200)
-            if exc.code in (408, 429, 500, 502, 503, 504):
+            try:
+                detail = sanitize(exc.read(400).decode("utf-8", "replace"), 200)
+            except (OSError, http.client.HTTPException):
+                detail = ""
+            finally:
+                exc.close()
+            if exc.code in (408, 429) or exc.code >= 500:
                 raise RetryableProviderError(f"the provider returned HTTP {exc.code}: {detail}") from exc
+            if exc.code in (401, 402):
+                raise AvailabilityError(f"the provider refused the key or its balance, HTTP {exc.code}: {detail}") from exc
             raise ProviderError(f"the provider returned HTTP {exc.code}: {detail}") from exc
         except (urllib.error.URLError, TimeoutError, OSError, http.client.IncompleteRead) as exc:
             raise RetryableProviderError("the provider request failed") from exc
+
+
+def _native_prompt(messages: list[dict], tools: list[dict], force: str | None) -> str:
+    if not tools:
+        rule = "No tools are offered now: leave tool_calls empty and answer in content."
+    elif force:
+        rule = f"You must call the tool {force} now."
+    else:
+        rule = "Call only tools listed in TOOLS."
+    return "\n\n".join(
+        [
+            "You are the inference step of a review runner. You have no tools of your own: do not run commands, read files or browse. "
+            "The runner executes the virtual tools in TOOLS for you and appends each result to the conversation.",
+            'Reply with one JSON object only: {"content": string, "tool_calls": [{"id": string, "type": "function", '
+            '"function": {"name": string, "arguments": string}}]}. Each arguments value is a JSON object encoded as a string, '
+            "and each id is unique. To answer without a tool, leave tool_calls empty.",
+            rule,
+            "TOOLS:\n" + json.dumps(tools, ensure_ascii=False),
+            "CONVERSATION:\n" + json.dumps(messages, ensure_ascii=False),
+        ]
+    )
+
+
+def _native_message(value: object, tools: list[dict], force: str | None) -> dict:
+    if not isinstance(value, dict) or set(value) != {"content", "tool_calls"}:
+        raise RunnerError("the native model returned a malformed message")
+    content, calls = value["content"], value["tool_calls"]
+    if not isinstance(content, str) or not isinstance(calls, list):
+        raise RunnerError("the native model returned a malformed message")
+    offered = {tool["function"]["name"] for tool in tools}
+    seen: set[str] = set()
+    for call in calls:
+        call_id, name, arguments = _call_parts(call)
+        if call.get("type") != "function" or call_id in seen or name not in offered or arguments is None:
+            raise RunnerError("the native model returned an invalid tool call")
+        if force and name != force:
+            raise RunnerError("the native model did not call the required tool")
+        seen.add(call_id)
+    return {"content": content, "tool_calls": calls}
+
+
+class NativeChat:
+    command = ""
+
+    def __init__(self, root: Path) -> None:
+        binary = shutil.which(self.command)
+        if binary is None:
+            raise AvailabilityError(f"{self.command} is not installed")
+        self.binary = binary
+        self.root = Path(tempfile.mkdtemp(prefix=f"{self.command}-", dir=root))
+        self.work = self.root / "work"
+        self.work.mkdir(mode=0o700)
+        self.env = {key: os.environ[key] for key in NATIVE_ENV_KEYS if key in os.environ}
+
+    def next(self, session: str, messages: list[dict], tools: list[dict], force: str | None = None) -> dict:
+        with tempfile.TemporaryDirectory(dir=self.root) as scratch:
+            value = self._run(_native_prompt(messages, tools, force), Path(scratch))
+        return _native_message(value, tools, force)
+
+    def _run(self, prompt: str, scratch: Path) -> object:
+        raise NotImplementedError
+
+    def _exec(self, args: list[str], prompt: str) -> tuple[int, str, str]:
+        try:
+            proc = subprocess.Popen(
+                [self.binary, *args],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self.work,
+                env=self.env,
+                start_new_session=True,
+            )
+        except OSError as exc:
+            raise AvailabilityError(f"{self.command} could not start") from exc
+        try:
+            out, err = proc.communicate(prompt.encode("utf-8"), timeout=NATIVE_TIMEOUT)
+        except BaseException as exc:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.communicate()
+            if isinstance(exc, subprocess.TimeoutExpired):
+                raise AvailabilityError(f"{self.command} timed out") from exc
+            raise
+        return proc.returncode, out.decode("utf-8", "replace"), err.decode("utf-8", "replace")
+
+    def _startup_failure(self, err: str) -> Exception:
+        if STARTUP_UNAVAILABLE_RE.search(err) or UNAVAILABLE_RE.search(err):
+            return AvailabilityError(f"{self.command} could not start a turn")
+        return RunnerError(f"{self.command} exited without a result")
+
+
+def _has_chatgpt_tokens(tokens: object) -> bool:
+    return isinstance(tokens, dict) and all(isinstance(tokens.get(key), str) and tokens[key] for key in ("access_token", "refresh_token"))
+
+
+def _codex_auth() -> tuple[dict, Path | None, str]:
+    raw = os.environ.get("CODEX_AUTH_JSON", "")
+    source = None
+    if not raw:
+        source = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "auth.json"
+        try:
+            raw = source.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            raise AvailabilityError("codex has no readable ChatGPT login") from exc
+    try:
+        auth = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RunnerError("the codex login is malformed") from exc
+    if not isinstance(auth, dict):
+        raise RunnerError("the codex login is malformed")
+    if not _has_chatgpt_tokens(auth.get("tokens")):
+        raise AvailabilityError("codex has no ChatGPT login")
+    return auth, source, raw
+
+
+def _write_private(path: Path, text: str) -> None:
+    temp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(8).hex()}.tmp")
+    descriptor = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp, path)
+    except BaseException:
+        temp.unlink(missing_ok=True)
+        raise
+
+
+class CodexChat(NativeChat):
+    command = "codex"
+
+    def __init__(self, root: Path) -> None:
+        super().__init__(root)
+        self.login, self.source, self.source_text = _codex_auth()
+        home = self.root / "home"
+        home.mkdir(mode=0o700)
+        self.home_auth = home / "auth.json"
+        self.home_text = json.dumps({**self.login, "OPENAI_API_KEY": None})
+        descriptor = os.open(self.home_auth, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(self.home_text)
+        self.env["CODEX_HOME"] = str(home)
+
+    def _sync_login(self) -> None:
+        if self.source is None:
+            return
+        try:
+            text = self.home_auth.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            text = None
+        if text == self.home_text:
+            return
+        self.home_text = text
+        try:
+            fresh = json.loads(text) if text is not None else None
+        except json.JSONDecodeError:
+            fresh = None
+        if not isinstance(fresh, dict) or not _has_chatgpt_tokens(fresh.get("tokens")):
+            print("opencode_agent: codex left an unreadable login, so the local codex auth.json was not updated", file=sys.stderr)
+            return
+        merged = {**self.login, "tokens": fresh["tokens"]}
+        if "last_refresh" in fresh:
+            merged["last_refresh"] = fresh["last_refresh"]
+        try:
+            current = self.source.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            current = None
+        if current != self.source_text:
+            print("opencode_agent: the local codex auth.json changed during the run, so codex's refreshed login was not saved", file=sys.stderr)
+            return
+        updated = json.dumps(merged, indent=2) + "\n"
+        try:
+            _write_private(self.source, updated)
+        except OSError:
+            print("opencode_agent: could not save codex's refreshed login to the local codex auth.json", file=sys.stderr)
+            return
+        self.source_text = updated
+
+    def _run(self, prompt: str, scratch: Path) -> object:
+        schema = scratch / "schema.json"
+        schema.write_text(json.dumps(ENVELOPE_SCHEMA), encoding="utf-8")
+        last = scratch / "last.json"
+        args = [
+            "exec",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--ephemeral",
+            "--sandbox",
+            "read-only",
+            "--skip-git-repo-check",
+            "--json",
+            "--output-schema",
+            str(schema),
+            "--output-last-message",
+            str(last),
+            "-C",
+            str(self.work),
+            "-c",
+            'web_search="disabled"',
+            "-c",
+            "project_doc_max_bytes=0",
+            "-c",
+            'forced_login_method="chatgpt"',
+            "--enable",
+            "skip_host_skill_discovery",
+        ]
+        for feature in CODEX_FEATURES_OFF:
+            args += ["--disable", feature]
+        try:
+            code, out, err = self._exec(args + ["-"], prompt)
+        finally:
+            self._sync_login()
+        text = last.read_text(encoding="utf-8", errors="replace") if last.is_file() else ""
+        if code == 0 and text.strip():
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise RunnerError("codex returned a malformed message") from exc
+        events, errors = 0, []
+        for line in out.splitlines():
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            events += 1
+            kind = event.get("type")
+            error = event.get("error") if kind == "turn.failed" else event if kind == "error" else None
+            if isinstance(error, dict) and isinstance(error.get("message"), str):
+                errors.append(error["message"])
+        if any("Incomplete response returned" in message or "content_filter" in message for message in [*errors, err]):
+            raise RunnerError("codex stopped before a complete response")
+        if any(UNAVAILABLE_RE.search(message) for message in errors):
+            raise AvailabilityError("codex reported a transport, login or quota failure")
+        if code != 0 and not events:
+            raise self._startup_failure(err)
+        raise RunnerError("codex failed without a message")
+
+
+def _claude_result(out: str) -> dict | None:
+    try:
+        data = json.loads(out)
+    except json.JSONDecodeError:
+        return None
+    if isinstance(data, list):
+        data = next((item for item in reversed(data) if isinstance(item, dict) and item.get("type") == "result"), None)
+    return data if isinstance(data, dict) else None
+
+
+class ClaudeChat(NativeChat):
+    command = "claude"
+
+    def __init__(self, root: Path) -> None:
+        super().__init__(root)
+        token = os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
+        if token:
+            if token != token.strip() or any(char.isspace() for char in token):
+                raise RunnerError("CLAUDE_CODE_OAUTH_TOKEN is malformed")
+            self.env["CLAUDE_CODE_OAUTH_TOKEN"] = token
+        self._require_subscription("oauth_token" if token else "claude.ai")
+
+    def _require_subscription(self, auth_method: str) -> None:
+        code, out, err = self._exec(["auth", "status", "--json"], "")
+        try:
+            status = json.loads(out)
+        except json.JSONDecodeError:
+            status = None
+        if not isinstance(status, dict) or not isinstance(status.get("loggedIn"), bool):
+            if code != 0:
+                raise self._startup_failure(err)
+            raise RunnerError("claude auth status returned a malformed status")
+        if not status["loggedIn"]:
+            raise AvailabilityError("claude is not logged in")
+        if code != 0:
+            raise self._startup_failure(err)
+        if status.get("apiProvider") != "firstParty" or status.get("authMethod") != auth_method:
+            raise AvailabilityError("claude is not logged in with a Claude subscription")
+
+    def _run(self, prompt: str, scratch: Path) -> object:
+        args = [
+            "-p",
+            "--safe-mode",
+            "--restricted",
+            "--tools",
+            "",
+            "--disable-slash-commands",
+            "--strict-mcp-config",
+            "--mcp-config",
+            '{"mcpServers":{}}',
+            "--setting-sources",
+            "",
+            "--no-session-persistence",
+            "--no-chrome",
+            "--permission-mode",
+            "dontAsk",
+            "--max-turns",
+            "2",
+            "--output-format",
+            "json",
+            "--json-schema",
+            json.dumps(ENVELOPE_SCHEMA),
+        ]
+        code, out, err = self._exec(args, prompt)
+        result = _claude_result(out)
+        if result is None:
+            if code != 0:
+                raise self._startup_failure(err)
+            raise RunnerError("claude returned malformed output")
+        subtype = result.get("subtype")
+        if result.get("is_error") or subtype != "success":
+            text = result.get("result")
+            http_status = result.get("api_error_status")
+            if isinstance(subtype, str) and subtype.startswith("error_max"):
+                raise RunnerError("claude ran out of turns")
+            if isinstance(http_status, int) and (http_status in (401, 429) or 500 <= http_status < 600):
+                raise AvailabilityError("claude reported a transport, login or quota failure")
+            if isinstance(text, str) and UNAVAILABLE_RE.search(text):
+                raise AvailabilityError("claude reported a transport, login or quota failure")
+            raise RunnerError("claude failed without a message")
+        structured = result.get("structured_output")
+        if isinstance(structured, dict):
+            return structured
+        text = result.get("result")
+        value = _json_content(text) if isinstance(text, str) else None
+        if value is None:
+            raise RunnerError("claude returned no structured message")
+        return value
+
+
+class FallbackChat:
+    def __init__(self, stages: tuple[tuple[str, Callable[[Path], Chat | NativeChat]], ...]) -> None:
+        self.stages = stages
+        self.index = 0
+        self.active: Chat | NativeChat | None = None
+        self._tmp: tempfile.TemporaryDirectory | None = None
+
+    def __enter__(self) -> FallbackChat:
+        self._tmp = tempfile.TemporaryDirectory(prefix="arkan-models-")
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        if self._tmp is not None:
+            self._tmp.cleanup()
+            self._tmp = None
+
+    def next(self, session: str, messages: list[dict], tools: list[dict], force: str | None = None) -> dict:
+        if self._tmp is None:
+            raise RunnerError("the model chain is not open")
+        while self.index < len(self.stages):
+            name, build = self.stages[self.index]
+            try:
+                if self.active is None:
+                    self.active = build(Path(self._tmp.name))
+                return self.active.next(session, messages, tools, force)
+            except AvailabilityError as exc:
+                print(f"opencode_agent: {name} is unavailable: {sanitize(str(exc), 200)}", file=sys.stderr)
+                self.index += 1
+                self.active = None
+        raise ChainExhaustedError("every model provider is unavailable: " + ", ".join(name for name, _ in self.stages))
+
+
+def _stages(model: str) -> tuple[tuple[str, Callable[[Path], Chat | NativeChat]], ...]:
+    return (("opencode-go", lambda root: Chat(model)), ("codex", CodexChat), ("claude", ClaudeChat))
 
 
 def _read_tools() -> list[dict]:
@@ -1338,8 +1806,8 @@ def _main(argv: list[str]) -> int:
             prompt = _read_prompt(args, required=True)
             prior = os.environ.get(args.prior_env, "") if args.prior_env else ""
             snap = load_snapshot(args.repo, args.base, args.head, args.from_sha)
-            chat = Chat(args.model)
-            result = run_review(snap, prompt, prior, chat, args.max_turns)
+            with FallbackChat(_stages(args.model)) as chat:
+                result = run_review(snap, prompt, prior, chat, args.max_turns)
             _write_execution(args.execution_file, "success", result.summary, args.max_turns)
             if args.eval:
                 if result.findings:
@@ -1362,8 +1830,8 @@ def _main(argv: list[str]) -> int:
     try:
         prompt = _read_prompt(args, required=False)
         snap = load_snapshot(args.repo, args.base, args.head, args.from_sha)
-        chat = Chat(args.model)
-        decision = run_risk(snap, prompt, chat, args.max_turns)
+        with FallbackChat(_stages(args.model)) as chat:
+            decision = run_risk(snap, prompt, chat, args.max_turns)
     except Exception as exc:
         message = sanitize(str(exc), 300) or "the vote failed"
         decision = Decision("manual", f"the vote failed: {message}")
@@ -1376,5 +1844,10 @@ def _main(argv: list[str]) -> int:
     return 0
 
 
+def _terminate(signum: int, frame: object) -> None:
+    raise SystemExit(128 + signum)
+
+
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, _terminate)
     sys.exit(_main(sys.argv[1:]))

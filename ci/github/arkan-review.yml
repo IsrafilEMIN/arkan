@@ -50,6 +50,9 @@ jobs:
     if: github.event_name != 'issue_comment' || (github.event.issue.pull_request && github.event.issue.state == 'open' && contains(github.event.comment.body, 'arkan:'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      CODEX_ENABLED: ${{ secrets.CODEX_AUTH_JSON != '' }}
+      CLAUDE_ENABLED: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
     steps:
       - name: Find the pr
         id: pr
@@ -215,12 +218,29 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "round $round: $action, git diff $diff"
 
+      - name: Install the subscription fallback clients
+        if: steps.scope.outputs.skip != 'true' && steps.round.outputs.action == 'review' && (env.CODEX_ENABLED == 'true' || env.CLAUDE_ENABLED == 'true')
+        run: |
+          install() {
+            prefix="$RUNNER_TEMP/arkan-native/$1"
+            if npm install --prefix "$prefix" --no-save --no-audit --no-fund "$2"; then
+              echo "$prefix/node_modules/.bin" >> "$GITHUB_PATH"
+            else
+              echo "::warning title=arkan-review::could not install $2, so the $1 fallback is unavailable"
+            fi
+          }
+          cd "$RUNNER_TEMP"
+          if [ "$CODEX_ENABLED" = true ]; then install codex "@openai/codex@0.162.1"; fi
+          if [ "$CLAUDE_ENABLED" = true ]; then install claude "@anthropic-ai/claude-code@2.1.304"; fi
+
       - name: Review with arkan skills
         id: review
         if: steps.scope.outputs.skip != 'true' && steps.round.outputs.action == 'review'
         continue-on-error: true
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BASE_SHA: ${{ steps.pr.outputs.base_sha }}
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           FROM_SHA: ${{ steps.round.outputs.from }}

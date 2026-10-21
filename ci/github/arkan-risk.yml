@@ -35,6 +35,8 @@ jobs:
       RISK_VOTE: "on"
       RISK_MODEL: deepseek-v4.1-flash
       RISK_MAX_TURNS: "8"
+      CODEX_ENABLED: ${{ secrets.CODEX_AUTH_JSON != '' }}
+      CLAUDE_ENABLED: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
     steps:
       - name: Check out the base branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -79,24 +81,58 @@ jobs:
             { echo "label=$label"; echo "reason=$reason"; } >>"$GITHUB_OUTPUT"
           fi
 
+      - name: Read the trusted runner
+        id: runner
+        if: steps.rules.outputs.vote == 'yes'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          runner="$RUNNER_TEMP/opencode_agent.py"
+          rm -f "$runner"
+          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "reason=the base commit is not in this checkout" >>"$GITHUB_OUTPUT"
+          elif ! git show "$BASE_SHA:ci/opencode_agent.py" >"$runner" 2>/dev/null || [ ! -s "$runner" ]; then
+            echo "reason=the base branch has no trusted runner ci/opencode_agent.py" >>"$GITHUB_OUTPUT"
+          elif ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+            echo "reason=the head commit is not in this checkout, so the vote cannot read it" >>"$GITHUB_OUTPUT"
+          else
+            echo "ready=yes" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Install the subscription fallback clients
+        if: steps.runner.outputs.ready == 'yes' && (env.CODEX_ENABLED == 'true' || env.CLAUDE_ENABLED == 'true')
+        run: |
+          install() {
+            prefix="$RUNNER_TEMP/arkan-native/$1"
+            if npm install --prefix "$prefix" --no-save --no-audit --no-fund "$2"; then
+              echo "$prefix/node_modules/.bin" >>"$GITHUB_PATH"
+            else
+              echo "::warning title=arkan-risk::could not install $2, so the $1 fallback is unavailable"
+            fi
+          }
+          cd "$RUNNER_TEMP"
+          if [ "$CODEX_ENABLED" = true ]; then install codex "@openai/codex@0.162.1"; fi
+          if [ "$CLAUDE_ENABLED" = true ]; then install claude "@anthropic-ai/claude-code@2.1.304"; fi
+
       - name: Vote
         id: vote
         if: steps.rules.outputs.vote == 'yes'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUNNER_READY: ${{ steps.runner.outputs.ready }}
+          RUNNER_REASON: ${{ steps.runner.outputs.reason }}
         run: |
           out="$RUNNER_TEMP/arkan-vote.out"
           runner="$RUNNER_TEMP/opencode_agent.py"
           rm -f "$out"
           manual() { printf 'label=manual\nreason=%s\n' "$1" >"$out"; }
-          if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
-            manual "the base commit is not in this checkout"
-          elif ! git show "$BASE_SHA:ci/opencode_agent.py" >"$runner" 2>/dev/null || [ ! -s "$runner" ]; then
-            manual "the base branch has no trusted runner ci/opencode_agent.py"
-          elif ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
-            manual "the head commit is not in this checkout, so the vote cannot read it"
+          if [ "$RUNNER_READY" != yes ]; then
+            manual "${RUNNER_REASON:-the trusted runner check did not finish}"
           elif ! python3 -E -s -B "$runner" risk \
             --repo "$GITHUB_WORKSPACE" \
             --base "$BASE_SHA" \
