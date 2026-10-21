@@ -70,7 +70,15 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 
 A `hint` on `ci-check` means the repo already runs its own ci: keep it, and copy `check.yml` only if the person wants arkan's `check` job beside it.
 
-Offer `ci-review` only when the person has added the `OPENCODE_API_KEY` secret and arkan's skills in `skills/` or `.claude/skills/` on the default branch. Without them `arkan-review` fails on every pull request, and the gate refuses every merge. Otherwise skip it and say why.
+Offer `ci-review` only when the person has added at least one model credential (usually the `OPENCODE_API_KEY` secret) and arkan's skills in `skills/` or `.claude/skills/` on the default branch. Without them `arkan-review` fails on every pull request, and the gate refuses every merge. Otherwise skip it and say why.
+
+`ci-review` and `ci-risk` use one fixed model chain: opencode go, then codex on a chatgpt subscription, then claude code on a claude subscription. the job moves down the chain only when a provider is unavailable, and stays there. ask for each secret separately, before you set it:
+
+- `OPENCODE_API_KEY`: the usual primary, from the opencode console.
+- `CODEX_AUTH_JSON`, optional: the `auth.json` of a dedicated `codex login` with chatgpt in its own `CODEX_HOME`, never the person's own `~/.codex/auth.json`, because a refresh in ci may sign out the login it came from. the runner never saves a refreshed login back into the secret, so the secret may stop signing in over time; then repeat the dedicated login and replace the secret. `ci/README.md` gives the commands.
+- `CLAUDE_CODE_OAUTH_TOKEN`, optional: the token `claude setup-token` prints.
+
+a self-hosted runner with an existing subscription login (codex with chatgpt, or claude code with claude.ai) needs no fallback secret. a claude code console or api login does not count. never ask for an api billing key for the fallbacks, and never write a credential into a file in the repo. the details are in `ci/README.md` under credentials.
 
 Offer `ci-post-merge` only when the person has added the `CLAUDE_CODE_OAUTH_TOKEN` secret (or `ANTHROPIC_API_KEY`) and arkan's skills in `.claude/skills/` on the default branch. It runs the `post-merge` skill when main's `check` fails or a revert lands, and once a day for slow signals. A repo that still has an older `arkan-post-merge-daily.yml` removes it after a yes, because the daily trigger is in the one file now. A repo whose own ci workflow has another name edits the copy's `workflows:` line before the push. The file takes `CHECK_COMMAND`, `MAIN`, and an optional `SIGNAL_COMMAND`. A github tracker needs no extra setting: the run creates the ticket as an issue, and a local tracker gets it committed on the branch. The run never merges the pull request it opens; the repo's merge path still lands it.
 
