@@ -22,13 +22,14 @@ runs the arkan-review reviewer on each case's bad.diff and prints
 
   --cases DIR         case folders (default: docs/agents/review-evals)
   --workflow FILE     the arkan-review workflow that holds the prompt, the
-                      model and the allowed tools (default:
+                      model and the turn limit (default:
                       ci/github/arkan-review.yml, else
                       .github/workflows/arkan-review.yml)
   --prompt FILE       reviewer prompt, replacing the workflow's prompt
   --reviewer CMD      reviewer command, reading the prompt on stdin
-                      (default: REVIEW_CMD, else `claude -p` with the
-                      workflow's model and allowed tools)
+                      (default: REVIEW_CMD, else this repo's
+                      ci/opencode_agent.py with the workflow's model and
+                      turn limit)
   --baseline FILE     caught-case baseline (default: <cases>/baseline.txt)
   --compare           exit 1 when a case in the baseline is now missed
   --update-baseline   add the caught cases to the baseline, never drop one
@@ -71,7 +72,7 @@ fi
 workflow_prompt() {
 	awk '
 		!started {
-			if ($0 ~ /^[[:space:]]*prompt:[[:space:]]*\|[[:space:]]*$/) started = 1
+			if ($0 ~ /^[[:space:]]*(prompt|REVIEW_PROMPT):[[:space:]]*\|[[:space:]]*$/) started = 1
 			next
 		}
 		!content {
@@ -92,20 +93,15 @@ workflow_model() {
 	sed -n 's/^[[:space:]]*REVIEW_MODEL:[[:space:]]*//p' "$1" | head -n1 | sed 's/[[:space:]]*$//'
 }
 
-workflow_tools() {
-	sed -n 's/^[[:space:]]*--allowedTools[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$1" | head -n1
-}
-
 workflow_turns() {
 	sed -n 's/^[[:space:]]*MAX_TURNS:[[:space:]]*//p' "$1" | head -n1 | sed 's/[[:space:]]*$//' | tr -d '"'
 }
 
+runner=ci/opencode_agent.py
 prompt_text=$(workflow_prompt "$workflow")
 [ -n "$prompt_text" ] || die "$workflow has no prompt block"
 model=$(workflow_model "$workflow")
 [ -n "$model" ] || die "$workflow has no REVIEW_MODEL"
-tools=$(workflow_tools "$workflow")
-[ -n "$tools" ] || die "$workflow has no --allowedTools line"
 turns=$(workflow_turns "$workflow")
 [ -n "$turns" ] || die "$workflow has no MAX_TURNS"
 
@@ -194,10 +190,13 @@ done < <(baseline_names)
 fill_prompt() {
 	printf '%s' "$prompt_text" | sed \
 		-e 's|${{ github.event.pull_request.number }}|'"$case_pr"'|g' \
-		-e 's|${{ github.repository }}|'"$repo_slug"'|g' \
-		-e 's|${{ steps.round.outputs.round }}|1|g' \
 		-e 's|${{ github.event.pull_request.head.sha }}|'"$run_head"'|g' \
 		-e 's|${{ github.event.pull_request.base.sha }}|'"$run_base"'|g' \
+		-e 's|${{ steps.pr.outputs.number }}|'"$case_pr"'|g' \
+		-e 's|${{ steps.pr.outputs.head_sha }}|'"$run_head"'|g' \
+		-e 's|${{ steps.pr.outputs.base_sha }}|'"$run_base"'|g' \
+		-e 's|${{ github.repository }}|'"$repo_slug"'|g' \
+		-e 's|${{ steps.round.outputs.round }}|1|g' \
 		-e 's|${{ steps.round.outputs.diff }}|'"$run_diff"'|g' \
 		-e 's|${{ steps.round.outputs.scope }}|the full pr diff|g' \
 		-e 's|${{ steps.round.outputs.prior }}|none (this is round 1)|g' \
@@ -213,15 +212,19 @@ left=$(fill_prompt | grep -oE '\$\{\{[^}]*\}\}' | head -n1 || true)
 unset left
 
 if [ "$check" = 1 ]; then
+	[ -f "$runner" ] || die "no runner: $runner"
+	python3 -c 'import ast, sys; ast.parse(open(sys.argv[1], "rb").read())' "$runner" || die "$runner does not parse"
 	printf 'review-eval: ok (%s case(s))\n' "$n_cases"
 	exit 0
 fi
 
+repo_root=$(pwd -P)
 if [ -n "$reviewer" ]; then
 	read -r -a reviewer_cmd <<<"$reviewer"
 else
-	command -v claude >/dev/null || die "claude is not on PATH; set REVIEW_CMD to a headless reviewer"
-	reviewer_cmd=(claude -p --model "$model" --allowedTools "$tools" --max-turns "$turns")
+	command -v python3 >/dev/null || die "python3 is not on PATH; set REVIEW_CMD to a headless reviewer"
+	[ -f "$runner" ] || die "no runner: $runner"
+	reviewer_cmd=(python3 -E -s -B "$repo_root/$runner" review --eval)
 fi
 
 tmp=$(mktemp -d)
@@ -293,8 +296,18 @@ make_work() {
 run_once() {
 	local zero=$1
 	fill_prompt >"$tmp/prompt"
-	printf '\nFor this eval, return text instead of the structured output: write each finding on one line as `<file>:<line>: <one sentence>`, where `<file>` is the path in the diff and `<line>` is a line number in the new version of the file. Write `none` when you find nothing.\n' >>"$tmp/prompt"
-	( cd "$zero" && "${reviewer_cmd[@]}" ) <"$tmp/prompt" >"$tmp/out" 2>"$tmp/err"
+	if [ -n "$reviewer" ]; then
+		printf '\nFor this eval, return text instead of the structured output: write each finding on one line as `<file>:<line>: <one sentence>`, where `<file>` is the path in the diff and `<line>` is a line number in the new version of the file. Write `none` when you find nothing.\n' >>"$tmp/prompt"
+		( cd "$zero" && "${reviewer_cmd[@]}" ) <"$tmp/prompt" >"$tmp/out" 2>"$tmp/err"
+	else
+		( cd "$zero" && "${reviewer_cmd[@]}" \
+			--repo . \
+			--base "$run_base" \
+			--head "$run_head" \
+			--from "$run_from" \
+			--model "$model" \
+			--max-turns "$turns" ) <"$tmp/prompt" >"$tmp/out" 2>"$tmp/err"
+	fi
 }
 
 for dir in "$cases"/*/; do

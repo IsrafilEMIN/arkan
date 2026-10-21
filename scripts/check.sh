@@ -12,6 +12,7 @@ scripts/check-seam.sh || fail=1
 
 ci/review-eval.sh --check || fail=1
 
+python3 -B -m unittest discover -s tests -p 'test_opencode_agent.py' || fail=1
 scripts/check-name-scan.sh || fail=1
 
 # every shell script parses.

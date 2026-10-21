@@ -12,6 +12,8 @@ refs="$skill/references"
 # the arkan checkout or plugin copy this skill came from, for the ci files.
 arkan="$(cd "$skill/../.." && pwd -P)"
 ci="$arkan/ci/github"
+runner_src="$arkan/ci/opencode_agent.py"
+runner_dst="ci/opencode_agent.py"
 home_skills="${HOME:-}/.agents/skills"
 tab="$(printf '\t')"
 
@@ -692,6 +694,18 @@ check_ci() {
 	fi
 }
 
+check_runner() {
+	if [ ! -f "$runner_src" ]; then
+		say ci-runner skip "arkan's $runner_dst not found next to this skill"
+	elif ! has "$runner_dst"; then
+		say ci-runner missing "$runner_dst"
+	elif [ "$(file_hash "$root/$runner_dst")" = "$(file_hash "$runner_src")" ]; then
+		say ci-runner ok "$runner_dst"
+	else
+		say ci-runner out-of-date "$runner_dst differs from $runner_src; run setup.sh apply ci-runner"
+	fi
+}
+
 check_merge() {
 	local dst=".github/workflows/arkan-merge.yml" mode
 	mode="$(merge_path)"
@@ -819,6 +833,11 @@ check() {
 			check_ci "${pair%%:*}" "${pair#*:}"
 		fi
 	done
+	if has .github/workflows/arkan-review.yml || has .github/workflows/arkan-risk.yml; then
+		check_runner
+	else
+		say ci-runner skip "no arkan-review or arkan-risk workflow"
+	fi
 	check_file codeowners .github/CODEOWNERS
 	if ls -d "$root"/.claude/skills/*verif* "$root"/.agents/skills/*verif* >/dev/null 2>&1; then
 		say verify ok
@@ -874,6 +893,12 @@ seed() { # repo file, reference file: copy only when the repo file is missing
 	cp "$refs/$2" "$root/$1"
 }
 
+install_runner() {
+	[ -f "$runner_src" ] || { printf 'setup: %s not found\n' "$runner_src" >&2; exit 1; }
+	mkdir -p "$root/$(dirname "$runner_dst")"
+	cp "$runner_src" "$root/$runner_dst"
+}
+
 apply() {
 	case "$item" in
 		git) in_git || git -C "$root" init -q ;;
@@ -917,14 +942,16 @@ apply() {
 			fi
 			for pair in $ci_items; do [ "${pair%%:*}" = "$item" ] && src="${pair#*:}"; done
 			[ -f "$ci/$src" ] || { printf 'setup: %s not found\n' "$ci/$src" >&2; exit 1; }
+			case "$item" in ci-review | ci-risk) install_runner ;; esac
 			mkdir -p "$root/.github/workflows"
 			local want
 			want="$(file_hash "$ci/$src")" || exit 1
 			cp "$ci/$src" "$root/.github/workflows/$src"
 			printf '# arkan-copy: %s\n' "$want" >>"$root/.github/workflows/$src"
 			;;
+		ci-runner) install_runner ;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, claude-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-post-merge, ci-merge\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, claude-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-runner, ci-post-merge, ci-merge\n' "$item" >&2
 			exit 2
 			;;
 	esac
