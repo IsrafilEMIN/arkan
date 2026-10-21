@@ -239,6 +239,9 @@ jobs:
         continue-on-error: true
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          STRATA_BASE_URL: ${{ vars.STRATA_BASE_URL }}
+          STRATA_API_KEY: ${{ secrets.STRATA_API_KEY }}
+          STRATA_MODEL: ${{ vars.STRATA_MODEL }}
           CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BASE_SHA: ${{ steps.pr.outputs.base_sha }}

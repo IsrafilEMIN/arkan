@@ -1,4 +1,5 @@
 import http.client
+import http.server
 import importlib.util
 import io
 import json
@@ -7,9 +8,11 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 import urllib.error
 from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager
 from pathlib import Path
 from unittest import mock
 
@@ -331,6 +334,212 @@ class PrimaryAvailabilityTest(unittest.TestCase):
         self.assertEqual(self.outcome(http_error(400)), (agent.ProviderError, 1))
         self.assertEqual(self.outcome(http_error(403)), (agent.ProviderError, 1))
 
+
+
+@contextmanager
+def strata_server(reply):
+    requests = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            requests.append((self.path, dict(self.headers), body))
+            status, content_type, payload, headers = reply(body)
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            for name, value in headers.items():
+                self.send_header(name, value)
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def log_message(self, format, *args):
+            pass
+
+    with http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler) as server:
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            yield f"http://127.0.0.1:{server.server_port}/v1", requests
+        finally:
+            server.shutdown()
+            thread.join()
+
+
+def strata_json(body):
+    force = body.get("tool_choice")
+    name = force["function"]["name"] if isinstance(force, dict) else body["tools"][-1]["function"]["name"]
+    message = {"content": "", "tool_calls": [terminal_call(name, AUTO[name])]}
+    return 200, "application/json", json.dumps({"choices": [{"message": message}]}).encode(), {}
+
+
+class StrataTransportTest(unittest.TestCase):
+    def config(self, base, **extra):
+        return mock.patch.dict(os.environ, {"STRATA_BASE_URL": base, "STRATA_API_KEY": "strata-secret", **extra}, clear=True)
+
+    def test_full_turn_and_forced_tool_reach_configured_endpoint_without_go_header(self):
+        messages = [
+            {"role": "system", "content": "rules"},
+            {"role": "user", "content": "vote"},
+            {"role": "assistant", "tool_calls": [terminal_call("read_diff", {"scope": "pr"})]},
+            {"role": "tool", "tool_call_id": "call-1", "content": "the full diff"},
+        ]
+        tools = [{"type": "function", "function": {"name": "submit_vote", "parameters": {"type": "object"}}}]
+        with strata_server(strata_json) as (base, requests), self.config(base, STRATA_MODEL="custom-model"):
+            result = agent.StrataChat().next("go-private-session", messages, tools, "submit_vote")
+        self.assertEqual(result["tool_calls"], [terminal_call("submit_vote", AUTO["submit_vote"])])
+        path, headers, body = requests[0]
+        self.assertEqual(path, "/v1/chat/completions")
+        self.assertEqual(headers["Authorization"], "Bearer strata-secret")
+        self.assertNotIn("x-opencode-session", {name.lower() for name in headers})
+        self.assertEqual(body["model"], "custom-model")
+        self.assertEqual(body["messages"], messages)
+        self.assertEqual(body["tools"], tools)
+        self.assertEqual(body["tool_choice"], {"type": "function", "function": {"name": "submit_vote"}})
+        self.assertEqual(body["stream"], True)
+
+    def test_streamed_tool_call_and_default_model(self):
+        payload = (
+            b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call-1","function":{"name":"submit_vote","arguments":"{\\"label\\":\\"manual\\","}}]}}]}\n'
+            b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"reason\\":\\"risky\\"}"}}]},"finish_reason":"tool_calls"}]}\n'
+            b'data: [DONE]\n'
+        )
+        with strata_server(lambda body: (200, "text/event-stream", payload, {})) as (base, requests), self.config(base, STRATA_MODEL=""):
+            result = agent.StrataChat().next("session", [], agent.READ_TOOLS)
+        self.assertEqual(len(result["tool_calls"]), 1)
+        call = result["tool_calls"][0]
+        self.assertEqual((call["id"], call["type"], call["function"]["name"]), ("call-1", "function", "submit_vote"))
+        self.assertEqual(json.loads(call["function"]["arguments"]), {"label": "manual", "reason": "risky"})
+        self.assertEqual(requests[0][2]["model"], "qwen3.8-flash-next-ud-q4_k_xl")
+        self.assertEqual(requests[0][2]["tool_choice"], "auto")
+
+    def test_http_availability_retries_and_fatal_errors(self):
+        for status, error, count in (
+            (401, agent.AvailabilityError, 1),
+            (402, agent.AvailabilityError, 1),
+            (408, agent.AvailabilityError, 2),
+            (429, agent.AvailabilityError, 2),
+            (503, agent.AvailabilityError, 2),
+            (400, agent.ProviderError, 1),
+            (403, agent.ProviderError, 1),
+        ):
+            with self.subTest(status=status), strata_server(
+                lambda body: (status, "application/json", b"strata-secret", {})
+            ) as (base, requests), self.config(base):
+                with self.assertRaises(error) as caught:
+                    agent.StrataChat().next("session", [], [])
+                self.assertNotIn("strata-secret", str(caught.exception))
+                self.assertEqual(len(requests), count)
+
+    def test_redirect_does_not_send_credentials_to_another_endpoint(self):
+        with strata_server(strata_json) as (other, leaked), strata_server(
+            lambda body: (307, "application/json", b"{}", {"Location": other + "/chat/completions"})
+        ) as (base, requests), self.config(base):
+            with self.assertRaises(agent.ProviderError):
+                agent.StrataChat().next("session", [], [])
+        self.assertEqual(len(requests), 1)
+        self.assertEqual(leaked, [])
+
+    def test_missing_config_is_unavailable_but_malformed_config_is_fatal(self):
+        for config in ({}, {"STRATA_API_KEY": "key"}, {"STRATA_BASE_URL": "https://example.com/v1"}):
+            with self.subTest(config=config), mock.patch.dict(os.environ, config, clear=True):
+                with self.assertRaises(agent.AvailabilityError):
+                    agent.StrataChat()
+        for base in (
+            "http://example.com/v1", "https://user:password@example.com/v1",
+            "https://example.com/v1?key=secret", "https://example.com/v1#fragment",
+            "https://example.com:bad/v1", " https://example.com/v1", "file:///tmp/v1",
+        ):
+            with self.subTest(base=base), self.config(base):
+                with self.assertRaises(agent.RunnerError):
+                    agent.StrataChat()
+        for extra in ({"STRATA_API_KEY": " bad"}, {"STRATA_API_KEY": "bad\nkey"}, {"STRATA_MODEL": " "}):
+            with self.subTest(extra=extra), self.config("https://example.com/v1", **extra):
+                with self.assertRaises(agent.RunnerError):
+                    agent.StrataChat()
+
+
+class StrataFallbackTest(RepoCase):
+    def test_go_unavailable_replays_turn_to_strata_and_stays_for_all_voters(self):
+        with strata_server(strata_json) as (base, requests), mock.patch.dict(
+            os.environ, {"STRATA_BASE_URL": base, "STRATA_API_KEY": "key"}, clear=True
+        ), redirect_stderr(io.StringIO()), agent.FallbackChat(agent._stages("go-model")) as chat:
+            decision = agent.run_risk(self.snap, "", chat)
+        self.assertEqual(decision.label, "auto")
+        self.assertEqual(len(requests), 4)
+        self.assertEqual([item[2]["tools"][-1]["function"]["name"] for item in requests],
+                         ["submit_vote", "submit_vote", "submit_vote", "submit_second"])
+
+    def test_strata_outage_reaches_codex_then_claude(self):
+        with strata_server(lambda body: (503, "application/json", b"{}", {})) as (base, requests), mock.patch.dict(
+            os.environ, {"STRATA_BASE_URL": base, "STRATA_API_KEY": "key"}, clear=True
+        ), mock.patch.object(agent, "CodexChat", side_effect=agent.AvailabilityError("no login")), mock.patch.object(
+            agent, "ClaudeChat", return_value=StubStage(AUTO)
+        ), redirect_stderr(io.StringIO()), agent.FallbackChat(agent._stages("go-model")) as chat:
+            decision = agent.run_risk(self.snap, "", chat)
+        self.assertEqual(decision.label, "auto")
+        self.assertEqual(len(requests), 2)
+
+    def test_strata_fatal_and_malformed_responses_do_not_reach_native_clients(self):
+        for response, error in (
+            ((403, "application/json", b"{}", {}), agent.ProviderError),
+            ((200, "application/json", b'{"choices":[]}', {}), agent.ProviderError),
+        ):
+            with self.subTest(response=response), strata_server(lambda body: response) as (base, requests), mock.patch.dict(
+                os.environ, {"STRATA_BASE_URL": base, "STRATA_API_KEY": "key"}, clear=True
+            ), mock.patch.object(agent, "CodexChat", side_effect=AssertionError("fatal response fell through")), mock.patch.object(
+                agent, "ClaudeChat", side_effect=AssertionError("fatal response fell through")
+            ), redirect_stderr(io.StringIO()), agent.FallbackChat(agent._stages("go-model")) as chat:
+                with self.assertRaises(error):
+                    agent.run_review(self.snap, "review", "", chat)
+            self.assertEqual(len(requests), 1)
+
+    def test_same_full_turn_is_replayed_after_go_http_failure_then_strata_is_sticky(self):
+        primary = []
+
+        def unavailable(request, **kwargs):
+            primary.append(json.loads(request.data))
+            raise urllib.error.HTTPError(request.full_url, 401, "unauthorized", http.client.HTTPMessage(), io.BytesIO(b"{}"))
+
+        messages = [{"role": "system", "content": "rules"}, {"role": "user", "content": "complete history"}]
+        tools = [{"type": "function", "function": {"name": "submit_vote", "parameters": {"type": "object"}}}]
+        with strata_server(strata_json) as (base, requests), mock.patch.dict(
+            os.environ, {"OPENCODE_API_KEY": "go-key", "STRATA_BASE_URL": base, "STRATA_API_KEY": "key"}, clear=True
+        ), mock.patch.object(agent.urllib.request, "urlopen", side_effect=unavailable), redirect_stderr(io.StringIO()), agent.FallbackChat(
+            agent._stages("go-model")
+        ) as chat:
+            first = chat.next("session", messages, tools, "submit_vote")
+            second = chat.next("session-2", messages, tools, "submit_vote")
+        self.assertEqual(first, second)
+        self.assertEqual(len(primary), 1)
+        self.assertEqual(len(requests), 2)
+        for field in ("messages", "tools", "tool_choice"):
+            self.assertEqual(requests[0][2][field], primary[0][field])
+        self.assertEqual(primary[0]["model"], "go-model")
+        self.assertEqual(requests[0][2]["model"], "qwen3.8-flash-next-ud-q4_k_xl")
+
+    def test_all_unavailable_fails_risk_closed_and_review_red(self):
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
+            agent, "CodexChat", side_effect=agent.AvailabilityError("no login")
+        ), mock.patch.object(agent, "ClaudeChat", side_effect=agent.AvailabilityError("no login")), redirect_stderr(io.StringIO()):
+            with agent.FallbackChat(agent._stages("go-model")) as chat:
+                self.assertEqual(agent.run_risk(self.snap, "", chat).label, "manual")
+            with agent.FallbackChat(agent._stages("go-model")) as chat:
+                with self.assertRaises(agent.ChainExhaustedError):
+                    agent.run_review(self.snap, "review", "", chat)
+
+    def test_strata_manual_and_malformed_votes_never_seek_another_provider(self):
+        for arguments in ({"label": "manual", "reason": "risky"}, {"label": "unknown", "reason": "bad vote"}):
+            def reply(body):
+                message = {"content": "", "tool_calls": [terminal_call("submit_vote", arguments)]}
+                return 200, "application/json", json.dumps({"choices": [{"message": message}]}).encode(), {}
+
+            with self.subTest(arguments=arguments), strata_server(reply) as (base, requests), mock.patch.dict(
+                os.environ, {"STRATA_BASE_URL": base, "STRATA_API_KEY": "key"}, clear=True
+            ), mock.patch.object(agent, "CodexChat", side_effect=AssertionError("vote fell through")), mock.patch.object(
+                agent, "ClaudeChat", side_effect=AssertionError("vote fell through")
+            ), redirect_stderr(io.StringIO()), agent.FallbackChat(agent._stages("go-model")) as chat:
+                self.assertEqual(agent.run_risk(self.snap, "", chat).label, "manual")
+            self.assertEqual(len(requests), 3)
 
 CODEX_LOGIN = {"OPENAI_API_KEY": "sk-in-login", "auth_mode": "chatgpt", "tokens": {"access_token": "access", "refresh_token": "refresh"}}
 SECRETS = {

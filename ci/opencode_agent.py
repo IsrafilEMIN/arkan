@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import http.client
+import ipaddress
 import json
 import os
 import re
@@ -12,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -561,6 +563,8 @@ def _message_from_stream(response) -> dict:
 
 
 class Chat:
+    url = API_URL
+
     def __init__(self, model: str, api_key: str | None = None) -> None:
         self.model = model.strip()
         if not self.model:
@@ -571,6 +575,18 @@ class Chat:
         if key != key.strip() or "\n" in key or "\r" in key:
             raise RunnerError("OPENCODE_API_KEY is malformed")
         self.api_key = key
+
+    def _headers(self, session: str) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "Accept": "text/event-stream",
+            "User-Agent": USER_AGENT,
+            "x-opencode-session": session,
+        }
+
+    def _open(self, request):
+        return urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT)
 
     def next(self, session: str, messages: list[dict], tools: list[dict], force: str | None = None) -> dict:
         body = {
@@ -588,30 +604,24 @@ class Chat:
                 return self._request(body, session)
             except RetryableProviderError as exc:
                 if attempt == 1:
-                    raise AvailabilityError(str(exc)) from exc
+                    raise AvailabilityError(str(exc).replace(self.api_key, "[redacted]")) from exc
         raise RetryableProviderError("the provider request failed")
 
     def _request(self, body: dict, session: str) -> dict:
         request = urllib.request.Request(
-            API_URL,
+            self.url,
             data=json.dumps(body).encode("utf-8"),
             method="POST",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-                "Accept": "text/event-stream",
-                "User-Agent": USER_AGENT,
-                "x-opencode-session": session,
-            },
+            headers=self._headers(session),
         )
         try:
-            with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
+            with self._open(request) as response:
                 if response.headers.get_content_type() == "application/json":
                     return _message_from_json(response.read())
                 return _message_from_stream(response)
         except urllib.error.HTTPError as exc:
             try:
-                detail = sanitize(exc.read(400).decode("utf-8", "replace"), 200)
+                detail = sanitize(exc.read(400).decode("utf-8", "replace").replace(self.api_key, "[redacted]"), 200)
             except (OSError, http.client.HTTPException):
                 detail = ""
             finally:
@@ -623,6 +633,60 @@ class Chat:
             raise ProviderError(f"the provider returned HTTP {exc.code}: {detail}") from exc
         except (urllib.error.URLError, TimeoutError, OSError, http.client.IncompleteRead) as exc:
             raise RetryableProviderError("the provider request failed") from exc
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
+class StrataChat(Chat):
+    def __init__(self) -> None:
+        base = os.environ.get("STRATA_BASE_URL", "")
+        key = os.environ.get("STRATA_API_KEY", "")
+        if not base or not key:
+            raise AvailabilityError("STRATA_BASE_URL or STRATA_API_KEY is missing")
+        if key != key.strip() or any(ord(char) < 32 or ord(char) == 127 for char in key):
+            raise RunnerError("STRATA_API_KEY is malformed")
+        try:
+            parsed = urllib.parse.urlsplit(base)
+            host = parsed.hostname
+            port = parsed.port
+        except ValueError as exc:
+            raise RunnerError("STRATA_BASE_URL is malformed") from exc
+        local = host == "localhost"
+        if host:
+            try:
+                address = ipaddress.ip_address(host)
+                local = address.is_private or address.is_loopback or address in ipaddress.ip_network("100.64.0.0/10")
+            except ValueError:
+                pass
+        if (
+            base != base.strip()
+            or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in base)
+            or not host
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+            or "?" in base
+            or "#" in base
+            or parsed.scheme not in ("https", "http")
+            or (parsed.scheme == "http" and not local)
+            or port == 0
+        ):
+            raise RunnerError("STRATA_BASE_URL is malformed")
+        super().__init__(os.environ.get("STRATA_MODEL") or "qwen3.8-flash-next-ud-q4_k_xl", key)
+        self.url = base.rstrip("/") + "/chat/completions"
+        self._opener = urllib.request.build_opener(_NoRedirect())
+
+    def _headers(self, session: str) -> dict[str, str]:
+        headers = super()._headers(session)
+        del headers["x-opencode-session"]
+        return headers
+
+    def _open(self, request):
+        return self._opener.open(request, timeout=REQUEST_TIMEOUT)
 
 
 def _native_prompt(messages: list[dict], tools: list[dict], force: str | None) -> str:
@@ -990,7 +1054,12 @@ class FallbackChat:
 
 
 def _stages(model: str) -> tuple[tuple[str, Callable[[Path], Chat | NativeChat]], ...]:
-    return (("opencode-go", lambda root: Chat(model)), ("codex", CodexChat), ("claude", ClaudeChat))
+    return (
+        ("opencode-go", lambda root: Chat(model)),
+        ("strata", lambda root: StrataChat()),
+        ("codex", CodexChat),
+        ("claude", ClaudeChat),
+    )
 
 
 def _read_tools() -> list[dict]:
