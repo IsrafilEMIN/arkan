@@ -9,12 +9,13 @@
 
 - [x] a `submit_*` call without a required field gets a tool reply that names the field, and the conversation goes on
 - [x] a content-only JSON reply with the wrong shape gets the same message as a user turn
-- [x] when the turns run out, the last result is parsed as before, so a wrong shape still fails the review closed
-- [x] tests: two new tests fail on the old runner and pass on the new one; a third proves the review still fails when the model never fixes its result
+- [x] when the turns run out, the final no-tools request gets the same check with one more try that names the missing field. after that try, the result is parsed as before, so a wrong shape still fails the review closed
+- [x] tests: three new tests fail on the old runner and pass on the new one (a bad tool-call submit, a bad content-only reply, a bad reply after every turn went to reading); two more prove the review still fails when the model never fixes its result
 - [ ] `ci/review-eval.sh --compare` misses no case caught before (`REVIEW.md`, review evals). this needs a headless reviewer and a model key on the person's machine
-- [x] `bash scripts/check.sh` prints `check: ok` (43 tests)
+- [x] `bash scripts/check.sh` prints `check: ok` (45 tests)
 
 ## Comments
 
 - 2026-10-25, owner: reported the `malformed findings` failure on pr 79.
 - 2026-10-25, agent: `_shape_problem` reads the submit tool's own schema (`required` and array `type`) and returns the first problem. `_conversation` uses it on both submit paths. item-level checks stay in the parsers (`_draft`), so one bad finding item still fails the review, as before. [inference] the failure on prs 79–82 comes from the model, not from their diffs: #83 and #84 passed on the same runner. a rerun of the same head (github "re-run failed jobs") keeps the round, and is the way to unblock those prs before this lands; an empty commit would use up a round, and round 4 stops the review.
+- 2026-10-25, agent: the failed run's log says `turns 16`, which is the configured limit, not the turns used, so the log does not show which path failed. a model that spends every turn reading reaches the no-tools "out of tool turns" request, which returned its result without a check. that request now gets the same shape check and one more try. every submit path is now covered; which one failed on pr 79 is not known.

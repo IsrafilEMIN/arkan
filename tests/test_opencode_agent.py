@@ -204,6 +204,29 @@ class MalformedModelOutputTest(RepoCase):
         with self.assertRaises(agent.RunnerError):
             agent.run_review(self.snap, "review this", "", Chat("submit_findings", {"summary": "nothing"}))
 
+    def test_a_bad_shape_after_the_turns_run_out_gets_one_more_chance(self):
+        reading = {"content": "", "tool_calls": [terminal_call("read_diff", {"scope": "pr"})]}
+        chat = ScriptedChat(
+            [
+                reading,
+                reading,
+                {"content": '{"summary": "nothing"}', "tool_calls": []},
+                {"content": '{"findings": []}', "tool_calls": []},
+            ]
+        )
+        result = agent._conversation(chat, self.snap, "s", "system", "user", FINDINGS_TOOLS, "submit_findings", 2)
+        self.assertEqual(result, {"findings": []})
+        self.assertIn("submit_findings needs the field findings", chat.seen[3][-1]["content"])
+
+    def test_a_bad_shape_after_the_retry_still_fails_the_review(self):
+        reading = {"content": "", "tool_calls": [terminal_call("read_diff", {"scope": "pr"})]}
+        summary = {"content": '{"summary": "nothing"}', "tool_calls": []}
+        chat = ScriptedChat([reading, reading, summary, summary])
+        result = agent._conversation(chat, self.snap, "s", "system", "user", FINDINGS_TOOLS, "submit_findings", 2)
+        self.assertEqual(result, {"summary": "nothing"})
+        with self.assertRaises(agent.RunnerError):
+            agent._parse_findings(result)
+
 
 class ScriptedChat(agent.Chat):
     def __init__(self, replies):

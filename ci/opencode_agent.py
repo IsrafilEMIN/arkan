@@ -1169,18 +1169,27 @@ def _conversation(
         if submitted is not None:
             return submitted
     messages.append({"role": "user", "content": f"You are out of tool turns. Return only the JSON object that {terminal} takes, and nothing else."})
-    try:
-        message = chat.next(session, messages, [])
-    except ProviderError as exc:
-        raise RunnerError("the model did not submit a result") from exc
-    for call in message["tool_calls"]:
-        _, name, arguments = _call_parts(call)
-        if name == terminal and arguments is not None:
-            return arguments
-    last_content = message["content"] or last_content
-    submitted = _json_content(message["content"])
-    if submitted is not None:
-        return submitted
+    for attempt in range(2):
+        try:
+            message = chat.next(session, messages, [])
+        except ProviderError as exc:
+            raise RunnerError("the model did not submit a result") from exc
+        candidate = None
+        for call in message["tool_calls"]:
+            _, name, arguments = _call_parts(call)
+            if name == terminal and arguments is not None:
+                candidate = arguments
+                break
+        if candidate is None:
+            last_content = message["content"] or last_content
+            candidate = _json_content(message["content"])
+        if candidate is None:
+            break
+        problem = _shape_problem(tools, terminal, candidate)
+        if not problem or attempt == 1:
+            return candidate
+        messages.append({"role": "assistant", "content": json.dumps(candidate)})
+        messages.append({"role": "user", "content": f"{problem}. Return only the JSON object that {terminal} takes, with every required field, and nothing else."})
     raise RunnerError(f"the model did not submit a result: {sanitize(last_content, 200)}")
 
 
