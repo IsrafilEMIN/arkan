@@ -7,7 +7,7 @@
 name: arkan-review
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
   # a comment applies a person's `arkan: <id> <state>` lines to the marker, with
   # no model call. an inline reply (pull_request_review_comment) runs this file
@@ -21,7 +21,7 @@ on:
 # comment run waits for the run in progress.
 concurrency:
   group: arkan-review-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -66,7 +66,7 @@ jobs:
           EV_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
           # a push run uses its event's head; a comment run reads the pr's head now.
-          if [ "$EVENT" = pull_request_target ]; then
+          if [ "$EVENT" = pull_request ]; then
             printf 'number=%s\nhead_sha=%s\nbase_sha=%s\nhead_repo=%s\n' "$N" "$EV_HEAD_SHA" "$EV_BASE_SHA" "$EV_HEAD_REPO" >> "$GITHUB_OUTPUT"
           else
             gh api "repos/$REPO/pulls/$N" --jq '"number=\(.number)\nhead_sha=\(.head.sha)\nbase_sha=\(.base.sha)\nhead_repo=\(.head.repo.full_name // "")"' >> "$GITHUB_OUTPUT"
@@ -205,7 +205,7 @@ jobs:
           fi
           # a comment never reviews or starts a round: it applies the commands and
           # decides the check from the marker.
-          if [ "$EVENT" != pull_request_target ]; then action=apply round=${m_round:-0}; fi
+          if [ "$EVENT" != pull_request ]; then action=apply round=${m_round:-0}; fi
           # round 1 reviews the full pr diff; a later round only the commits since
           # the last reviewed one, or the full diff again if that is not an ancestor.
           if [ -n "$m_reviewed" ] && git merge-base --is-ancestor "$m_reviewed" "$HEAD_SHA" 2>/dev/null; then
