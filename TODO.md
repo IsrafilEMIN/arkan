@@ -49,9 +49,6 @@
 - [ ] 57: Freeze blocks reads, misses patches and follows no file symlink #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/57-freeze-adapter-bugs.md` · blocked by: none
 
-- [ ] 58: Link-agents.sh --check writes, and setup.sh misses a verify skill #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/58-two-script-bugs.md` · blocked by: none
-
 - [ ] 59: Arkan-review and arkan-risk run the base branch's workflow #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/59-review-and-risk-run-the-base-workflow.md` · blocked by: none
 
@@ -188,3 +185,6 @@
 
 - [x] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
+
+- [x] 58: Link-agents.sh --check writes, and setup.sh misses a verify skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/58-two-script-bugs.md` · blocked by: none

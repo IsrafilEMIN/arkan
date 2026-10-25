@@ -839,7 +839,11 @@ check() {
 		say ci-runner skip "no arkan-review or arkan-risk workflow"
 	fi
 	check_file codeowners .github/CODEOWNERS
-	if ls -d "$root"/.claude/skills/*verif* "$root"/.agents/skills/*verif* >/dev/null 2>&1; then
+	local verify_skill verify_found=0
+	for verify_skill in "$root"/.claude/skills/*verif* "$root"/.agents/skills/*verif*; do
+		if [ -e "$verify_skill" ]; then verify_found=1; fi
+	done
+	if [ "$verify_found" = 1 ]; then
 		say verify ok
 	else
 		say verify hint "no verify skill: run create-verification"

@@ -79,7 +79,7 @@ done
 # claude_builtin: skills claude code ships itself; ~/.agents holds them for the other agents only.
 claude_builtin=" simplify code-review security-review "
 mirror="$home/.claude/skills"
-mkdir -p "$mirror"
+if [ "$check" = 0 ]; then mkdir -p "$mirror"; fi
 for skill in "$canon"/skills/*/; do
 	name="$(basename "$skill")"
 	case "$claude_builtin" in *" $name "*) continue ;; esac
@@ -93,7 +93,7 @@ for skill in "$canon"/skills/*/; do
 done
 
 # a skill removed from ~/.agents leaves a dangling link behind
-for path in "$mirror"/*; do
+[ -d "$mirror" ] && for path in "$mirror"/*; do
 	if [ -L "$path" ] && [ ! -e "$path" ] && case "$(readlink "$path")" in *.agents/*) true ;; *) false ;; esac; then
 		printf 'DANGLING %s (its skill is gone from %s/skills)\n' "$path" "$canon"
 		problems=1
