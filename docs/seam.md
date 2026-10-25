@@ -9,7 +9,7 @@ arkan and underground share one machine and one agent workflow. underground boun
 | 3 | hook wiring (`~/.agents/hooks.json`, the shell-hooks extension, `~/.agents/git-hooks/`) | underground | nothing; the `freeze` skill's own adapters are private to it |
 | 4 | policy file (`~/.omp/policy.yml`) | underground | nothing |
 | 5 | tracker contract (`docs/agents/issue-tracker.md`) | arkan | `pre-setup`'s seeds and `board.sh build\|check\|fields`; with a local tracker the field and board checks run locally through `pre-setup`, because a consumer repo's ci does not fetch arkan (arkan's own ci runs its `scripts/board.sh` copy) |
-| 6 | merge rule: the `PASS` verdict, the agent mark `<!-- arkan:verifier -->`, the risk marker `<!-- arkan:risk head=<sha> label=<auto\|manual> -->`, and the rule | arkan | `ci/github/arkan-risk.yml` writes the marker; the broker's `pr-merge` applies the rule (its merge loop, where deployed, uses the same code); `ci/github/arkan-merge.yml` is the gate a consumer repo can install; `docs/agents/approvals.md` (from `pre-setup`) states the rule and records the repo's merge path (`**Merge path:** broker` for arkan) |
+| 6 | merge rule: the `PASS` verdict, the agent mark `<!-- arkan:verifier -->`, the risk marker `<!-- arkan:risk head=<sha> label=<auto\|manual> -->`, and the rule | arkan | `.github/workflows/arkan-risk.yml` writes the marker; the broker's `pr-merge` applies the rule (its merge loop, where deployed, uses the same code); `ci/github/arkan-merge.yml` is the gate a consumer repo can install; `docs/agents/approvals.md` (from `pre-setup`) states the rule and records the repo's merge path (`**Merge path:** broker` for arkan) |
 
 Row 2's verbs, as `agent-gh <verb>`: `push`, `worktree-remove`, `pr-create`, `pr-view`, `pr-checks`, `pr-merge`, `pr-retarget`, `pr-review`, `pr-reply`, `pr-diff`, and `raw` (the transport `pr-diff` and `worktree-remove` use).
 
@@ -28,7 +28,7 @@ The merge path is a local `pre-setup` choice recorded in `docs/agents/approvals.
 `scripts/check-seam.sh` runs in `scripts/check.sh`, so ci fails on drift. it skips `.scratch/`, this page, `scripts/check-seam.sh` itself, and each case's `bad.diff` under `docs/agents/review-evals/`, in all three checks below.
 
 - a file names `agent-gh <verb>` with a verb that is not in row 2's list above;
-- `ci/github/arkan-merge.yml`, `ci/github/arkan-risk.yml` or their copies in `.github/workflows/` do not carry row 6's agent mark and risk marker exactly as written here;
+- `ci/github/arkan-merge.yml`, its installed copy `.github/workflows/arkan-merge.yml` or `.github/workflows/arkan-risk.yml` do not carry row 6's agent mark and risk marker exactly as written here;
 - a file outside those skips names a path inside underground (its broker sources, staged copies, probes, threat model or adr).
 
 ## Change rule

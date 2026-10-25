@@ -1,6 +1,6 @@
 # Review evals
 
-Each confirmed miss by the ci reviewer becomes one case here. The cases keep the reviewer honest: a change to `ci/github/arkan-review.yml`, `ci/opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when it misses no case caught before.
+Each confirmed miss by the ci reviewer becomes one case here. The cases keep the reviewer honest: a change to `.github/workflows/arkan-review.yml`, `ci/opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when it misses no case caught before.
 
 ## A case
 
@@ -24,7 +24,7 @@ One folder per case, `<NN>-<slug>/`, numbered from `01`. It holds:
 
 ## One reviewer
 
-`ci/review-eval.sh` reads the prompt, `REVIEW_MODEL` and `MAX_TURNS` from `ci/github/arkan-review.yml`, the file ci runs. It fills the workflow's `${{ }}` inputs with the case's values, so a change to that file changes the eval. One file, not a second prompt copy that can drift. The script dies when the prompt holds an input it does not fill, or the workflow uses a `${{ env.* }}` setting it does not read.
+`ci/review-eval.sh` reads the prompt, `REVIEW_MODEL` and `MAX_TURNS` from `.github/workflows/arkan-review.yml`, the file ci runs. It fills the workflow's `${{ }}` inputs with the case's values, so a change to that file changes the eval. One file, not a second prompt copy that can drift. The script dies when the prompt holds an input it does not fill, or the workflow uses a `${{ env.* }}` setting it does not read.
 
 The default reviewer is `ci/opencode_agent.py review --eval` with that model and turn limit: the reviewer ci runs. Set `REVIEW_CMD`, or pass `--reviewer`, to use another headless harness. A swapped harness is a weaker proof, because it does not run the command ci runs.
 

@@ -2,7 +2,7 @@
 
 ## arkan-review
 
-[`github/arkan-review.yml`](github/arkan-review.yml) reviews each push to an open pull request with arkan's `code-review` and `security-review` skills, in a github actions run that no session drives. it runs `ci/opencode_agent.py`, a stdlib python runner, against the opencode go chat completions api. when opencode go is unavailable, the runner falls back to codex and then to claude code, each signed in with a subscription ([model fallback](#model-fallback)).
+[`.github/workflows/arkan-review.yml`](../.github/workflows/arkan-review.yml) reviews each push to an open pull request with arkan's `code-review` and `security-review` skills, in a github actions run that no session drives. it runs `ci/opencode_agent.py`, a stdlib python runner, against the opencode go chat completions api. when opencode go is unavailable, the runner falls back to codex and then to claude code, each signed in with a subscription ([model fallback](#model-fallback)).
 
 ### add it to a repo
 
@@ -124,11 +124,11 @@ A merged change that broke main becomes a case under the repo's `docs/agents/rev
 ci/review-eval.sh --compare
 ```
 
-The default reviewer is `ci/opencode_agent.py review --eval` with the workflow's `REVIEW_MODEL` and `MAX_TURNS`: the reviewer ci runs. The script reads both from [`github/arkan-review.yml`](github/arkan-review.yml), so a change there changes the eval. It goes through the same [model fallback](#model-fallback), so a run without a working opencode go key scores codex or claude code, not `REVIEW_MODEL`. Set `REVIEW_CMD` to another command that reads the prompt on stdin; a swapped harness is a weaker proof. `--prompt FILE` replaces the workflow's prompt, to test a weaker one. `--update-baseline` adds the cases caught now to `docs/agents/review-evals/baseline.txt` and never drops one; `--compare` exits 1 when a baseline case is now missed. The case format and the full command list are in [the cases doc](../docs/agents/review-evals/README.md).
+The default reviewer is `ci/opencode_agent.py review --eval` with the workflow's `REVIEW_MODEL` and `MAX_TURNS`: the reviewer ci runs. The script reads both from [`.github/workflows/arkan-review.yml`](../.github/workflows/arkan-review.yml), so a change there changes the eval. It goes through the same [model fallback](#model-fallback), so a run without a working opencode go key scores codex or claude code, not `REVIEW_MODEL`. Set `REVIEW_CMD` to another command that reads the prompt on stdin; a swapped harness is a weaker proof. `--prompt FILE` replaces the workflow's prompt, to test a weaker one. `--update-baseline` adds the cases caught now to `docs/agents/review-evals/baseline.txt` and never drops one; `--compare` exits 1 when a baseline case is now missed. The case format and the full command list are in [the cases doc](../docs/agents/review-evals/README.md).
 
-A change to `github/arkan-review.yml`, `opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when `--compare` misses no case caught before. No ci job runs a model: `scripts/check.sh` runs `--check`, which validates the case files and reads the workflow without one. The person or agent that changes the reviewer runs `--compare` locally before the change lands. The `post-merge` skill adds the case.
+A change to `.github/workflows/arkan-review.yml`, `opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when `--compare` misses no case caught before. No ci job runs a model: `scripts/check.sh` runs `--check`, which validates the case files and reads the workflow without one. The person or agent that changes the reviewer runs `--compare` locally before the change lands. The `post-merge` skill adds the case.
 
-A repo that installs `arkan-review` copies `review-eval.sh` into its own `ci/` and keeps its cases in its own `docs/agents/review-evals/`. The script reads `.github/workflows/arkan-review.yml` when `ci/github/arkan-review.yml` is absent.
+A repo that installs `arkan-review` copies `review-eval.sh` into its own `ci/` and keeps its cases in its own `docs/agents/review-evals/`. The script reads that repo's `.github/workflows/arkan-review.yml`, as it does in arkan.
 
 ## arkan-post-merge
 
@@ -169,7 +169,7 @@ the settings are the `env:` lines at the top: `POST_MERGE_MODEL`, `MAX_TURNS`, `
 
 ## check
 
-[`github/check.yml`](github/check.yml) runs the repo's check command (its tests, lint and build, the same command the task loop's prove step runs) on each push to the default branch and on each pull request, as a job named `check`. it sets up no language: the command runs with the tools already on github's `ubuntu-latest` runner, and the file has a commented example step for python and node.
+[`.github/workflows/check.yml`](../.github/workflows/check.yml) runs the repo's check command (its tests, lint and build, the same command the task loop's prove step runs) on each push to the default branch and on each pull request, as a job named `check`. it sets up no language: the command runs with the tools already on github's `ubuntu-latest` runner, and the file has a commented example step for python and node.
 
 ### add it to a repo
 
@@ -182,7 +182,7 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
 
 ## arkan-risk
 
-[`github/arkan-risk.yml`](github/arkan-risk.yml) gives each pull request a risk label, `auto` or `manual`, that its author cannot pick. `arkan-merge` and the broker's `pr-merge` read it: an `auto` pr merges on the agent verifier's `PASS`, a `manual` pr only on a person's `PASS`. the rules follow the claude code team's review post: the change sets the tier, some paths always need a person, an agent's approval never counts as a person's, and start strict.
+[`.github/workflows/arkan-risk.yml`](../.github/workflows/arkan-risk.yml) gives each pull request a risk label, `auto` or `manual`, that its author cannot pick. `arkan-merge` and the broker's `pr-merge` read it: an `auto` pr merges on the agent verifier's `PASS`, a `manual` pr only on a person's `PASS`. the rules follow the claude code team's review post: the change sets the tier, some paths always need a person, an agent's approval never counts as a person's, and start strict.
 
 ### add it to a repo
 

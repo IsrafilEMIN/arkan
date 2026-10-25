@@ -23,7 +23,6 @@ runs the arkan-review reviewer on each case's bad.diff and prints
   --cases DIR         case folders (default: docs/agents/review-evals)
   --workflow FILE     the arkan-review workflow that holds the prompt, the
                       model and the turn limit (default:
-                      ci/github/arkan-review.yml, else
                       .github/workflows/arkan-review.yml)
   --prompt FILE       reviewer prompt, replacing the workflow's prompt
   --reviewer CMD      reviewer command, reading the prompt on stdin
@@ -61,12 +60,7 @@ done
 [ "$compare" = 1 ] && [ "$update" = 1 ] && die "--compare and --update-baseline cannot be combined"
 [ "$compare" = 1 ] && [ ! -f "$baseline" ] && die "no baseline: $baseline"
 
-if [ -z "$workflow" ]; then
-	for f in ci/github/arkan-review.yml .github/workflows/arkan-review.yml; do
-		if [ -f "$f" ]; then workflow=$f; break; fi
-	done
-fi
-[ -n "$workflow" ] || die "no workflow: ci/github/arkan-review.yml or .github/workflows/arkan-review.yml"
+[ -n "$workflow" ] || workflow=.github/workflows/arkan-review.yml
 [ -f "$workflow" ] || die "no workflow: $workflow"
 
 workflow_prompt() {

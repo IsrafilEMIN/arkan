@@ -17,7 +17,7 @@ What the reviewer must care about in arkan. Keep it short. The reviewer reads it
 
 ## Review evals
 
-A change to `ci/github/arkan-review.yml`, `ci/opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when `ci/review-eval.sh --compare` misses no case caught before. The script reads the reviewer's prompt, model and turn limit from that workflow, so the rule scores the reviewer ci runs. No ci job runs a model: `scripts/check.sh` runs `--check`, and the person or agent making the change runs `--compare` locally with a headless reviewer. New cases come from `post-merge`; see `docs/agents/review-evals/README.md`.
+A change to `.github/workflows/arkan-review.yml`, `ci/opencode_agent.py`, `skills/code-review/` or `skills/security-review/` is kept only when `ci/review-eval.sh --compare` misses no case caught before. The script reads the reviewer's prompt, model and turn limit from that workflow, so the rule scores the reviewer ci runs. No ci job runs a model: `scripts/check.sh` runs `--check`, and the person or agent making the change runs `--compare` locally with a headless reviewer. New cases come from `post-merge`; see `docs/agents/review-evals/README.md`.
 
 ## Rules
 
