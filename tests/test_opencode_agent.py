@@ -116,6 +116,15 @@ class RepositoryBoundaryTest(RepoCase):
         self.assertIn("-old", diff)
         self.assertIn("+new", diff)
 
+    def test_changed_files_lists_both_sides_of_a_rename_into_docs(self):
+        code = "".join(f"line {n}\n" for n in range(40))
+        base = commit(self.repo, {"tool.py": code}, "code")
+        (self.repo / "docs").mkdir()
+        git(self.repo, "mv", "tool.py", "docs/tool.md")
+        head = commit(self.repo, {}, "rename into docs")
+        snap = agent.load_snapshot(str(self.repo), base, head, base)
+        self.assertEqual(sorted(agent._changed_files(snap)), ["docs/tool.md", "tool.py"])
+
 
 class JsonContentTest(unittest.TestCase):
     def test_fenced_json_is_read(self):

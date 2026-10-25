@@ -7,7 +7,10 @@
 name: arkan-review
 
 on:
-  pull_request:
+  # github runs a pull_request_target run from the default branch's copy of this
+  # file, so a pr cannot change its own review. that run holds secrets and a
+  # write token, so it checks out only the base and reads the pr as git objects.
+  pull_request_target:
     types: [opened, synchronize, reopened]
   # a comment applies a person's `arkan: <id> <state>` lines to the marker, with
   # no model call. an inline reply (pull_request_review_comment) runs this file
@@ -21,7 +24,7 @@ on:
 # comment run waits for the run in progress.
 concurrency:
   group: arkan-review-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request_target' }}
 
 permissions:
   contents: read
@@ -66,18 +69,36 @@ jobs:
           EV_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         run: |
           # a push run uses its event's head; a comment run reads the pr's head now.
-          if [ "$EVENT" = pull_request ]; then
+          if [ "$EVENT" = pull_request_target ]; then
             printf 'number=%s\nhead_sha=%s\nbase_sha=%s\nhead_repo=%s\n' "$N" "$EV_HEAD_SHA" "$EV_BASE_SHA" "$EV_HEAD_REPO" >> "$GITHUB_OUTPUT"
           else
             gh api "repos/$REPO/pulls/$N" --jq '"number=\(.number)\nhead_sha=\(.head.sha)\nbase_sha=\(.base.sha)\nhead_repo=\(.head.repo.full_name // "")"' >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Check out the pr head
-        uses: actions/checkout@v6
+      - name: Check out the base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ steps.pr.outputs.head_sha }}
+          ref: ${{ steps.pr.outputs.base_sha }}
           fetch-depth: 0
           persist-credentials: false
+
+      # the pr comes in as git objects only, never as files on disk. the token
+      # goes in one git command's config, so no later step finds it in .git/config.
+      - name: Fetch the pr head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')
+          echo "::add-mask::$auth"
+          fetch() { git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --no-tags origin "$@"; }
+          fetch "+refs/pull/$PR/head:refs/remotes/origin/pull/$PR/head" || true
+          git cat-file -e "$HEAD_SHA^{commit}" 2>/dev/null || fetch "$HEAD_SHA" || true
+          if ! git cat-file -e "$HEAD_SHA^{commit}" 2>/dev/null; then
+            echo "::error title=arkan-review::the pr head $HEAD_SHA could not be fetched"
+            exit 1
+          fi
 
       - name: Decide whether to review
         id: scope
@@ -92,9 +113,9 @@ jobs:
           reason=""
           if [ "$HEAD_REPO" != "$REPO" ]; then
             reason="fork"
-            text="arkan-review skipped: this pr comes from a fork (\`$HEAD_REPO\`), and a fork's run gets no secrets. a person reviews it by hand."
+            text="arkan-review skipped: this pr comes from a fork (\`$HEAD_REPO\`), and arkan-review does not review a fork's pr. a person reviews it by hand."
           else
-            files=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+            files=$(git diff --name-only --no-renames "$BASE_SHA...$HEAD_SHA")
             other=$(printf '%s\n' "$files" | grep -Ev "$DOCS_ONLY_REGEX" || true)
             steering=$(printf '%s\n' "$files" | grep -E "$NEVER_DOCS_REGEX" || true)
             if [ -n "$files" ] && [ -z "$other" ] && [ -z "$steering" ]; then
@@ -124,8 +145,8 @@ jobs:
           echo "skip=true" >> "$GITHUB_OUTPUT"
           echo "::notice title=arkan-review skipped::$text"
           marker="<!-- arkan-review:skip reason=$reason -->"
-          # one skip comment per pr and reason. a fork's token is read-only, so
-          # there the notice above is the message.
+          # one skip comment per pr and reason. an inline reply on a fork's pr runs
+          # with a read-only token, so there the notice above is the message.
           bodies=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq '.[].body' 2>/dev/null || true)
           if [[ "$bodies" != *"$marker"* ]]; then
             gh api "repos/$REPO/issues/$PR/comments" -f body="$text
@@ -189,7 +210,7 @@ jobs:
           fi
           # a comment never reviews or starts a round: it applies the commands and
           # decides the check from the marker.
-          if [ "$EVENT" != pull_request ]; then action=apply round=${m_round:-0}; fi
+          if [ "$EVENT" != pull_request_target ]; then action=apply round=${m_round:-0}; fi
           # round 1 reviews the full pr diff; a later round only the commits since
           # the last reviewed one, or the full diff again if that is not an ancestor.
           if [ -n "$m_reviewed" ] && git merge-base --is-ancestor "$m_reviewed" "$HEAD_SHA" 2>/dev/null; then
