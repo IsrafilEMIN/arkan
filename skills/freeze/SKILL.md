@@ -44,9 +44,9 @@ The freeze is per project. The state key is the resolved project directory (`/` 
 
 | harness | wiring | how you arm it | covers shell writes? |
 | --- | --- | --- | --- |
-| claude-code | the frontmatter `hooks` block in this file. it registers when you type `/freeze`. copy the same block into settings.json to keep it on in every session | `/freeze <dir>`, then the skill runs the arm command | best-effort |
-| omp | `install.sh` links `adapters/freeze.ts` to `~/.omp/agent/hooks/pre/freeze.ts`. the extension also registers a `/freeze` command | `/freeze <dir>` in the session | best-effort |
-| pi | `install.sh` links the same file to `~/.pi/agent/extensions/freeze.ts` | `/freeze <dir>` in the session | best-effort |
+| claude-code | the frontmatter `hooks` block in this file, matcher `Write\|Edit`. it registers when you type `/freeze`. copy the same block into settings.json to keep it on in every session | `/freeze <dir>`, then the skill runs the arm command | no. only if you add `Bash` to the matcher; then best-effort |
+| omp | `install.sh` links `adapters/freeze.ts` to `~/.omp/agent/hooks/pre/freeze.ts`. the extension also registers a `/freeze` command | `/freeze arm <dir>` in the session | best-effort |
+| pi | `install.sh` links the same file to `~/.pi/agent/extensions/freeze.ts` | `/freeze arm <dir>` in the session | best-effort |
 | codex | `install.sh` merges `adapters/codex-hooks.json` into `~/.codex/hooks.json` | run the arm command, or ask in chat | best-effort |
 | grok | `install.sh` links `adapters/grok-hooks.json` into `~/.grok/hooks/` | run the arm command, or ask in chat | best-effort |
 | hermes | paste `adapters/hermes-config.yaml` into the hermes config | run the arm command, or ask in chat | best-effort |

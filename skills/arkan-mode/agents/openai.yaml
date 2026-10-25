@@ -1,5 +1,5 @@
 interface:
   display_name: "Arkan Mode"
-  short_description: "Do one engineering task properly, from shaping to merge"
+  short_description: "Do one engineering task properly, through to merge"
 policy:
   allow_implicit_invocation: true
