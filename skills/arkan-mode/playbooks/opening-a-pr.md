@@ -31,7 +31,8 @@ After the sections, attach videos or screenshots when they prove a claim. Full S
 - view: `gh api .../pulls/<n>`, fields `state`, `merged`, `merged_at`, `mergeable`, `mergeable_state`, `base.ref`, `head.sha`. `mergeable` is `null` while GitHub computes it, so read again. Reviews: `gh api .../pulls/<n>/reviews`.
 - checks: `gh api .../commits/<head-sha>/check-runs` and `gh api .../commits/<head-sha>/status`. A status with `total_count` 0 reads `pending` but has no statuses. In place of `--watch`, `gh run watch <run-id> --exit-status`, with the run ids from `gh run list --commit <head-sha>`.
 - comment: `gh api -X POST .../issues/<n>/comments -F body=@<file>`.
-- review or verdict: `gh api -X POST .../pulls/<n>/reviews -f event=COMMENT -f commit_id=<head-sha> -F body=@<file>`.
+- verdict: the comment call. An agent's verdict on the direct route is a PR comment, never a review: only the broker posts an agent's verdict as a review, because a review from the person's own token has no mark and counts as the person's `PASS`. Neither merge path reads the comment, so without the broker an `auto` PR does not merge on an agent verdict alone.
+- review: the person's call, not an agent's. The person reads the verdict comment, then posts their own `PASS` review on the head: `gh api -X POST .../pulls/<n>/reviews -f event=COMMENT -f commit_id=<head-sha> -F body=@<file>`.
 - edit base: `gh api -X PATCH .../pulls/<n> -f base=<branch>`.
 - merge: no raw merge call. No session calls `gh pr merge` or another raw merge api; the repo's merge path lands the PR: its `arkan-merge` gate or the broker (`agent-merge <pr> <head-sha>` after green checks and the person's `PASS` on a `manual` PR; see `playbooks/shipping.md` step 4). Read a landed PR back with the view call: `merged` is `true` and `base.ref` is the base you expect.
 

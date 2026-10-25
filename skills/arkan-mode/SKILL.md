@@ -84,6 +84,8 @@ github is the forge. pick the route once, at the start of the run.
 
 **the direct route** is for a run with no broker and no guard: the `gh pr` calls the playbooks name, and the **Forge without GraphQL** REST calls in `playbooks/opening-a-pr.md` when GraphQL is blocked.
 
+on the direct route an agent's verdict is a pr comment (`gh pr comment`, or `issues/<n>/comments` over rest), never a review. only the broker posts an agent's verdict as a review, with its mark; a review from the person's own token has no mark and counts as the person's `PASS`. neither merge path reads the comment. the person reads it, then posts their own `PASS` review on the head. the cost: without the broker, an `auto` pr does not merge on an agent verdict alone.
+
 on the broker route the forge is its clients, in any repo the host allow-list approves. read the target slug off the working repo's own origin, the way `agent-merge` does: `git remote get-url origin`, then strip a leading `https://github.com/` or `git@github.com:` and a trailing `.git`. take the branch and the head sha from the working checkout (`git branch --show-current`, `git rev-parse HEAD`). pass each command the fields its line names. this route never falls back to `gh`, to the token file, or to a wider config. every `<body>` below is the text itself, quoted for your shell, never a `@file` path.
 
 - **push a checkpoint.** `agent-gh push <owner/repo> <worktree-path> <agent/branch> <head-sha>`. the reply line `remote ref verified: <sha> <ref>` is the proof.

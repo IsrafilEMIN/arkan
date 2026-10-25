@@ -43,9 +43,6 @@
 - [ ] 55: Fix the docs that no longer match the code #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/55-fix-docs-drift.md` · blocked by: none
 
-- [ ] 56: On the direct route, an agent verdict is a comment, not a review #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/56-direct-route-verdict-is-a-comment.md` · blocked by: none
-
 - [ ] 57: Freeze blocks reads, misses patches and follows no file symlink #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/57-freeze-adapter-bugs.md` · blocked by: none
 
@@ -188,3 +185,6 @@
 
 - [x] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
+
+- [x] 56: On the direct route, an agent verdict is a comment, not a review #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/56-direct-route-verdict-is-a-comment.md` · blocked by: none
