@@ -14,6 +14,9 @@
 - [ ] 01: Implement mental models into the arkan skillset #mental-models #needs-triage
   `.scratch/mental-models/issues/01-implement-mental-models.md` · blocked by: none
 
+- [ ] 60: One copy of each workflow arkan installs #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/60-one-copy-of-each-installed-workflow.md` · blocked by: 59
+
 ## Todo
 
 - [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
@@ -33,6 +36,24 @@
 
 - [ ] 53: The model keeps its key in the shell environment #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/53-model-credential-in-shell-env.md` · blocked by: none
+
+- [ ] 54: Opening-a-pr owns the pr body; remove the `pr` skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/54-opening-a-pr-owns-the-pr-body.md` · blocked by: none
+
+- [ ] 55: Fix the docs that no longer match the code #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/55-fix-docs-drift.md` · blocked by: none
+
+- [ ] 56: On the direct route, an agent verdict is a comment, not a review #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/56-direct-route-verdict-is-a-comment.md` · blocked by: none
+
+- [ ] 57: Freeze blocks reads, misses patches and follows no file symlink #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/57-freeze-adapter-bugs.md` · blocked by: none
+
+- [ ] 58: Link-agents.sh --check writes, and setup.sh misses a verify skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/58-two-script-bugs.md` · blocked by: none
+
+- [ ] 59: Arkan-review and arkan-risk run the base branch's workflow #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/59-review-and-risk-run-the-base-workflow.md` · blocked by: none
 
 ## Done
 
