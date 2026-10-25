@@ -2,6 +2,25 @@ import { spawnSync } from "node:child_process";
 
 const GUARD = (process.env.HOME || "") + "/.agents/skills/freeze/scripts/freeze-guard.sh";
 
+const READ_TOOLS = ["read", "grep", "search", "find", "glob", "ls", "ast_grep", "web_search"];
+const LSP_READ_ACTIONS = ["diagnostics", "definition", "references", "hover", "symbols", "type_definition", "implementation", "status", "capabilities"];
+const TEXT_FIELDS = ["command", "patch", "input"];
+
+function isReadOnlyCall(toolName, input) {
+	const name = typeof toolName === "string" ? toolName.toLowerCase() : "";
+	if (READ_TOOLS.indexOf(name) !== -1) return true;
+	if (name === "lsp") return LSP_READ_ACTIONS.indexOf(input.action) !== -1;
+	return false;
+}
+
+function hasTextTarget(input) {
+	for (let i = 0; i < TEXT_FIELDS.length; i++) {
+		const v = input[TEXT_FIELDS[i]];
+		if (typeof v === "string" && v.length > 0) return true;
+	}
+	return false;
+}
+
 function toAbsolute(p, cwd) {
 	if (typeof p !== "string" || p.length === 0) return "";
 	if (p.charAt(0) === "/") return p;
@@ -107,6 +126,8 @@ export default function (pi) {
 	pi.on("tool_call", function (event, ctx) {
 		try {
 			const input = event && event.input && typeof event.input === "object" ? event.input : {};
+			const toolName = event && event.toolName;
+			if (isReadOnlyCall(toolName, input)) return undefined;
 			const cwd = ctx && typeof ctx.cwd === "string" && ctx.cwd.length > 0 ? ctx.cwd : process.cwd();
 			const targets = [];
 			const raw = collectPathTargets(input);
@@ -115,17 +136,10 @@ export default function (pi) {
 				if (abs.length > 0) targets.push(abs);
 			}
 
-			let res;
-			if (targets.length > 0) {
-				res = runGuard(["write"].concat(targets), "", cwd);
-			} else if (typeof input.command === "string" && input.command.length > 0) {
-				res = runGuard(
-					["hook"],
-					JSON.stringify({ tool_name: event && event.toolName, tool_input: input }),
-					cwd,
-				);
-			} else {
-				return undefined;
+			let res = { status: 0, stdout: "", stderr: "" };
+			if (targets.length > 0) res = runGuard(["write"].concat(targets), "", cwd);
+			if (res.status !== 2 && hasTextTarget(input)) {
+				res = runGuard(["hook"], JSON.stringify({ tool_name: toolName, tool_input: input }), cwd);
 			}
 
 			if (res.status === 2) {

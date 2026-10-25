@@ -55,8 +55,8 @@ The freeze is per project. The state key is the resolved project directory (`/` 
 
 ## Limits
 
-- The guard checks the file tools of the harness only. Read tools pass untouched.
-- Bash writes are a best-effort text check. The guard reads `>`, `>>`, `2>`, `&>`, `tee`, and `sed -i` targets. It also reads `*** Add File:`, `*** Update File:`, and `*** Delete File:` lines from a codex `apply_patch` payload. A quoted path with a space, a variable, or a command substitution can hide a target.
+- The guard checks the file tools of the harness only. Read tools pass untouched. The omp and pi adapter passes `read`, `grep`, `search`, `find`, `glob`, `ls`, `ast_grep`, `web_search`, and the read actions of `lsp`. It checks any other tool that names a path, so a new write tool is not missed.
+- Bash writes are a best-effort text check. The guard reads `>`, `>>`, `2>`, `&>`, `tee`, and `sed -i` targets. It also reads `*** Add File:`, `*** Update File:`, and `*** Delete File:` lines from an `apply_patch` payload in a `command`, `patch`, or `input` field. A quoted path with a space, a variable, or a command substitution can hide a target.
 - A subprocess write is invisible. A program that opens a file itself never reaches the guard.
-- Path checks handle `..` and symlinks. The guard resolves the deepest existing ancestor of each target, then re-appends the rest. A textual compare alone cannot do this.
+- Path checks handle `..` and symlinks. The guard resolves the deepest existing ancestor of each target, then re-appends the rest. It follows a final file symlink, also a dangling one, for at most 40 hops. A textual compare alone cannot do this.
 - This is a seatbelt, not a sandbox. It stops a mistaken edit. It does not stop a determined process.

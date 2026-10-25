@@ -75,7 +75,11 @@ the path from each `*** Add|Update|Delete File:` envelope line. `Move to:` lines
 and bare hunks are not checked. Docs: <https://learn.chatgpt.com/docs/hooks>.
 
 omp and pi share one extension API. The adapter also registers a `/freeze`
-command, so you can arm and disarm without leaving the session.
+command, so you can arm and disarm without leaving the session. It skips the
+read tools of omp and pi (`read`, `grep`, `search`, `find`, `glob`, `ls`,
+`ast_grep`, `web_search`, and the read actions of `lsp`). Any other tool with a
+path field goes to `write`. A `command`, `patch`, or `input` string goes to
+`hook`, which reads its `*** Add|Update|Delete File:` lines.
 
 hermes runs shell hooks as subprocesses and blocks a `pre_tool_call` hook that
 exits `2`. It asks for consent once per event and command pair. Consider adding

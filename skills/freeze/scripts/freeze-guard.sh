@@ -6,6 +6,8 @@ STATE_ROOT="${FREEZE_STATE_DIR:-$HOME/.agents/state/freeze}"
 ROOT=""
 GROK=0
 REASON=""
+LINK_HOPS=0
+LINK_HOP_LIMIT=40
 
 usage() {
   printf 'usage: freeze-guard.sh arm <dir> | disarm | status | write <path>... | hook\n' >&2
@@ -31,12 +33,22 @@ physical() {
   done
   _rest=""
   _cur="$_p"
-  while [ "$_cur" != "/" ] && [ ! -e "$_cur" ]; do
+  while [ "$_cur" != "/" ] && [ ! -e "$_cur" ] && [ ! -L "$_cur" ]; do
     _base="${_cur##*/}"
     _rest="/$_base$_rest"
     _cur="${_cur%/*}"
     [ -z "$_cur" ] && _cur="/"
   done
+  if [ -L "$_cur" ] && [ ! -d "$_cur" ] && [ "$LINK_HOPS" -lt "$LINK_HOP_LIMIT" ]; then
+    LINK_HOPS=$((LINK_HOPS + 1))
+    _link=$(readlink "$_cur")
+    case "$_link" in
+      /*) ;;
+      *) _link="${_cur%/*}/$_link" ;;
+    esac
+    printf '%s%s\n' "$(physical "$_link")" "$_rest"
+    return
+  fi
   if [ -d "$_cur" ]; then
     _real=$(cd -P "$_cur" 2>/dev/null && pwd -P)
   else
@@ -86,15 +98,19 @@ emit() {
   printf '%s\n' "$_t"
 }
 
-command_writes() {
-  _cmd="$1"
-  printf '%s\n' "$_cmd" | awk '
+patch_writes() {
+  printf '%s\n' "$1" | awk '
     /^[*][*][*] (Add|Update|Delete) File: / {
       sub(/^[*][*][*] (Add|Update|Delete) File: /, "")
       sub(/[[:space:]]+$/, "")
       if (length($0) > 0) print
     }
   '
+}
+
+command_writes() {
+  _cmd="$1"
+  patch_writes "$_cmd"
   _norm=$(printf '%s' "$_cmd" | awk '{gsub(/&>>|&>|2>>|2>|>>|>/, " & "); gsub(/\|/, " | "); print}')
   set -f
   # shellcheck disable=SC2086
@@ -243,6 +259,18 @@ EOF
         frozen_target "$_t" || block
       done <<EOF
 $(command_writes "$_command")
+EOF
+    fi
+    _patch=$(json_str '[.tool_input.patch?, .toolInput.patch?, .tool_input.input?, .toolInput.input?] | .[] | select(type=="string")' <<EOF
+$PAYLOAD
+EOF
+)
+    if [ -n "$_patch" ]; then
+      while IFS= read -r _t; do
+        [ -n "$_t" ] || continue
+        frozen_target "$_t" || block
+      done <<EOF
+$(patch_writes "$_patch")
 EOF
     fi
     ;;
