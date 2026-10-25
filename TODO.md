@@ -37,9 +37,6 @@
 - [ ] 53: The model keeps its key in the shell environment #arkan-flow #ready-for-human
   `.scratch/arkan-flow/issues/53-model-credential-in-shell-env.md` · blocked by: none
 
-- [ ] 54: Opening-a-pr owns the pr body; remove the `pr` skill #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/54-opening-a-pr-owns-the-pr-body.md` · blocked by: none
-
 - [ ] 55: Fix the docs that no longer match the code #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/55-fix-docs-drift.md` · blocked by: none
 
@@ -188,3 +185,6 @@
 
 - [x] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
+
+- [x] 54: Opening-a-pr owns the pr body; remove the `pr` skill #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/54-opening-a-pr-owns-the-pr-body.md` · blocked by: none

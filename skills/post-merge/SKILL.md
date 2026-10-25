@@ -18,7 +18,7 @@ A merged change broke something. You make main safe, then turn the **miss** (the
    - **revert**: `git revert -m 1 <merge>` (no `-m` for a squash commit). The fallback whenever a fix is unclear.
    - **fix forward**: a small change, red first, through `tdd`, when the cause is plain and a revert would undo more than it saves.
 
-   _Done when_ the check passes on the branch, the repo's other checks still pass, and the branch is pushed. Open the PR with the `pr` skill. Merging is the person's call. In ci, the workflow pushes the branch and opens the PR from your output; you never push or merge.
+   _Done when_ the check passes on the branch, the repo's other checks still pass, and the branch is pushed. Open the PR per `arkan-mode`'s opening-a-pr playbook. Merging is the person's call. In ci, the workflow pushes the branch and opens the PR from your output; you never push or merge.
 
 5. **Name the node that should have caught it.** Walk the task loop in order: build + `tdd` (a test for this case), prove (tests, build, lint, verify), `code-review`, `security-review`. Pick the first node that had what it needed to catch the bug, and say what it lacked: a missing test, a check that never ran, a rule the reviewer does not hold. _Done when_ the answer cites evidence from the bad diff or the node's own output, not a guess.
 
