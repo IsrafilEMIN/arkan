@@ -6,9 +6,6 @@
 name: arkan-risk
 
 on:
-  # github runs a pull_request_target run from the default branch's copy of this
-  # file, so a pr cannot write its own label. the run holds secrets and a write
-  # token, so it checks out only the base and reads the pr as git objects.
   pull_request_target:
     types: [opened, synchronize, reopened]
 

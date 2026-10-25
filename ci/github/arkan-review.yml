@@ -7,9 +7,6 @@
 name: arkan-review
 
 on:
-  # github runs a pull_request_target run from the default branch's copy of this
-  # file, so a pr cannot change its own review. that run holds secrets and a
-  # write token, so it checks out only the base and reads the pr as git objects.
   pull_request_target:
     types: [opened, synchronize, reopened]
   # a comment applies a person's `arkan: <id> <state>` lines to the marker, with
@@ -82,8 +79,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # the pr comes in as git objects only, never as files on disk. the token
-      # goes in one git command's config, so no later step finds it in .git/config.
       - name: Fetch the pr head
         env:
           GH_TOKEN: ${{ github.token }}
