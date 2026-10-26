@@ -61,6 +61,9 @@
 - [ ] 62: The verifier retries when its results skip a candidate #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/62-verifier-retries-incomplete-coverage.md` · blocked by: none
 
+- [ ] 63: Skills and the seam follow the six broker verbs #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/63-skills-follow-the-six-broker-verbs.md` · blocked by: none
+
 ## Done
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
