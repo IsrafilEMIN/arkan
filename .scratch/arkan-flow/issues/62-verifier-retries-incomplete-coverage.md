@@ -1,7 +1,7 @@
 # 62: the verifier retries when its results skip a candidate
 
 **Role:** ready-for-agent
-**Closed:** no
+**Closed:** yes
 **Priority:** 70
 **Blocked by:** None (can start immediately).
 
@@ -18,6 +18,8 @@
 - [x] `PYTHONDONTWRITEBYTECODE=1 bash scripts/check.sh` prints `check: ok` with 56 tests
 - [ ] `ci/review-eval.sh --compare` misses no case caught before (`REVIEW.md`, review evals). this needs a headless reviewer and a model key on the person's machine
 
+#wontfix: the owner merged #95 by hand on 2026-10-26 (merge commit `86978ad`) without the live compare. the compare was not run.
+
 ## Live-model comparison
 
 attempted `PYTHONDONTWRITEBYTECODE=1 bash ci/review-eval.sh --compare`. the command exited 2. both attempts reported `every model provider is unavailable: opencode-go, codex, claude`. opencode-go reported `OPENCODE_API_KEY is missing`; codex reported a transport, login or quota failure; claude could not start a turn. the result was `0 caught, 1 missed`, so this is not comparison evidence and the acceptance box stays open.
@@ -30,3 +32,10 @@ attempted `PYTHONDONTWRITEBYTECODE=1 bash ci/review-eval.sh --compare`. the comm
 - 2026-10-25, owner: the same class fired on a live run of this ticket's own pr: `no findings returned (review step: failure; error, turns 16: the model returned a malformed candidate severity)`. the security finder submitted a candidate whose severity did not parse, and the review died after the finder phase returned. the retry now covers the finder submissions too, so the model sees the problem and submits again within the turn limit.
 - 2026-10-25, agent: the `arkan-review` check on this pr runs the runner from the base commit, not from the pr (`.github/workflows/arkan-review.yml:110-112`, `git show "$BASE_SHA:ci/opencode_agent.py"`). main still has the bug, so this pr's own review fails with `malformed candidate severity` even with the fix in the pr. the check cannot pass before this pr merges. a live comparison is unavailable on the owner's machine; the codex and claude logins exist, but both providers report transport or quota failures, and the local rig takes about 11 seconds per model call with tens of calls per run.
 - 2026-10-25, agent: `scripts/check.sh` passed with 52 tests. independent standards and spec reviews found no defects. the security review found no new high-confidence high or medium issue. no live model result is proven.
+
+## Answer
+
+- the review now retries every submission that fails to parse, at each submission boundary: `submit_verify` coverage, standards and spec findings, security candidates, the security filter decision and the fixed ids. a submission that never parses still fails the review closed.
+- evidence: 56 tests pass, and `PYTHONDONTWRITEBYTECODE=1 bash scripts/check.sh` prints `check: ok`. commits `25ec2ba`, `bb7a51c`, `463be85`, `ed60341`; merged as `86978ad` in pr #95.
+- live proof of the fixed runner: pr #89's `arkan-review` passed on head `39d9709` after the merge (`checks passed: check=success, arkan-risk=success, arkan-review=success`). the same head failed before with `malformed candidate severity`.
+- left open: the live `--compare` never ran; the owner merged by hand. that box carries `#wontfix`. a nightly run of `bash ci/review-eval.sh --compare` with a model key would close it.

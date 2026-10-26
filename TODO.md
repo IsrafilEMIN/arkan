@@ -58,9 +58,6 @@
 - [ ] 61: The reviewer asks the model again when its result has the wrong shape #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/61-review-asks-again-on-a-bad-result-shape.md` · blocked by: none
 
-- [ ] 62: The verifier retries when its results skip a candidate #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/62-verifier-retries-incomplete-coverage.md` · blocked by: none
-
 ## Done
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
@@ -194,3 +191,6 @@
 
 - [x] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
+
+- [x] 62: The verifier retries when its results skip a candidate #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/62-verifier-retries-incomplete-coverage.md` · blocked by: none
