@@ -4,14 +4,14 @@ arkan and underground share one machine and one agent workflow. underground boun
 
 | # | interface | owner | what arkan does with it |
 |---|---|---|---|
-| 1 | launcher entry points (`omp-srt`, `claude` on `PATH`) | underground | names them; never reaches past them |
-| 2 | broker clients and their verbs (`agent-gh` and its ten verbs, `agent-merge`, `agent-worktree-remove`) | underground | `arkan-mode`'s forge steps call them on the broker route |
+| 1 | launcher entry point (`~/.agents/bin/omp-srt`) | underground | names it; never reaches past it |
+| 2 | broker clients and their verbs (`agent-gh` and its six verbs, `agent-merge`) | underground | `arkan-mode`'s forge steps call them on the broker route |
 | 3 | hook wiring (`~/.agents/hooks.json`, the shell-hooks extension, `~/.agents/git-hooks/`) | underground | nothing; the `freeze` skill's own adapters are private to it |
 | 4 | policy file (`~/.omp/policy.yml`) | underground | nothing |
 | 5 | tracker contract (`docs/agents/issue-tracker.md`) | arkan | `pre-setup`'s seeds and `board.sh build\|check\|fields`; with a local tracker the field and board checks run locally through `pre-setup`, because a consumer repo's ci does not fetch arkan (arkan's own ci runs its `scripts/board.sh` copy) |
 | 6 | merge rule: the `PASS` verdict, the agent mark `<!-- arkan:verifier -->`, the risk marker `<!-- arkan:risk head=<sha> label=<auto\|manual> -->`, and the rule | arkan | `ci/github/arkan-risk.yml` writes the marker; the broker's `pr-merge` applies the rule (its merge loop, where deployed, uses the same code); `ci/github/arkan-merge.yml` is the gate a consumer repo can install; `docs/agents/approvals.md` (from `pre-setup`) states the rule and records the repo's merge path (`**Merge path:** broker` for arkan) |
 
-Row 2's verbs, as `agent-gh <verb>`: `push`, `worktree-remove`, `pr-create`, `pr-view`, `pr-checks`, `pr-merge`, `pr-retarget`, `pr-review`, `pr-reply`, `pr-diff`, and `raw` (the transport `pr-diff` and `worktree-remove` use).
+Row 2's verbs, as `agent-gh <verb>`: `push`, `pr-create`, `pr-status`, `pr-review`, `pr-merge`, `worktree-remove`. `pr-status` carries every status field and the checks, and the diff comes from the local checkout.
 
 ## The merge rule (row 6)
 

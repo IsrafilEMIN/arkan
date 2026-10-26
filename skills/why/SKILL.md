@@ -21,7 +21,7 @@ If the target is vague ("why do we do it this way?"), make your best guess from 
 
 ## Step 2. Establish the code anchor
 
-Before spawning investigators, build the seed context yourself: file paths and line ranges, key symbols, the last commits touching the target, pull request numbers from merge commits (`(#1234)` in the subject, or "Merge pull request #1234"), and linked ticket ids. Run `git blame -L <start>,<end> <file>`, `git log --follow -p -- <file>`, `git log --oneline -20 -- <file>`, and `git log -1 --format=%B <commit>`. Then pull the pull request bodies and discussion for each substantive commit: `gh pr view <n> --json title,body,author,createdAt,mergedAt,labels,closingIssuesReferences,comments,reviews`, or on the broker route `agent-gh pr-view` (arkan-mode's forge). This anchor goes to every investigator and to the synthesizer.
+Before spawning investigators, build the seed context yourself: file paths and line ranges, key symbols, the last commits touching the target, pull request numbers from merge commits (`(#1234)` in the subject, or "Merge pull request #1234"), and linked ticket ids. Run `git blame -L <start>,<end> <file>`, `git log --follow -p -- <file>`, `git log --oneline -20 -- <file>`, and `git log -1 --format=%B <commit>`. Then pull the pull request bodies and discussion for each substantive commit: `gh pr view <n> --json title,body,author,createdAt,mergedAt,labels,closingIssuesReferences,comments,reviews`, or on the broker route `agent-gh pr-status` (arkan-mode's forge). This anchor goes to every investigator and to the synthesizer.
 
 ## Step 3. Spawn parallel investigators
 

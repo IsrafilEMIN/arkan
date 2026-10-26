@@ -86,7 +86,7 @@ trunk="agent/run-$name"
 if [ "$route" = broker ]; then
 	git branch -q -f "$trunk" "$sha"
 	agent-gh push "$slug" "$PWD" "$trunk" "$sha" || die "agent-gh push did not create $trunk; no run started"
-	forge="(2) Every push and pull request goes through the broker clients, never git push, gh or the REST API: push with agent-gh push $slug <worktree> <agent/ branch> <head sha>; open a pr with agent-gh pr-create $slug $trunk <agent/ branch> <title> <body>; read it with agent-gh pr-view $slug N; read checks with agent-gh pr-checks $slug N."
+	forge="(2) Every push and pull request goes through the broker clients, never git push, gh or the REST API: push with agent-gh push $slug <worktree> <agent/ branch> <head sha>; open a pr with agent-gh pr-create $slug $trunk <agent/ branch> <title> <body>; read it with agent-gh pr-status $slug N, which carries its checks."
 	verdict="A verdict is posted as a pr review: agent-gh pr-review $slug N SHA <body>;"
 else
 	git push -q origin "$sha:refs/heads/$trunk" 2>/dev/null || die "cannot create $trunk on the remote"
