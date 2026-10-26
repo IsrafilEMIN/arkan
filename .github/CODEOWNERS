@@ -1,14 +1,1 @@
 # each sensitive path (docs/agents/sensitive-paths.md) is owned by the repo owner.
-/.github/workflows/** @IsrafilEMIN
-/.github/CODEOWNERS @IsrafilEMIN
-/docs/agents/sensitive-paths.md @IsrafilEMIN
-/docs/agents/approvals.md @IsrafilEMIN
-/REVIEW.md @IsrafilEMIN
-/AGENTS.md @IsrafilEMIN
-/CLAUDE.md @IsrafilEMIN
-/ci/** @IsrafilEMIN
-/scripts/check.sh @IsrafilEMIN
-/scripts/check-seam.sh @IsrafilEMIN
-/docs/seam.md @IsrafilEMIN
-/skills/pre-setup/scripts/** @IsrafilEMIN
-/skills/pre-setup/references/** @IsrafilEMIN
