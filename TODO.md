@@ -52,6 +52,9 @@
 - [ ] 59: Arkan-review and arkan-risk run the base branch's workflow #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/59-review-and-risk-run-the-base-workflow.md` · blocked by: none
 
+- [ ] 61: The reviewer asks the model again when its result has the wrong shape #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/61-review-asks-again-on-a-bad-result-shape.md` · blocked by: none
+
 ## Done
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
