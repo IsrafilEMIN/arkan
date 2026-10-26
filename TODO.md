@@ -61,6 +61,9 @@
 - [ ] 62: The verifier retries when its results skip a candidate #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/62-verifier-retries-incomplete-coverage.md` · blocked by: none
 
+- [ ] 01: Add an enhance skill that audits arkan against its upstream skill sources #enhance #ready-for-agent
+  `.scratch/enhance/issues/01-enhance-skill.md` · blocked by: none
+
 ## Done
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
