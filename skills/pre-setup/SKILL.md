@@ -1,6 +1,6 @@
 ---
 name: pre-setup
-description: "Set up the machine and this repo for the arkan skills: issue tracker, triage labels, domain docs, the Tern board, the sensitive-path list, the approval rule, REVIEW.md, the ci jobs and the merge path. Safe to run again: it checks first and only works on what is missing or out of date."
+description: "Set up the machine and this repo for the arkan skills: issue tracker, triage labels, domain docs, the Tern board, the sensitive-path list, the approval rule, the ci jobs and the merge path. Safe to run again: it checks first and only works on what is missing or out of date."
 disable-model-invocation: true
 ---
 
@@ -61,7 +61,6 @@ Any change on the host (github, gitlab) asks first, even when there is no choice
 | `board` | `apply board` (seeds `TODO.md`, creates `.scratch/` for a local tracker, removes a `TODO.md` line from `.gitignore`). With a local tracker, the check runs `board.sh check` and reads `ok` only on `check-board: ok`; then run `board.sh build` and `board.sh check` until it passes. With github or gitlab, the board is written by hand, as that tracker's seed says | no |
 | `sensitive-paths` | start from `references/sensitive-paths.md` and add what the repo has: installer scripts, auth, billing, release workflows. Show the list | yes, the person approves or edits the list |
 | `approvals` | `apply approvals` (the fixed rule: `auto` and `manual`) | no |
-| `review-md` | `apply review-md` (seeds `REVIEW.md`). Fill in the failure line from what the repo is, if it is plain | no |
 | `ci-review`, `ci-check`, `ci-risk`, `ci-post-merge` | `apply <item>` copies arkan's file into `.github/workflows/`. `ci-review` and `ci-risk` also install `ci/opencode_agent.py`. Then follow that file's steps in arkan's `ci/README.md` (secrets, the `CHECK_COMMAND` setting) | before the push, and before each secret or setting |
 | `ci-runner` | `apply ci-runner` copies arkan's `ci/opencode_agent.py`. A repo with an older `arkan-review` lands this in its own pull request before `apply ci-review`, because the new workflow runs the base branch's runner | before the push |
 | `ci-merge` | ask gate or broker. Record the answer as the exact line in `docs/agents/approvals.md`: broker installs no gate; gate does. See [Merge path](#merge-path) | yes, which path |
@@ -123,10 +122,6 @@ The five default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready
 ### Approvals
 
 Pull requests are `auto` or `manual`; the person approves `manual` ones. The merge path (`broker` or `gate`) is recorded in the same file. See `docs/agents/approvals.md` and `docs/agents/sensitive-paths.md`.
-
-### Review
-
-What the reviewer cares about in this repo. See `REVIEW.md`.
 ```
 
 ### 4. Check again, then commit

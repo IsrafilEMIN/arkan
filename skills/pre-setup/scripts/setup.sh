@@ -824,7 +824,6 @@ check() {
 	check_board
 	check_file sensitive-paths docs/agents/sensitive-paths.md
 	check_file approvals docs/agents/approvals.md
-	check_file review-md REVIEW.md
 	local pair
 	for pair in $ci_items; do
 		if [ "${pair%%:*}" = ci-merge ]; then
@@ -915,7 +914,6 @@ apply() {
 			fi
 			;;
 		approvals) seed docs/agents/approvals.md approvals.md ;;
-		review-md) seed REVIEW.md review.md ;;
 		claude-md)
 			if claude_detected && has AGENTS.md && [ ! -e "$root/CLAUDE.md" ] && [ ! -L "$root/CLAUDE.md" ]; then
 				ln -s AGENTS.md "$root/CLAUDE.md"
@@ -951,7 +949,7 @@ apply() {
 			;;
 		ci-runner) install_runner ;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, claude-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-runner, ci-post-merge, ci-merge\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, claude-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-runner, ci-post-merge, ci-merge\n' "$item" >&2
 			exit 2
 			;;
 	esac

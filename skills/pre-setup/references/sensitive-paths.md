@@ -7,7 +7,6 @@ A pull request that touches one of these paths always needs the person's review 
 .github/CODEOWNERS
 docs/agents/sensitive-paths.md
 docs/agents/approvals.md
-REVIEW.md
 AGENTS.md
 CLAUDE.md
 ```
