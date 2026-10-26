@@ -1097,13 +1097,15 @@ def _call_parts(call: object) -> tuple[str, str, dict | None]:
     return call["id"], function["name"], parsed if isinstance(parsed, dict) else None
 
 
-def _shape_problem(tools: list[dict], terminal: str, payload: dict) -> str:
+def _submission_problem(tools: list[dict], terminal: str, payload: dict, validate: Callable[[dict], str] | None = None) -> str:
     schema = next(tool["function"]["parameters"] for tool in tools if tool["function"]["name"] == terminal)
     for key in schema.get("required", []):
         if key not in payload:
             return f"{terminal} needs the field {key}"
         if schema["properties"].get(key, {}).get("type") == "array" and not isinstance(payload[key], list):
             return f"the field {key} of {terminal} must be a JSON array"
+    if validate is not None:
+        return validate(payload)
     return ""
 
 
@@ -1116,6 +1118,7 @@ def _conversation(
     tools: list[dict],
     terminal: str,
     max_turns: int,
+    validate: Callable[[dict], str] | None = None,
 ) -> dict:
     messages = [
         {"role": "system", "content": system},
@@ -1134,7 +1137,7 @@ def _conversation(
         if not calls:
             last_content = message["content"]
             submitted = _json_content(message["content"])
-            problem = _shape_problem(tools, terminal, submitted) if submitted is not None else ""
+            problem = _submission_problem(tools, terminal, submitted, validate) if submitted is not None else ""
             if submitted is not None and not problem:
                 return submitted
             messages.append({"role": "assistant", "content": message["content"]})
@@ -1151,7 +1154,7 @@ def _conversation(
                     raise RunnerError("the model submitted twice")
                 if arguments is None:
                     raise RunnerError("the model returned malformed submit arguments")
-                problem = _shape_problem(tools, terminal, arguments)
+                problem = _submission_problem(tools, terminal, arguments, validate)
                 if problem:
                     retry = f"{problem}. Call {terminal} again with every required field."
                     messages.append({"role": "tool", "tool_call_id": call_id, "content": json.dumps({"error": retry})})
@@ -1185,7 +1188,7 @@ def _conversation(
             candidate = _json_content(message["content"])
         if candidate is None:
             break
-        problem = _shape_problem(tools, terminal, candidate)
+        problem = _submission_problem(tools, terminal, candidate, validate)
         if not problem or attempt == 1:
             return candidate
         messages.append({"role": "assistant", "content": json.dumps(candidate)})
@@ -1208,9 +1211,10 @@ def _phase(
     properties: dict,
     required: list[str],
     max_turns: int,
+    validate: Callable[[dict], str] | None = None,
 ) -> dict:
     tools = READ_TOOLS + [_terminal_tool(terminal, description, properties, required)]
-    return _conversation(chat, snap, _session(snap, role), system, user, tools, terminal, max_turns)
+    return _conversation(chat, snap, _session(snap, role), system, user, tools, terminal, max_turns, validate)
 
 
 def _system(snap: Snapshot, skill: str, extra: str) -> str:
@@ -1314,6 +1318,14 @@ def _parse_candidates(payload: dict) -> list[SecurityCandidate]:
     return candidates
 
 
+def _parse_problem(parse: Callable[[dict], object], payload: dict) -> str:
+    try:
+        parse(payload)
+    except (RunnerError, ToolError) as exc:
+        return str(exc)
+    return ""
+
+
 def _evidence(snap: Snapshot, tag: str, file: str, line: int) -> bool:
     if not _exists(snap, snap.head, file):
         return False
@@ -1328,31 +1340,50 @@ def _evidence(snap: Snapshot, tag: str, file: str, line: int) -> bool:
     return True
 
 
-def _parse_verify(payload: dict, drafts: list[DraftFinding], snap: Snapshot) -> list[Finding]:
+def _verification_map(payload: dict, count: int) -> tuple[dict[int, dict], str]:
     items = payload.get("results")
     if not isinstance(items, list):
-        raise RunnerError("the verifier returned malformed results")
+        return {}, "the verifier returned malformed results"
     by_index: dict[int, dict] = {}
     for item in items:
         if not isinstance(item, dict):
-            raise RunnerError("the verifier returned a malformed result")
+            return {}, "the verifier returned a malformed result"
         index = item.get("index")
-        if not isinstance(index, int) or isinstance(index, bool) or index in by_index:
-            raise RunnerError("the verifier returned a malformed index")
+        if not isinstance(index, int) or isinstance(index, bool):
+            return {}, "the verifier returned a malformed index"
+        if index in by_index:
+            return {}, f"the verifier returned a malformed index: duplicate index {index}"
         by_index[index] = item
-    if set(by_index) != set(range(1, len(drafts) + 1)):
-        raise RunnerError("the verifier did not check every finding")
-    findings: list[Finding] = []
-    for index, draft in enumerate(drafts, start=1):
+    expected = set(range(1, count + 1))
+    if set(by_index) != expected:
+        detail: list[str] = []
+        missing = sorted(expected - set(by_index))
+        unexpected = sorted(set(by_index) - expected)
+        if missing:
+            detail.append("missing index " + ", ".join(str(index) for index in missing))
+        if unexpected:
+            detail.append("unexpected index " + ", ".join(str(index) for index in unexpected))
+        return {}, "the verifier did not check every finding: " + "; ".join(detail)
+    for index in sorted(by_index):
         item = by_index[index]
         keep = item.get("keep")
         if not isinstance(keep, bool):
-            raise RunnerError("the verifier returned a malformed keep")
-        if not keep:
+            return {}, "the verifier returned a malformed keep"
+        if keep and item.get("tag") not in ("important", "nit", "pre-existing"):
+            return {}, "the verifier returned a malformed tag"
+    return by_index, ""
+
+
+def _parse_verify(payload: dict, drafts: list[DraftFinding], snap: Snapshot) -> list[Finding]:
+    by_index, problem = _verification_map(payload, len(drafts))
+    if problem:
+        raise RunnerError(problem)
+    findings: list[Finding] = []
+    for index, draft in enumerate(drafts, start=1):
+        item = by_index[index]
+        if not item["keep"]:
             continue
-        tag = item.get("tag")
-        if tag not in ("important", "nit", "pre-existing"):
-            raise RunnerError("the verifier returned a malformed tag")
+        tag = item["tag"]
         if not _evidence(snap, tag, draft.file, draft.line):
             continue
         findings.append(Finding("code-review", tag, None, draft.cls, draft.symbol, draft.file, draft.line, draft.body))
@@ -1480,6 +1511,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             finding_properties,
             finding_required,
             max_turns,
+            validate=lambda payload: _parse_problem(_parse_findings, payload),
         )
     )
     spec_payload = _phase(
@@ -1497,6 +1529,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
         {**finding_properties, "note": {"type": "string"}},
         finding_required,
         max_turns,
+        validate=lambda payload: _parse_problem(_parse_findings, payload),
     )
     spec_findings = _parse_findings(spec_payload)
     spec_note = sanitize(spec_payload.get("note", ""), 200)
@@ -1532,6 +1565,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             },
             ["candidates"],
             max_turns,
+            validate=lambda payload: _parse_problem(_parse_candidates, payload),
         )
     )
 
@@ -1549,6 +1583,10 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             }
             for index, draft in enumerate(drafts, start=1)
         ]
+
+        def verify_problem(candidate: dict) -> str:
+            return _verification_map(candidate, len(drafts))[1]
+
         payload = _phase(
             chat,
             snap,
@@ -1578,6 +1616,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             },
             ["results"],
             max_turns,
+            verify_problem,
         )
         findings.extend(_parse_verify(payload, drafts, snap))
 
@@ -1603,6 +1642,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             },
             ["keep"],
             max_turns,
+            validate=lambda payload: _parse_problem(lambda item: _parse_filter(item, candidate, snap), payload),
         )
         kept = _parse_filter(payload, candidate, snap)
         if kept is not None:
@@ -1637,6 +1677,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             {"fixed": {"type": "array", "items": {"type": "string"}}},
             ["fixed"],
             max_turns,
+            validate=lambda payload: _parse_problem(lambda item: _parse_fixed(item, open_ids), payload),
         )
         fixed = _parse_fixed(payload, open_ids)
 

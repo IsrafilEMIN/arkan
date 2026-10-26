@@ -253,6 +253,221 @@ def terminal_call(name, arguments, call_id="call-1"):
     return {"id": call_id, "type": "function", "function": {"name": name, "arguments": json.dumps(arguments)}}
 
 
+class VerifierCoverageTest(RepoCase):
+    DRAFT = {
+        "class": "correctness",
+        "symbol": "a.txt",
+        "file": "a.txt",
+        "line": 1,
+        "body": "The value changed from old to new but readers still expect old.",
+    }
+    VERIFIED = {"results": [{"index": 1, "keep": True, "tag": "important"}]}
+    DRAFT_TWO = {
+        "class": "docs",
+        "symbol": "code review skill",
+        "file": "skills/code-review/SKILL.md",
+        "line": 1,
+        "body": "The skill text does not say how to report a finding.",
+    }
+
+    def review(self, verify, max_turns=40, drafts=None):
+        findings = [self.DRAFT] if drafts is None else drafts
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": findings}, "standards")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": []}, "security")]},
+            *verify,
+        ]
+        chat = ScriptedChat(replies)
+        return agent.run_review(self.snap, "review this", "", chat, max_turns), chat
+
+    def test_partial_verify_submission_for_two_candidates_gets_a_retry_and_then_completes(self):
+        result, chat = self.review(
+            [
+                {
+                    "content": "",
+                    "tool_calls": [
+                        terminal_call(
+                            "submit_verify",
+                            {"results": [{"index": 1, "keep": True, "tag": "important"}]},
+                            "verify-1",
+                        )
+                    ],
+                },
+                {
+                    "content": "",
+                    "tool_calls": [
+                        terminal_call(
+                            "submit_verify",
+                            {"results": [{"index": 1, "keep": True, "tag": "important"}, {"index": 2, "keep": False}]},
+                            "verify-2",
+                        )
+                    ],
+                },
+            ],
+            drafts=[self.DRAFT, self.DRAFT_TWO],
+        )
+        self.assertEqual(
+            [(item.source, item.tag, item.file, item.line) for item in result.findings],
+            [("code-review", "important", "a.txt", 1)],
+        )
+        retry = chat.seen[4][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "verify-1"))
+        self.assertIn("the verifier did not check every finding", retry["content"])
+        self.assertIn("missing index 2", retry["content"])
+        self.assertNotIn("unexpected index", retry["content"])
+
+    def test_verify_submission_missing_a_candidate_gets_a_retry_and_then_completes(self):
+        result, chat = self.review(
+            [
+                {"content": "", "tool_calls": [terminal_call("submit_verify", {"results": []}, "verify-1")]},
+                {"content": "", "tool_calls": [terminal_call("submit_verify", self.VERIFIED, "verify-2")]},
+            ]
+        )
+        self.assertEqual([(item.source, item.tag) for item in result.findings], [("code-review", "important")])
+        retry = chat.seen[4][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "verify-1"))
+        self.assertIn("the verifier did not check every finding", retry["content"])
+        self.assertIn("missing index 1", retry["content"])
+
+    def test_content_only_verify_submission_missing_a_candidate_gets_a_retry(self):
+        result, chat = self.review(
+            [
+                {"content": '{"results": []}', "tool_calls": []},
+                {"content": "", "tool_calls": [terminal_call("submit_verify", self.VERIFIED, "verify-2")]},
+            ]
+        )
+        self.assertEqual([(item.source, item.tag) for item in result.findings], [("code-review", "important")])
+        retry = chat.seen[4][-1]
+        self.assertEqual(retry["role"], "user")
+        self.assertIn("the verifier did not check every finding", retry["content"])
+        self.assertIn("missing index 1", retry["content"])
+
+    def test_verify_submission_after_the_turns_run_out_gets_the_coverage_check(self):
+        result, chat = self.review(
+            [
+                {"content": "", "tool_calls": [terminal_call("read_diff", {"scope": "pr"}, "read-1")]},
+                {"content": '{"results": []}', "tool_calls": []},
+                {"content": json.dumps(self.VERIFIED), "tool_calls": []},
+            ],
+            max_turns=1,
+        )
+        self.assertEqual([(item.source, item.tag) for item in result.findings], [("code-review", "important")])
+        retry = chat.seen[5][-1]
+        self.assertEqual(retry["role"], "user")
+        self.assertIn("the verifier did not check every finding", retry["content"])
+        self.assertIn("missing index 1", retry["content"])
+
+    def test_verify_submission_with_an_unknown_index_gets_a_retry(self):
+        result, chat = self.review(
+            [
+                {"content": "", "tool_calls": [terminal_call("submit_verify", {"results": [{"index": 2, "keep": False}]}, "verify-1")]},
+                {"content": "", "tool_calls": [terminal_call("submit_verify", self.VERIFIED, "verify-2")]},
+            ]
+        )
+        self.assertEqual(len(result.findings), 1)
+        retry = chat.seen[4][-1]["content"]
+        self.assertIn("the verifier did not check every finding", retry)
+        self.assertIn("missing index 1", retry)
+        self.assertIn("unexpected index 2", retry)
+
+    def test_verify_submission_with_a_duplicate_index_gets_a_retry(self):
+        result, chat = self.review(
+            [
+                {
+                    "content": "",
+                    "tool_calls": [
+                        terminal_call(
+                            "submit_verify",
+                            {"results": [{"index": 1, "keep": True, "tag": "important"}, {"index": 1, "keep": False}]},
+                            "verify-1",
+                        )
+                    ],
+                },
+                {"content": "", "tool_calls": [terminal_call("submit_verify", self.VERIFIED, "verify-2")]},
+            ]
+        )
+        self.assertEqual(len(result.findings), 1)
+        retry = chat.seen[4][-1]["content"]
+        self.assertIn("the verifier returned a malformed index", retry)
+        self.assertIn("duplicate index 1", retry)
+
+    def test_verify_submission_that_never_covers_every_candidate_fails_closed(self):
+        with self.assertRaises(agent.RunnerError) as raised:
+            self.review(
+                [
+                    {"content": "", "tool_calls": [terminal_call("submit_verify", {"results": []}, "verify-1")]},
+                    {"content": '{"results": []}', "tool_calls": []},
+                    {"content": '{"results": []}', "tool_calls": []},
+                ],
+                max_turns=1,
+            )
+        self.assertIn("the verifier did not check every finding", str(raised.exception))
+        self.assertIn("missing index 1", str(raised.exception))
+
+    def test_candidate_without_a_severity_gets_a_retry_and_then_completes(self):
+        bad = {"category": "correctness", "symbol": "a.txt", "file": "a.txt", "line": 1, "severity": None, "body": "b"}
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": [bad]}, "security-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": []}, "security-2")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", "", chat, 40)
+        self.assertEqual(len(result.findings), 0)
+        retry = chat.seen[3][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "security-1"))
+        self.assertIn("malformed candidate severity", retry["content"])
+
+    def test_finding_with_a_malformed_line_gets_a_retry_and_then_completes(self):
+        bad = {"class": "correctness", "symbol": "a.txt", "file": "a.txt", "line": 0, "body": "b"}
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": [bad]}, "standards-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards-2")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": []}, "security")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", "", chat, 40)
+        self.assertEqual(len(result.findings), 0)
+        retry = chat.seen[1][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "standards-1"))
+        self.assertIn("malformed finding line", retry["content"])
+
+    def test_filter_with_a_non_boolean_keep_gets_a_retry_and_then_completes(self):
+        candidate = {"category": "correctness", "symbol": "a.txt", "file": "a.txt", "line": 1, "severity": "HIGH", "body": "b"}
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": [candidate]}, "security")]},
+            {"content": "", "tool_calls": [terminal_call("submit_filter", {"keep": "no", "confidence": 9}, "filter-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_filter", {"keep": False}, "filter-2")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", "", chat, 40)
+        self.assertEqual(len(result.findings), 0)
+        retry = chat.seen[4][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "filter-1"))
+        self.assertIn("malformed keep", retry["content"])
+
+    def test_fixed_check_with_a_malformed_id_gets_a_retry_and_then_completes(self):
+        prior = "- `a1b2c3d4` **open** `important` `a.txt:1` `a.txt`"
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": []}, "security")]},
+            {"content": "", "tool_calls": [terminal_call("submit_fixed", {"fixed": [7]}, "fixed-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_fixed", {"fixed": []}, "fixed-2")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", prior, chat, 40)
+        self.assertEqual(result.fixed, ())
+        retry = chat.seen[4][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "fixed-1"))
+        self.assertIn("malformed id", retry["content"])
+
+
 class StubStage:
     def __init__(self, replies=None, error=None):
         self.replies = replies or {}
