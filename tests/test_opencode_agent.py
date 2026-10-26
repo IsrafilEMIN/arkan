@@ -184,6 +184,75 @@ class MalformedModelOutputTest(RepoCase):
         with self.assertRaises(agent.RunnerError):
             agent.run_review(self.snap, "review this", "", chat)
 
+    def test_a_submit_without_findings_gets_a_second_chance(self):
+        chat = ScriptedChat(
+            [
+                {"content": "", "tool_calls": [terminal_call("submit_findings", {"summary": "nothing"}, "call-1")]},
+                {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "call-2")]},
+            ]
+        )
+        result = agent._conversation(chat, self.snap, "s", "system", "user", FINDINGS_TOOLS, "submit_findings", 4)
+        self.assertEqual(result, {"findings": []})
+        retry = chat.seen[1][-1]
+        self.assertEqual(retry["role"], "tool")
+        self.assertEqual(retry["tool_call_id"], "call-1")
+        self.assertIn("submit_findings needs the field findings", retry["content"])
+
+    def test_content_json_with_a_wrong_shape_gets_a_second_chance(self):
+        chat = ScriptedChat(
+            [
+                {"content": '{"findings": "none"}', "tool_calls": []},
+                {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []})]},
+            ]
+        )
+        result = agent._conversation(chat, self.snap, "s", "system", "user", FINDINGS_TOOLS, "submit_findings", 4)
+        self.assertEqual(result, {"findings": []})
+        self.assertIn("the field findings of submit_findings must be a JSON array", chat.seen[1][-1]["content"])
+
+    def test_a_model_that_never_fixes_its_shape_still_fails_the_review(self):
+        with self.assertRaises(agent.RunnerError):
+            agent.run_review(self.snap, "review this", "", Chat("submit_findings", {"summary": "nothing"}))
+
+    def test_a_bad_shape_after_the_turns_run_out_gets_one_more_chance(self):
+        reading = {"content": "", "tool_calls": [terminal_call("read_diff", {"scope": "pr"})]}
+        chat = ScriptedChat(
+            [
+                reading,
+                reading,
+                {"content": '{"summary": "nothing"}', "tool_calls": []},
+                {"content": '{"findings": []}', "tool_calls": []},
+            ]
+        )
+        result = agent._conversation(chat, self.snap, "s", "system", "user", FINDINGS_TOOLS, "submit_findings", 2)
+        self.assertEqual(result, {"findings": []})
+        self.assertIn("submit_findings needs the field findings", chat.seen[3][-1]["content"])
+
+    def test_a_bad_shape_after_the_retry_still_fails_the_review(self):
+        reading = {"content": "", "tool_calls": [terminal_call("read_diff", {"scope": "pr"})]}
+        summary = {"content": '{"summary": "nothing"}', "tool_calls": []}
+        chat = ScriptedChat([reading, reading, summary, summary])
+        result = agent._conversation(chat, self.snap, "s", "system", "user", FINDINGS_TOOLS, "submit_findings", 2)
+        self.assertEqual(result, {"summary": "nothing"})
+        with self.assertRaises(agent.RunnerError):
+            agent._parse_findings(result)
+
+
+class ScriptedChat(agent.Chat):
+    def __init__(self, replies):
+        self.model = "test"
+        self.api_key = "test"
+        self.replies = list(replies)
+        self.seen = []
+
+    def next(self, session, messages, tools, force=None):
+        self.seen.append([dict(message) for message in messages])
+        return self.replies.pop(0)
+
+
+FINDINGS_TOOLS = agent.READ_TOOLS + [
+    agent._terminal_tool("submit_findings", "Submit findings.", {"findings": {"type": "array"}}, ["findings"])
+]
+
 
 AUTO = {"submit_vote": {"label": "auto", "reason": "low risk"}, "submit_second": {"raise_to_manual": False, "reason": "fine"}}
 MANUAL = {"submit_vote": {"label": "manual", "reason": "risky"}}
