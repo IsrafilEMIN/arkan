@@ -29,7 +29,7 @@ Launch all reviewers at once, read-only, in fresh contexts, labeled Reviewer A, 
 
 **Models.** Where the harness lets you pick a model per subagent, give each reviewer a different model family (diversity is the point). Where it does not, run every reviewer on the current model in its own fresh context, and say so in the report: the agreement signal is then weaker. If the harness refuses a model, run that seat on the closest model it accepts and say so; never block the review on it.
 
-Fill [`references/reviewer-prompt.md`](references/reviewer-prompt.md) the same way for every reviewer, with the stated intent, the diff or file contents, the rubric from [`references/rubric.md`](references/rubric.md), and the code-quality lens from [`references/code-quality-review.md`](references/code-quality-review.md). Add the repo's `REVIEW.md` and `CODING_STANDARDS.md` when they exist.
+Fill [`references/reviewer-prompt.md`](references/reviewer-prompt.md) the same way for every reviewer, with the stated intent, the diff or file contents, the rubric from [`references/rubric.md`](references/rubric.md), and the code-quality lens from [`references/code-quality-review.md`](references/code-quality-review.md). Add the repo's `CODING_STANDARDS.md` when it exists.
 
 ## Step 4, synthesize
 
