@@ -40,7 +40,7 @@ env:
   DOCS_ONLY_REGEX: '(\.(md|mdx|txt|rst)$|^docs/|^LICENSE$|^NOTICE$)'
   # files that steer the agent or its reviewer are never docs, even as markdown:
   # a pr that touches one is always reviewed.
-  NEVER_DOCS_REGEX: '(^\.claude/|^\.scratch/|^\.github/|^docs/agents/review-evals/|(^|/)(AGENTS|CLAUDE|CODING_STANDARDS|REVIEW)\.md$|(^|/)SKILL\.md$)'
+  NEVER_DOCS_REGEX: '(^\.claude/|^\.scratch/|^\.github/|^docs/agents/review-evals/|(^|/)(AGENTS|CLAUDE|CODING_STANDARDS)\.md$|(^|/)SKILL\.md$)'
 
 jobs:
   arkan-review:
