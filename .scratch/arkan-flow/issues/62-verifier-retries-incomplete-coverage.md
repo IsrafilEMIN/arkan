@@ -37,5 +37,5 @@ attempted `PYTHONDONTWRITEBYTECODE=1 bash ci/review-eval.sh --compare`. the comm
 
 - the review now retries every submission that fails to parse, at each submission boundary: `submit_verify` coverage, standards and spec findings, security candidates, the security filter decision and the fixed ids. a submission that never parses still fails the review closed.
 - evidence: 56 tests pass, and `PYTHONDONTWRITEBYTECODE=1 bash scripts/check.sh` prints `check: ok`. commits `25ec2ba`, `bb7a51c`, `463be85`, `ed60341`; merged as `86978ad` in pr #95.
-- live proof of the fixed runner: pr #89's `arkan-review` passed on head `39d9709` after the merge (`checks passed: check=success, arkan-risk=success, arkan-review=success`). the same head failed before with `malformed candidate severity`.
+- live proof of the fixed runner: pr #89's `arkan-review` passed on head `39d9709` after the merge (`checks passed: check=success, arkan-risk=success, arkan-review=success`). its previous head `7c16420` failed on `the verifier did not check every finding`, the coverage error this ticket fixes. the `malformed candidate severity` error came from #95's own review, and `bb7a51c` covers it.
 - left open: the live `--compare` never ran; the owner merged by hand. that box carries `#wontfix`. a nightly run of `bash ci/review-eval.sh --compare` with a model key would close it.
