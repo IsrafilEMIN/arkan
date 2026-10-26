@@ -14,8 +14,8 @@
 - [x] coverage stays exact: integer non-boolean indexes, no duplicates, one result per candidate `1..N`; every result needs a boolean `keep`, and a kept result needs a valid `tag`
 - [x] a model that never fixes its coverage still fails the review closed
 - [x] six consumer-visible recovery cases fail on the old runner and pass on the new one; the persistent-omission case still fails closed
-- [x] a finder submission that fails to parse gets the same correction: standards and spec findings, and security candidates, including a missing severity
-- [x] `PYTHONDONTWRITEBYTECODE=1 bash scripts/check.sh` prints `check: ok` with 54 tests
+- [x] a submission that fails to parse gets the same correction in every review phase: standards and spec findings, security candidates, the security filter decision and the fixed ids
+- [x] `PYTHONDONTWRITEBYTECODE=1 bash scripts/check.sh` prints `check: ok` with 56 tests
 - [ ] `ci/review-eval.sh --compare` misses no case caught before (`REVIEW.md`, review evals). this needs a headless reviewer and a model key on the person's machine
 
 ## Live-model comparison

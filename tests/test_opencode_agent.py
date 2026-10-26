@@ -435,6 +435,38 @@ class VerifierCoverageTest(RepoCase):
         self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "standards-1"))
         self.assertIn("malformed finding line", retry["content"])
 
+    def test_filter_with_a_non_boolean_keep_gets_a_retry_and_then_completes(self):
+        candidate = {"category": "correctness", "symbol": "a.txt", "file": "a.txt", "line": 1, "severity": "HIGH", "body": "b"}
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": [candidate]}, "security")]},
+            {"content": "", "tool_calls": [terminal_call("submit_filter", {"keep": "no", "confidence": 9}, "filter-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_filter", {"keep": False}, "filter-2")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", "", chat, 40)
+        self.assertEqual(len(result.findings), 0)
+        retry = chat.seen[4][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "filter-1"))
+        self.assertIn("malformed keep", retry["content"])
+
+    def test_fixed_check_with_a_malformed_id_gets_a_retry_and_then_completes(self):
+        prior = "- `a1b2c3d4` **open** `important` `a.txt:1` `a.txt`"
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": []}, "security")]},
+            {"content": "", "tool_calls": [terminal_call("submit_fixed", {"fixed": [7]}, "fixed-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_fixed", {"fixed": []}, "fixed-2")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", prior, chat, 40)
+        self.assertEqual(result.fixed, ())
+        retry = chat.seen[4][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "fixed-1"))
+        self.assertIn("malformed id", retry["content"])
+
 
 class StubStage:
     def __init__(self, replies=None, error=None):

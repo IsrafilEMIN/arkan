@@ -1642,6 +1642,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             },
             ["keep"],
             max_turns,
+            validate=lambda payload: _parse_problem(lambda item: _parse_filter(item, candidate, snap), payload),
         )
         kept = _parse_filter(payload, candidate, snap)
         if kept is not None:
@@ -1676,6 +1677,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             {"fixed": {"type": "array", "items": {"type": "string"}}},
             ["fixed"],
             max_turns,
+            validate=lambda payload: _parse_problem(lambda item: _parse_fixed(item, open_ids), payload),
         )
         fixed = _parse_fixed(payload, open_ids)
 
