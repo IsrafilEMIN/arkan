@@ -30,11 +30,11 @@ above the task line, a person decides what to build. below it, the agent works a
 
 after a merge breaks main, `post-merge` finds the first bad merge, reverts or fixes forward on a branch, and opens a ticket for the miss. a person can start it, or [`ci/github/arkan-post-merge.yml`](ci/github/arkan-post-merge.yml) starts it when main's check fails or a revert lands, and once a day for slow signals. see [`ci/README.md`](ci/README.md#arkan-post-merge).
 
-[`ci/github/arkan-risk.yml`](ci/github/arkan-risk.yml) labels each pr `auto` or `manual`. a path on `docs/agents/sensitive-paths.md` and a pr from anyone but the repo owner are always `manual`. three fresh model votes label the rest, and a second check can only raise the label to `manual`. a vote with no available model gives `manual`. an `auto` pr may merge on the agent verifier's `PASS`; a `manual` pr needs the owner's `PASS`.
+[`.github/workflows/arkan-risk.yml`](.github/workflows/arkan-risk.yml) labels each pr `auto` or `manual`. a path on `docs/agents/sensitive-paths.md` and a pr from anyone but the repo owner are always `manual`. three fresh model votes label the rest, and a second check can only raise the label to `manual`. a vote with no available model gives `manual`. an `auto` pr may merge on the agent verifier's `PASS`; a `manual` pr needs the owner's `PASS`.
 
 ## review in ci
 
-[`ci/github/arkan-review.yml`](ci/github/arkan-review.yml) runs `code-review` and `security-review` on each push to an open pr, keeps the findings and the round count in one comment on the pr (a later push gets only its new commits reviewed, and round 4 asks for a rethink), and sets an `arkan-review` check that fails while an `important` or security finding is open. the model reads committed files through `ci/opencode_agent.py`, with no shell or github access. to add it to a repo:
+[`.github/workflows/arkan-review.yml`](.github/workflows/arkan-review.yml) runs `code-review` and `security-review` on each push to an open pr, keeps the findings and the round count in one comment on the pr (a later push gets only its new commits reviewed, and round 4 asks for a rethink), and sets an `arkan-review` check that fails while an `important` or security finding is open. the model reads committed files through `ci/opencode_agent.py`, with no shell or github access. to add it to a repo:
 
 1. put arkan's skills in `skills/` or `.claude/skills/` on the default branch.
 2. add at least one model credential as a repo secret. `OPENCODE_API_KEY` is the usual one. `CODEX_AUTH_JSON` (a chatgpt login for codex) and `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) are optional fallbacks, tried in that order only when the one before is unavailable. see [`ci/README.md`](ci/README.md#credentials).
@@ -42,7 +42,7 @@ after a merge breaks main, `post-merge` finds the first bad merge, reverts or fi
 
 it skips docs-only prs, prs from forks, and the pull request that first installs the runner; it says so on the pr. the details are in [`ci/README.md`](ci/README.md).
 
-[`ci/github/check.yml`](ci/github/check.yml) runs the repo's check command (`bash scripts/check.sh` by default) on each push and pr, as a `check` job; `check` and `arkan-review` are the two checks a branch rule requires. see [`ci/README.md`](ci/README.md#check).
+[`.github/workflows/check.yml`](.github/workflows/check.yml) runs the repo's check command (`bash scripts/check.sh` by default) on each push and pr, as a `check` job; `check` and `arkan-review` are the two checks a branch rule requires. see [`ci/README.md`](ci/README.md#check).
 
 [`ci/github/arkan-merge.yml`](ci/github/arkan-merge.yml) is the merge gate a repo can install once instead of the broker: it merges a pr when every check on the head passed and a review on that head, from a reviewer with write access, begins with `PASS`. arkan itself merges through the broker (`agent-merge <pr> <sha>` after the person's `PASS`), not this gate; a consumer repo chooses one path and records `**Merge path:** gate` or `**Merge path:** broker` in `docs/agents/approvals.md`. install steps and branch rules: [`ci/README.md`](ci/README.md#arkan-merge).
 

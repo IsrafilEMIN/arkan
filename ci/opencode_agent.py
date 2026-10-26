@@ -453,7 +453,7 @@ def read_diff(snap: Snapshot, scope: object, path: object = None) -> str:
 
 
 def _changed_files(snap: Snapshot) -> list[str]:
-    proc = _run_git(snap.repo, ["diff", "--name-only", f"{snap.base}...{snap.head}"])
+    proc = _run_git(snap.repo, ["diff", "--name-only", "--no-renames", f"{snap.base}...{snap.head}"])
     names = [line for line in proc.stdout.decode("utf-8", "replace").splitlines() if line]
     return names[:MAX_LIST]
 

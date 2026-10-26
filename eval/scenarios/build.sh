@@ -92,7 +92,7 @@ copy_ci() {
 	cp -p "$script_dir/sandbox/check.yml" "$dir/.github/workflows/check.yml"
 	cp -p "$script_dir/sandbox/auto-merge.yml" "$dir/.github/workflows/auto-merge.yml"
 	workflow="$dir/.github/workflows/arkan-review.yml"
-	sed -E 's/^(  REVIEW_MODEL: ).*$/\1claude-sonnet-5-5/' "$arkan_root/ci/github/arkan-review.yml" >"$workflow"
+	sed -E 's/^(  REVIEW_MODEL: ).*$/\1claude-sonnet-5-5/' "$arkan_root/.github/workflows/arkan-review.yml" >"$workflow"
 	grep -q '^  REVIEW_MODEL: claude-sonnet-5-5$' "$workflow" || die "arkan-review.yml has no sonnet model line"
 }
 

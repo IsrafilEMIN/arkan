@@ -28,10 +28,8 @@ for f in ci/github/arkan-merge.yml .github/workflows/arkan-merge.yml; do
 	grep -qF "AGENT_MARK: \"$mark\"" "$f" || bad "$f: AGENT_MARK is not $mark"
 	grep -qF '"<!-- arkan:risk head=$HEAD label=auto -->"' "$f" || bad "$f: the risk marker it reads is not row 6's"
 done
-for f in ci/github/arkan-risk.yml .github/workflows/arkan-risk.yml; do
-	[ -f "$f" ] || continue
-	grep -qF "'<!-- arkan:risk head=%s label=%s -->" "$f" || bad "$f: the risk marker it writes is not row 6's"
-done
+f=.github/workflows/arkan-risk.yml
+grep -qF "'<!-- arkan:risk head=%s label=%s -->" "$f" 2>/dev/null || bad "$f: the risk marker it writes is not row 6's"
 
 # 3. no file outside .scratch/ names a path inside underground.
 while IFS= read -r hit; do

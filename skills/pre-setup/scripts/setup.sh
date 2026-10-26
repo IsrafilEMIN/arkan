@@ -11,7 +11,8 @@ skill="$(cd "$(dirname "$0")/.." && pwd -P)"
 refs="$skill/references"
 # the arkan checkout or plugin copy this skill came from, for the ci files.
 arkan="$(cd "$skill/../.." && pwd -P)"
-ci="$arkan/ci/github"
+ci_templates="ci/github"
+ci_workflows=".github/workflows"
 runner_src="$arkan/ci/opencode_agent.py"
 runner_dst="ci/opencode_agent.py"
 home_skills="${HOME:-}/.agents/skills"
@@ -31,6 +32,12 @@ root="$(cd "$root" && pwd -P)"
 
 # the ci workflow files pre-setup copies in: <item> <arkan file> <repo file>
 ci_items="ci-review:arkan-review.yml ci-check:check.yml ci-risk:arkan-risk.yml ci-post-merge:arkan-post-merge.yml ci-merge:arkan-merge.yml"
+ci_src() {
+	case "$1" in
+		arkan-merge.yml | arkan-post-merge.yml) printf '%s/%s' "$ci_templates" "$1" ;;
+		*) printf '%s/%s' "$ci_workflows" "$1" ;;
+	esac
+}
 
 say() { printf '%-16s %s%s\n' "$1" "$2" "${3:+  $3}"; }
 has() { [ -f "$root/$1" ]; }
@@ -673,9 +680,10 @@ own_ci() {
 }
 
 check_ci() {
-	local name=$1 src=$2 dst=".github/workflows/$2" repo="$root/.github/workflows/$2" want
-	if [ ! -f "$ci/$src" ]; then
-		say "$name" skip "arkan's ci/github/$src not found next to this skill"
+	local name=$1 src=$2 dst=".github/workflows/$2" repo="$root/.github/workflows/$2" from want
+	from="$arkan/$(ci_src "$src")"
+	if [ ! -f "$from" ]; then
+		say "$name" skip "arkan's $(ci_src "$src") not found next to this skill"
 	elif ! has "$dst"; then
 		if [ "$name" = ci-check ] && [ -n "$(own_ci)" ]; then
 			say "$name" hint "the repo runs its own ci ($(own_ci)); keep it, or copy $src"
@@ -683,13 +691,13 @@ check_ci() {
 			say "$name" missing "$dst"
 		fi
 	else
-		want="$(file_hash "$ci/$src")"
+		want="$(file_hash "$from")"
 		if [ "$(body_hash "$repo")" = "$want" ]; then
 			say "$name" ok "$dst"
 		elif [ "$(stamp_of "$repo")" = "$want" ]; then
 			say "$name" ok "$dst customized"
 		else
-			say "$name" out-of-date "$dst differs from $ci/$src; update it and merge the repo's settings"
+			say "$name" out-of-date "$dst differs from $from; update it and merge the repo's settings"
 		fi
 	fi
 }
@@ -941,12 +949,14 @@ apply() {
 				fi
 			fi
 			for pair in $ci_items; do [ "${pair%%:*}" = "$item" ] && src="${pair#*:}"; done
-			[ -f "$ci/$src" ] || { printf 'setup: %s not found\n' "$ci/$src" >&2; exit 1; }
+			local from
+			from="$arkan/$(ci_src "$src")"
+			[ -f "$from" ] || { printf 'setup: %s not found\n' "$from" >&2; exit 1; }
 			case "$item" in ci-review | ci-risk) install_runner ;; esac
 			mkdir -p "$root/.github/workflows"
 			local want
-			want="$(file_hash "$ci/$src")" || exit 1
-			cp "$ci/$src" "$root/.github/workflows/$src"
+			want="$(file_hash "$from")" || exit 1
+			cp "$from" "$root/.github/workflows/$src"
 			printf '# arkan-copy: %s\n' "$want" >>"$root/.github/workflows/$src"
 			;;
 		ci-runner) install_runner ;;

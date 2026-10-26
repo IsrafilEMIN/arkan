@@ -14,9 +14,6 @@
 - [ ] 01: Implement mental models into the arkan skillset #mental-models #needs-triage
   `.scratch/mental-models/issues/01-implement-mental-models.md` · blocked by: none
 
-- [ ] 60: One copy of each workflow arkan installs #arkan-flow #ready-for-agent
-  `.scratch/arkan-flow/issues/60-one-copy-of-each-installed-workflow.md` · blocked by: 59
-
 ## Todo
 
 - [ ] 07: Readme that says run pre-setup first #arkan-flow #ready-for-agent
@@ -194,3 +191,6 @@
 
 - [x] 51: A customized ci copy should not always read out of date #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/51-ci-copy-customization-drift.md` · blocked by: none
+
+- [x] 60: One copy of each workflow arkan installs #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/60-one-copy-of-each-installed-workflow.md` · blocked by: 59
