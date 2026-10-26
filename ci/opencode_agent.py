@@ -1318,6 +1318,14 @@ def _parse_candidates(payload: dict) -> list[SecurityCandidate]:
     return candidates
 
 
+def _parse_problem(parse: Callable[[dict], object], payload: dict) -> str:
+    try:
+        parse(payload)
+    except (RunnerError, ToolError) as exc:
+        return str(exc)
+    return ""
+
+
 def _evidence(snap: Snapshot, tag: str, file: str, line: int) -> bool:
     if not _exists(snap, snap.head, file):
         return False
@@ -1503,6 +1511,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             finding_properties,
             finding_required,
             max_turns,
+            validate=lambda payload: _parse_problem(_parse_findings, payload),
         )
     )
     spec_payload = _phase(
@@ -1520,6 +1529,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
         {**finding_properties, "note": {"type": "string"}},
         finding_required,
         max_turns,
+        validate=lambda payload: _parse_problem(_parse_findings, payload),
     )
     spec_findings = _parse_findings(spec_payload)
     spec_note = sanitize(spec_payload.get("note", ""), 200)
@@ -1555,6 +1565,7 @@ def run_review(snap: Snapshot, prompt: str, prior: str, chat: Chat, max_turns: i
             },
             ["candidates"],
             max_turns,
+            validate=lambda payload: _parse_problem(_parse_candidates, payload),
         )
     )
 

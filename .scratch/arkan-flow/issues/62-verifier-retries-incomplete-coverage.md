@@ -14,7 +14,8 @@
 - [x] coverage stays exact: integer non-boolean indexes, no duplicates, one result per candidate `1..N`; every result needs a boolean `keep`, and a kept result needs a valid `tag`
 - [x] a model that never fixes its coverage still fails the review closed
 - [x] six consumer-visible recovery cases fail on the old runner and pass on the new one; the persistent-omission case still fails closed
-- [x] `PYTHONDONTWRITEBYTECODE=1 bash scripts/check.sh` prints `check: ok` with 52 tests
+- [x] a finder submission that fails to parse gets the same correction: standards and spec findings, and security candidates, including a missing severity
+- [x] `PYTHONDONTWRITEBYTECODE=1 bash scripts/check.sh` prints `check: ok` with 54 tests
 - [ ] `ci/review-eval.sh --compare` misses no case caught before (`REVIEW.md`, review evals). this needs a headless reviewer and a model key on the person's machine
 
 ## Live-model comparison
@@ -26,4 +27,5 @@ attempted `PYTHONDONTWRITEBYTECODE=1 bash ci/review-eval.sh --compare`. the comm
 - 2026-10-25, owner: reported `the verifier did not check every finding` from a review run.
 - 2026-10-25, agent: local repro with one draft: `submit_verify` with `results: []` returns from `_conversation` in one call, then `_parse_verify` raises the reported error. a complete `keep: false` result for index 1 passes; missing index 1, extra index 2 and a duplicate index 1 each fail. `turns 16` in the log is the configured limit, not the turns used. the regression tests are written but not run in this worktree; the parent runs the red/green proof and the checks.
 - 2026-10-25, agent: the seven new tests pass with the fix. against `f9fff69`, six recovery cases raise the old verifier errors; the persistent-omission case still fails closed but lacks the new missing-index diagnostic. a separate `run_review` smoke with two candidates returned one kept finding after the verifier corrected `missing index 2`. boolean indexes, non-boolean `keep`, and kept results without a tag remain invalid.
+- 2026-10-25, owner: the same class fired on a live run of this ticket's own pr: `no findings returned (review step: failure; error, turns 16: the model returned a malformed candidate severity)`. the security finder submitted a candidate whose severity did not parse, and the review died after the finder phase returned. the retry now covers the finder submissions too, so the model sees the problem and submits again within the turn limit.
 - 2026-10-25, agent: `scripts/check.sh` passed with 52 tests. independent standards and spec reviews found no defects. the security review found no new high-confidence high or medium issue. no live model result is proven.

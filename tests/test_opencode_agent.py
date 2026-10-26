@@ -405,6 +405,36 @@ class VerifierCoverageTest(RepoCase):
         self.assertIn("the verifier did not check every finding", str(raised.exception))
         self.assertIn("missing index 1", str(raised.exception))
 
+    def test_candidate_without_a_severity_gets_a_retry_and_then_completes(self):
+        bad = {"category": "correctness", "symbol": "a.txt", "file": "a.txt", "line": 1, "severity": None, "body": "b"}
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": [bad]}, "security-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": []}, "security-2")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", "", chat, 40)
+        self.assertEqual(len(result.findings), 0)
+        retry = chat.seen[3][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "security-1"))
+        self.assertIn("malformed candidate severity", retry["content"])
+
+    def test_finding_with_a_malformed_line_gets_a_retry_and_then_completes(self):
+        bad = {"class": "correctness", "symbol": "a.txt", "file": "a.txt", "line": 0, "body": "b"}
+        replies = [
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": [bad]}, "standards-1")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "standards-2")]},
+            {"content": "", "tool_calls": [terminal_call("submit_findings", {"findings": []}, "spec")]},
+            {"content": "", "tool_calls": [terminal_call("submit_candidates", {"candidates": []}, "security")]},
+        ]
+        chat = ScriptedChat(replies)
+        result = agent.run_review(self.snap, "review this", "", chat, 40)
+        self.assertEqual(len(result.findings), 0)
+        retry = chat.seen[1][-1]
+        self.assertEqual((retry["role"], retry["tool_call_id"]), ("tool", "standards-1"))
+        self.assertIn("malformed finding line", retry["content"])
+
 
 class StubStage:
     def __init__(self, replies=None, error=None):
