@@ -64,6 +64,9 @@
 - [ ] 63: Skills and the seam follow the six broker verbs #arkan-flow #ready-for-agent
   `.scratch/arkan-flow/issues/63-skills-follow-the-six-broker-verbs.md` · blocked by: none
 
+- [ ] 64: Arkan-review posts its verdict as a commit status #arkan-flow #ready-for-agent
+  `.scratch/arkan-flow/issues/64-review-verdict-as-commit-status.md` · blocked by: none
+
 ## Done
 
 - [x] 20: Security-review skill #arkan-flow #ready-for-agent
