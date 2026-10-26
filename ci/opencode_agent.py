@@ -1097,6 +1097,16 @@ def _call_parts(call: object) -> tuple[str, str, dict | None]:
     return call["id"], function["name"], parsed if isinstance(parsed, dict) else None
 
 
+def _shape_problem(tools: list[dict], terminal: str, payload: dict) -> str:
+    schema = next(tool["function"]["parameters"] for tool in tools if tool["function"]["name"] == terminal)
+    for key in schema.get("required", []):
+        if key not in payload:
+            return f"{terminal} needs the field {key}"
+        if schema["properties"].get(key, {}).get("type") == "array" and not isinstance(payload[key], list):
+            return f"the field {key} of {terminal} must be a JSON array"
+    return ""
+
+
 def _conversation(
     chat: Chat,
     snap: Snapshot,
@@ -1124,10 +1134,12 @@ def _conversation(
         if not calls:
             last_content = message["content"]
             submitted = _json_content(message["content"])
-            if submitted is not None:
+            problem = _shape_problem(tools, terminal, submitted) if submitted is not None else ""
+            if submitted is not None and not problem:
                 return submitted
             messages.append({"role": "assistant", "content": message["content"]})
-            messages.append({"role": "user", "content": f"Call a tool now. Finish by calling {terminal}."})
+            retry = f"{problem}. " if problem else ""
+            messages.append({"role": "user", "content": f"{retry}Call a tool now. Finish by calling {terminal} with every required field."})
             continue
         assistant = {"role": "assistant", "content": message["content"], "tool_calls": calls}
         messages.append(assistant)
@@ -1139,6 +1151,11 @@ def _conversation(
                     raise RunnerError("the model submitted twice")
                 if arguments is None:
                     raise RunnerError("the model returned malformed submit arguments")
+                problem = _shape_problem(tools, terminal, arguments)
+                if problem:
+                    retry = f"{problem}. Call {terminal} again with every required field."
+                    messages.append({"role": "tool", "tool_call_id": call_id, "content": json.dumps({"error": retry})})
+                    continue
                 submitted = arguments
                 continue
             if arguments is None:
@@ -1152,18 +1169,27 @@ def _conversation(
         if submitted is not None:
             return submitted
     messages.append({"role": "user", "content": f"You are out of tool turns. Return only the JSON object that {terminal} takes, and nothing else."})
-    try:
-        message = chat.next(session, messages, [])
-    except ProviderError as exc:
-        raise RunnerError("the model did not submit a result") from exc
-    for call in message["tool_calls"]:
-        _, name, arguments = _call_parts(call)
-        if name == terminal and arguments is not None:
-            return arguments
-    last_content = message["content"] or last_content
-    submitted = _json_content(message["content"])
-    if submitted is not None:
-        return submitted
+    for attempt in range(2):
+        try:
+            message = chat.next(session, messages, [])
+        except ProviderError as exc:
+            raise RunnerError("the model did not submit a result") from exc
+        candidate = None
+        for call in message["tool_calls"]:
+            _, name, arguments = _call_parts(call)
+            if name == terminal and arguments is not None:
+                candidate = arguments
+                break
+        if candidate is None:
+            last_content = message["content"] or last_content
+            candidate = _json_content(message["content"])
+        if candidate is None:
+            break
+        problem = _shape_problem(tools, terminal, candidate)
+        if not problem or attempt == 1:
+            return candidate
+        messages.append({"role": "assistant", "content": json.dumps(candidate)})
+        messages.append({"role": "user", "content": f"{problem}. Return only the JSON object that {terminal} takes, with every required field, and nothing else."})
     raise RunnerError(f"the model did not submit a result: {sanitize(last_content, 200)}")
 
 
