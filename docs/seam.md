@@ -5,7 +5,7 @@ arkan and underground share one machine and one agent workflow. underground boun
 | # | interface | owner | what arkan does with it |
 |---|---|---|---|
 | 1 | launcher entry points (`omp-srt`, `claude` on `PATH`) | underground | names them; never reaches past them |
-| 2 | broker clients and their verbs (`agent-gh` and its ten verbs, `agent-merge`, `agent-worktree-remove`) | underground | `arkan-mode`'s forge steps call them on the broker route |
+| 2 | broker clients and their verbs (`agent-gh` and its ten verbs, `agent-worktree-remove`) | underground | `arkan-mode`'s forge steps call them on the broker route |
 | 3 | hook wiring (`~/.agents/hooks.json`, the shell-hooks extension, `~/.agents/git-hooks/`) | underground | nothing; the `freeze` skill's own adapters are private to it |
 | 4 | policy file (`~/.omp/policy.yml`) | underground | nothing |
 | 5 | tracker contract (`docs/agents/issue-tracker.md`) | arkan | `pre-setup`'s seeds and `board.sh build\|check\|fields`; with a local tracker the field and board checks run locally through `pre-setup`, because a consumer repo's ci does not fetch arkan (arkan's own ci runs its `scripts/board.sh` copy) |

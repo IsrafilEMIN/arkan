@@ -44,7 +44,7 @@ it skips docs-only prs, prs from forks, and the pull request that first installs
 
 [`ci/github/check.yml`](ci/github/check.yml) runs the repo's check command (`bash scripts/check.sh` by default) on each push and pr, as a `check` job; `check` and `arkan-review` are the two checks a branch rule requires. see [`ci/README.md`](ci/README.md#check).
 
-[`ci/github/arkan-merge.yml`](ci/github/arkan-merge.yml) is the merge gate a repo can install once instead of the broker: it merges a pr when every check on the head passed and a review on that head, from a reviewer with write access, begins with `PASS`. arkan itself merges through the broker (`agent-merge <pr> <sha>` after the person's `PASS`), not this gate; a consumer repo chooses one path and records `**Merge path:** gate` or `**Merge path:** broker` in `docs/agents/approvals.md`. install steps and branch rules: [`ci/README.md`](ci/README.md#arkan-merge).
+[`ci/github/arkan-merge.yml`](ci/github/arkan-merge.yml) is the merge gate a repo can install once instead of the broker: it merges a pr when every check on the head passed and a review on that head, from a reviewer with write access, begins with `PASS`. arkan itself merges through the broker (`agent-gh pr-merge <owner/repo> <pr> <head-sha>` after the person's `PASS`), not this gate; a consumer repo chooses one path and records `**Merge path:** gate` or `**Merge path:** broker` in `docs/agents/approvals.md`. install steps and branch rules: [`ci/README.md`](ci/README.md#arkan-merge).
 
 ## where the skills come from
 

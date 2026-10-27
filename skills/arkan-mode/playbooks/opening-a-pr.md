@@ -33,7 +33,7 @@ After the sections, attach videos or screenshots when they prove a claim. Full S
 - comment: `gh api -X POST .../issues/<n>/comments -F body=@<file>`.
 - review or verdict: `gh api -X POST .../pulls/<n>/reviews -f event=COMMENT -f commit_id=<head-sha> -F body=@<file>`.
 - edit base: `gh api -X PATCH .../pulls/<n> -f base=<branch>`.
-- merge: no raw merge call. No session calls `gh pr merge` or another raw merge api; the repo's merge path lands the PR: its `arkan-merge` gate or the broker (`agent-merge <pr> <head-sha>` after green checks and the person's `PASS` on a `manual` PR; see `playbooks/shipping.md` step 4). Read a landed PR back with the view call: `merged` is `true` and `base.ref` is the base you expect.
+- merge: no raw merge call. No session calls `gh pr merge` or another raw merge api; the repo's merge path lands the PR: its `arkan-merge` gate or the broker (`agent-gh pr-merge <owner/repo> <pr> <head-sha>` after green checks and the person's `PASS` on a `manual` PR; see `playbooks/shipping.md` step 4). Read a landed PR back with the view call: `merged` is `true` and `base.ref` is the base you expect.
 
 REST cannot mark a PR ready (`gh pr ready`); a PR created over REST without `draft` is already ready. Auto-merge stays unarmed: `gh pr merge --auto` is a merge api call, and no session calls it.
 

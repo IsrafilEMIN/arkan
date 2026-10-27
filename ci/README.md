@@ -199,7 +199,7 @@ it reads the code with `contents: read` and nothing else, stops after 15 minutes
 
 ## arkan-merge
 
-[`github/arkan-merge.yml`](github/arkan-merge.yml) is a merge gate a repo can install once. arkan does not use it: arkan's merge path is the broker (`agent-merge <pr> <sha>` on the owner's machine). a repo that installs the gate merges a pull request once its verifier posts a `PASS` verdict on the head commit and every check on that commit passed; after that the agent never merges: it opens the pr, its verifier posts the verdict, and the repo merges. it uses no third-party actions, only `gh` on the runner.
+[`github/arkan-merge.yml`](github/arkan-merge.yml) is a merge gate a repo can install once. arkan does not use it: arkan's merge path is the broker (`agent-gh pr-merge <owner/repo> <pr> <head-sha>` on the owner's machine). a repo that installs the gate merges a pull request once its verifier posts a `PASS` verdict on the head commit and every check on that commit passed; after that the agent never merges: it opens the pr, its verifier posts the verdict, and the repo merges. it uses no third-party actions, only `gh` on the runner.
 
 ### add it to a repo
 
@@ -218,7 +218,7 @@ a repo that chose the gate path follows these steps; a repo on the broker path s
 
 a repo uses one merge path, recorded in `docs/agents/approvals.md` as `**Merge path:** gate` or `**Merge path:** broker`. `pre-setup` asks for the choice; the broker never reads the file.
 
-the gate path needs required status checks, which need github pro on a private repo, or a public repo. on the free plan a private repo refuses a ruleset (403), so the gate cannot bind: nothing requires `check` or `arkan-review`, and nothing stops a merge around them. that repo uses the broker path instead: `agent-merge <pr> <sha>`.
+the gate path needs required status checks, which need github pro on a private repo, or a public repo. on the free plan a private repo refuses a ruleset (403), so the gate cannot bind: nothing requires `check` or `arkan-review`, and nothing stops a merge around them. that repo uses the broker path instead: `agent-gh pr-merge <owner/repo> <pr> <head-sha>`.
 
 the broker path needs no ruleset. the broker applies row 6's rule itself (seam row 6, `docs/seam.md`): a `manual` pull request lands only on the person's unmarked `PASS` on the head, and an `auto` one may land on the agent verifier's marked `PASS`. it merges with `--merge --delete-branch` and the head pinned.
 
