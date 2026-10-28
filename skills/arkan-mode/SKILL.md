@@ -177,16 +177,24 @@ open the file at `playbooks/<file>`. where a step names a tool your harness does
 
 - **investigation** (`investigation.md`). a read-only question: how does x work, why is y like this, should we do x or y.
 - **bug fix** (`bug-fix.md`). a defect to reproduce, find the root cause of, and fix with evidence.
+- **perf issue** (`perf-issue.md`). a measured slowness to trace and improve against a baseline.
+- **hillclimb** (`hillclimb.md`). steady improvement of one metric toward a target: one change, one measurement, keep or revert. a one-off slowness is a perf issue.
+- **runtime forensics** (`runtime-forensics.md`). diagnose a runtime symptom (a leak, an idle cpu spin, a glitch) from live instrumentation. the deliverable is a diagnosis, not a fix.
+- **trace forensics** (`trace-forensics.md`). diagnose a profiling artifact handed to you after the fact (a cpuprofile, a trace, a heap snapshot). the deliverable is a diagnosis, not a fix.
 - **feature** (`feature.md`). new or changed behavior, built from a named data shape.
 - **refactor** (`refactoring.md`). the structure changes, the behavior does not.
 - **prototype** (`prototype.md`). throwaway code to make a design decision, or to settle a question by watching what happens.
+- **visual parity** (`visual-parity.md`). two ui implementations must look the same, or a styling system migrates.
 - **authoring a skill** (`authoring-a-skill.md`). writing or changing a `SKILL.md`.
+- **eval** (`eval.md`). test how a skill, structure or prompt change affects agent behavior before you promote it.
 - **autonomous run** (`autonomous-run.md`). a long task driven to a checkable end without stopping.
+- **orchestrate** (`orchestrate.md`). a standing program handed to one coordinator: many days, many prs, many subagents. autonomous run drives one task to a predicate.
 - **pause safely** (`pause-safely.md`). stop cleanly so a fresh agent can continue.
 - **session pickup** (`session-pickup.md`). continue work another agent left.
+- **worktree cleanup** (`worktree-cleanup.md`). reclaim local disk from merged or abandoned worktrees and old simulators, with [`scripts/worktree-audit.sh`](scripts/worktree-audit.sh).
 - **opening a pr** (`opening-a-pr.md`). the end of every other code playbook.
 - **babysit** (`babysit.md`). drive an open pr to merge-ready: conflicts, review threads, ci.
 - **shipping** (`shipping.md`). land a green pr that a verifier, not its author, has checked.
 - **spec** (`spec.md`). a spec with tickets: one task loop per ready ticket on an integration branch, then one review and one pr.
 
-pstack's other playbooks (perf, hillclimb, forensics, visual parity, eval, orchestrate, autopilot, worktree cleanup) are not part of arkan yet. a multi-phase plan with no tickets yet is shaping, not a task: see step 0.
+pstack's autopilot and multi-phase-plan playbooks are not part of arkan. a multi-phase plan with no tickets yet is shaping, not a task: see step 0.
