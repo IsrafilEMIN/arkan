@@ -12,7 +12,7 @@ hooks:
 
 # Freeze
 
-Freeze writes to one directory. The guard script allows edits under the frozen directory. It blocks writes outside it. The same script serves every harness through a thin adapter.
+Freeze writes to one directory. The guard script allows edits under the frozen directory. It blocks writes outside it. The guard runs as a claude code pre-tool-use hook.
 
 ## Procedure
 
@@ -40,23 +40,20 @@ Freeze writes to one directory. The guard script allows edits under the frozen d
 
 The freeze is per project. The state key is the resolved project directory (`/` becomes `%`). The state file holds one absolute directory path.
 
-## Harness wiring
+## Setup
 
-| harness | wiring | how you arm it | covers shell writes? |
-| --- | --- | --- | --- |
-| claude-code | the frontmatter `hooks` block in this file. it registers when you type `/freeze`. copy the same block into settings.json to keep it on in every session | `/freeze <dir>`, then the skill runs the arm command | best-effort |
-| omp | `install.sh` links `adapters/freeze.ts` to `~/.omp/agent/hooks/pre/freeze.ts`. the extension also registers a `/freeze` command | `/freeze <dir>` in the session | best-effort |
-| pi | `install.sh` links the same file to `~/.pi/agent/extensions/freeze.ts` | `/freeze <dir>` in the session | best-effort |
-| codex | `install.sh` merges `adapters/codex-hooks.json` into `~/.codex/hooks.json` | run the arm command, or ask in chat | best-effort |
-| grok | `install.sh` links `adapters/grok-hooks.json` into `~/.grok/hooks/` | run the arm command, or ask in chat | best-effort |
-| hermes | paste `adapters/hermes-config.yaml` into the hermes config | run the arm command, or ask in chat | best-effort |
+Claude code only. Other harnesses are not supported.
 
-`install.sh` links what it can and prints the steps it cannot do. The hook stays inert until a state file exists. A harness with no command registration is armed by running the arm command, or by asking in chat. Read the snippets in `adapters/`.
+1. Install the skill so the guard sits at `$HOME/.agents/skills/freeze/scripts/freeze-guard.sh`, and install `jq`.
+2. The frontmatter `hooks` block in this file registers the guard when you type `/freeze <dir>`. The skill then runs the arm command.
+3. To keep the guard on in every session, copy the same block into the `hooks` key of `~/.claude/settings.json`. Add `Bash` to the matcher (`"Write|Edit|Bash"`) to turn on the shell write check.
+
+The hook stays inert until a state file exists.
 
 ## Limits
 
 - The guard checks the file tools of the harness only. Read tools pass untouched.
-- Bash writes are a best-effort text check. The guard reads `>`, `>>`, `2>`, `&>`, `tee`, and `sed -i` targets. It also reads `*** Add File:`, `*** Update File:`, and `*** Delete File:` lines from a codex `apply_patch` payload. A quoted path with a space, a variable, or a command substitution can hide a target.
+- Bash writes are a best-effort text check, and only when `Bash` is in the matcher. The guard reads `>`, `>>`, `2>`, `&>`, `tee`, and `sed -i` targets. A quoted path with a space, a variable, or a command substitution can hide a target.
 - A subprocess write is invisible. A program that opens a file itself never reaches the guard.
 - Path checks handle `..` and symlinks. The guard resolves the deepest existing ancestor of each target, then re-appends the rest. A textual compare alone cannot do this.
 - This is a seatbelt, not a sandbox. It stops a mistaken edit. It does not stop a determined process.

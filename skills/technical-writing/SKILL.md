@@ -90,7 +90,7 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 ## Voice and repo specifics
 
 - Apply the **unslop** skill to every doc this skill touches. That skill owns the slop-pattern catalog: AI vocabulary, filler, hedging, formatting tells.
-- PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body follows the `pr` skill's template and is a briefing a reviewer can read in under a minute. Do not paste swarm logs, SHA lists, or metric tables. Link them.
+- PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body follows the arkan-mode `opening-a-pr` playbook's template and is a briefing a reviewer can read in under a minute. Do not paste swarm logs, SHA lists, or metric tables. Link them.
 - Use the repo's own words: the terms in `GLOSSARY.md` win over synonyms (`domain-modeling` owns it).
 - Product UI strings are not documentation. Use your product's copy guidelines for those.
 - Format code snippets the way the repo does. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.

@@ -21,7 +21,7 @@ If the target is vague ("why do we do it this way?"), make your best guess from 
 
 ## Step 2. Establish the code anchor
 
-Before spawning investigators, build the seed context yourself: file paths and line ranges, key symbols, the last commits touching the target, pull request numbers from merge commits (`(#1234)` in the subject, or "Merge pull request #1234"), and linked ticket ids. Run `git blame -L <start>,<end> <file>`, `git log --follow -p -- <file>`, `git log --oneline -20 -- <file>`, and `git log -1 --format=%B <commit>`. Then pull the pull request bodies and discussion for each substantive commit: `gh pr view <n> --json title,body,author,createdAt,mergedAt,labels,closingIssuesReferences,comments,reviews`, or on the broker route `agent-gh pr-view` (arkan-mode's forge). This anchor goes to every investigator and to the synthesizer.
+Before spawning investigators, build the seed context yourself: file paths and line ranges, key symbols, the last commits touching the target, pull request numbers from merge commits (`(#1234)` in the subject, or "Merge pull request #1234"), and linked ticket ids. Run `git blame -L <start>,<end> <file>`, `git log --follow -p -- <file>`, `git log --oneline -20 -- <file>`, and `git log -1 --format=%B <commit>`. Then pull the pull request bodies and discussion for each substantive commit: `gh pr view <n> --json title,body,author,createdAt,mergedAt,labels,closingIssuesReferences,comments,reviews`. This anchor goes to every investigator and to the synthesizer.
 
 ## Step 3. Spawn parallel investigators
 
@@ -39,13 +39,13 @@ List the connectors (mcp servers) this run can call: in claude code, the tools n
 6. error / exception tracking
 7. product analytics warehouse
 
-Source control is always available through `git` (and `gh` or the broker). The repo's own tracker is always available too: read `docs/agents/issue-tracker.md`; for a local markdown tracker, the tickets and their `## Comments` and `## Answer` sections under `.scratch/` are category 2, searchable with `grep`. For the other categories, classify by the connector's name, instructions and tools. If one could fit two categories, pick its main evidence and note the ambiguity in the coverage map.
+Source control is always available through `git` (and `gh`). The repo's own tracker is always available too: read `docs/agents/issue-tracker.md`; for a local markdown tracker, the tickets and their `## Comments` and `## Answer` sections under `.scratch/` are category 2, searchable with `grep`. For the other categories, classify by the connector's name, instructions and tools. If one could fit two categories, pick its main evidence and note the ambiguity in the coverage map.
 
 Spawn one investigator per category that has a source, all at once, each owning exactly one source. Don't ask one agent to cover several.
 
 Each investigator's prompt is [`references/investigator-prompt.md`](references/investigator-prompt.md) filled in, plus:
 
-- the category playbook from `references/sources/<source>.md` for the selected source, adapted from the examples in [`references/source-playbook.md`](references/source-playbook.md) (`code-archaeology.md` for source control and a local tracker);
+- its playbook from [`references/source-playbook.md`](references/source-playbook.md): `references/sources/code-archaeology.md` for source control and a local tracker, or the connector search steps for any other category;
 - `references/sources/incident-postmortem.md` **if the target code looks defensive** (null checks, retry logic, timeouts, rate limits, feature flags, egress guards, out-of-memory handlers);
 - the code anchor and the person's original question.
 
