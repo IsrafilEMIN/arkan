@@ -39,7 +39,7 @@ REST cannot mark a PR ready (`gh pr ready`); a PR created over REST without `dra
 
 **Size and stacks.** Prefer five narrow PRs to one large PR. A stack is a base-branch chain. The root PR targets trunk. Each child branch starts at its parent's exact tip and its PR targets the parent branch. As a parent merges, move its child onto trunk per `playbooks/shipping.md` step 4. Create a child with `gh pr create --base <parent-branch>`, and retarget one with `gh pr edit <pr> --base <parent-branch>` (or the run's PR tool). Branch from trunk only for independent work. Rebase on trunk before substantial stack work.
 
-**Readiness.** Open every PR ready, never as a draft. A built-in PR tool can default to draft, so set `draft: false` on every creation call through it. With `gh`, omit `--draft`. If a PR still opens as a draft, mark it ready through the PR tool or with `gh pr ready <number>`. Run `gh pr view <number>` (or the PR tool's read) before you refer to PR status.
+**Readiness.** Open every PR ready, never as a draft. A built-in PR tool can default to draft, so set `draft: false` on every creation call through it. With `gh`, run `gh pr create --base <base> --head <branch> --title <title> --body-file <file>` without `--draft`. If a PR still opens as a draft, mark it ready through the PR tool or with `gh pr ready <number>`. Run `gh pr view <number>` (or the PR tool's read) before you refer to PR status.
 
 **Babysit.** Opening a PR does not start a babysit. Post the URL and keep building. Finish the phase or stack first. Run a separate babysit pass only when the user asks for one after the whole stack exists. A babysit for each new PR stalls the build and spends checks on commits later waves restart. Push back when feedback drifts from intent.
 

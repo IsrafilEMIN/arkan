@@ -25,7 +25,7 @@ arkan mode runs tasks only. the work before a task is **shaping**, and a person 
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
 
-**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the person sets the role with `/triage`, so the role is the person's go.
+**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, from `/to-tickets` after the person approves the breakdown, or from `/to-spec` when it publishes the spec.
 
 when the task is a ticket:
 
@@ -83,13 +83,13 @@ github is the forge, through plain `git` and `gh`. when the run provides github 
 read the target slug off the working repo's own origin: `git remote get-url origin`, then strip a leading `https://github.com/` or `git@github.com:` and a trailing `.git`. take the branch and the head sha from the working checkout (`git branch --show-current`, `git rev-parse HEAD`). pass every pr body, review and reply as a file, never inline in a shell command.
 
 - **push a checkpoint.** `git push -u origin <branch>`. `git ls-remote origin refs/heads/<branch>` printing the head sha is the proof.
-- **open a pr.** `gh pr create --base <base> --head <branch> --title <title> --body-file <file>`, which opens it ready.
+- **open a pr.** the opening-a-pr playbook.
 - **read a pr.** `gh pr view <number> --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,mergedAt,headRefName,headRefOid,baseRefName,latestReviews,reviewRequests,mergeCommit`. `gh pr checks <number>` reads the checks. `gh api repos/<owner>/<repo>/pulls/<number>/comments` lists the review comments, each with its `id`, `path`, `line` and `in_reply_to_id`.
 - **read the diff.** `gh pr diff <number>`.
 - **review a pr.** `gh api -X POST repos/<owner>/<repo>/pulls/<number>/reviews -f event=COMMENT -f commit_id=<head-sha> -F body=@<file>` posts a comment review bound to that head, which is how a verifier posts its verdict: the reply json reads `state` `COMMENTED` with `commit_id` at that head sha. it is a comment: the review decision, and any approval, stay the person's.
 - **reply on a thread.** `gh api -X POST repos/<owner>/<repo>/pulls/<number>/comments/<comment-id>/replies -F body=@<file>` answers one review comment, with the thread's first comment `id` as the id. the reply json carries the new comment's `id`: cite it.
 - **retarget a stacked pr.** after the parent merges, `gh pr edit <number> --base <base>` moves its child onto trunk. read the base back with `gh pr view <number> --json baseRefName`. this is the single sanctioned move of a base.
-- **merge.** only on the person's go-ahead for that pr, and after every check is green: `gh pr merge <number> --match-head-commit <head-sha>` with the repo's merge method (`--squash`, `--merge` or `--rebase`). the person may merge it themselves instead. arm auto-merge (`gh pr merge --auto`) only on the same go-ahead.
+- **merge.** the shipping playbook, step 4.
 - **clean up.** from a surviving checkout of the repo. first pin the head: `gh pr view <number> --json state,headRefOid` must read `MERGED`; its `headRefOid` is `<head-sha>`. then check both branch heads: `git rev-parse refs/heads/<branch>` and `git ls-remote --heads origin <branch>` must each print `<head-sha>`, or nothing when that ref is already gone. if either prints another sha, the branch holds later commits: stop and report both shas. then `git worktree remove <worktree-path>`, then `git branch -D <branch>` (a squash merge leaves the branch unmerged in git's eyes, so `-d` refuses it), then `git push --force-with-lease=refs/heads/<branch>:<head-sha> origin --delete <branch>`, whose lease refuses the delete if the remote head moved after the check.
 
 a nonzero exit means the action did not happen: report its stderr and stop.
@@ -98,7 +98,7 @@ a nonzero exit means the action did not happen: report its stderr and stop.
 
 ## autonomy
 
-**do it.** reversible work goes ahead without asking: code, branches, draft prs, notes, scratch scripts. a wrong reversible choice costs less than a blocked agent. do the work, show the result, and say what the user can change.
+**do it.** reversible work goes ahead without asking: code, branches, prs, notes, scratch scripts. a wrong reversible choice costs less than a blocked agent. do the work, show the result, and say what the user can change.
 
 **always stop and ask** before an action no one can undo, or one the person owns: merge a pr, force-push to a shared branch, deploy, delete data, send a message outside the project.
 
