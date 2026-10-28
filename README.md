@@ -4,7 +4,7 @@ arkan is one bundle of agent skills for engineering work. a person shapes the wo
 
 ## install
 
-link or copy each folder in [`skills/`](skills/) into the folder your harness reads skills from. then run `/pre-setup` once in each repo where you use arkan: it sets up the issue tracker, the triage labels, the domain docs and the `TODO.md` board.
+for omp, run `skills/pre-setup/scripts/setup.sh apply omp` from this checkout, or `/pre-setup`: it links each folder in [`skills/`](skills/) into omp's skills folder. for any other harness, link or copy each `skills/<name>` into the folder that harness reads skills from yourself. then run `/pre-setup` once in each repo where you use arkan: it sets up the issue tracker, the triage labels, the domain docs and the `TODO.md` board.
 
 ## the flow in one view
 

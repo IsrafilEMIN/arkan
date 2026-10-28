@@ -1,6 +1,6 @@
 ---
 name: ketchup
-description: "Catch the person up on what changed in this chat since their last message, in plain words and small visuals, and list every item waiting on them with what they need to decide it from the reply alone. Use for /ketchup or 'catch me up on this chat'."
+description: "Catch the person up on what changed in this chat since their last message, in plain words and small visuals, and list every item waiting on them with what they need to decide it from the reply alone. Use for /ketchup."
 disable-model-invocation: true
 ---
 
