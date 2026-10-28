@@ -47,7 +47,7 @@ when the task is a ticket:
 
 each line names the skill to call today.
 
-- a term or a domain rule is unclear inside the task → `grilling` and `domain-modeling`. if the answer changes what to build, stop: the work is not a task (step 0).
+- a term or a domain rule is unclear inside the task → `grilling` with domain-modeling on. if the answer changes what to build, stop: the work is not a task (step 0).
 - code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook).
 - a behavior to build, or a bug with a cheap test path → `tdd`.
 - something is broken, flaky or slow → `diagnosing-bugs`.
