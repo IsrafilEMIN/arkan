@@ -2,11 +2,11 @@
 
 Where each harness reads skills and instructions, and how pre-setup sets it up. The canonical home is `~/.agents/skills/<name>/`: a harness that reads it needs no link.
 
-Sources: `skills/symlink-first/SKILL.md`'s agent map (verified 2026-10 against each harness's docs or source), the sources ticket 04 read on 2026-10-18, and tickets 05 and 06. A fact with no source below is `unverified`: check the harness's own docs before you rely on it.
+Sources: `skills/symlink-first/SKILL.md`'s agent map (verified 2026-10 against each harness's docs or source) and each harness's docs or source, read 2026-10-18. A fact with no source below is `unverified`: check the harness's own docs before you rely on it.
 
 ## Name scan scope
 
-On 2026-10-20 the owner narrowed ticket 17 from eight harnesses to "scan your three harnesses": Claude code, Codex and Omp. Harness setup and detection below are unchanged. The name scanner does not traverse Pi, Hermes, dsh, Cursor or Opencode roots or parse their config. It reports those arguments as `unverified` and continues with supported arguments.
+On 2026-10-20 the owner narrowed the name scan from eight harnesses to "scan your three harnesses": Claude code, Codex and Omp. Harness setup and detection below are unchanged. The name scanner does not traverse Pi, Hermes, dsh, Cursor or Opencode roots or parse their config. It reports those arguments as `unverified` and continues with supported arguments.
 
 | harness | candidate roots | discovery and missing-name rule |
 |---|---|---|
@@ -28,14 +28,14 @@ Sources read 2026-10-20:
 
 ## Claude code
 
-- user skills: `~/.claude/skills/<name>/` as a link, or the arkan plugin, which names each skill `arkan:<name>`. Source: `skills/symlink-first/SKILL.md`, agent map (verified 2026-10); ticket 06.
-- project skills: `<repo>/.claude/skills/<name>/`. Source: `skills/pre-setup/SKILL.md`, `ci-review` row (2026-10-19).
-- instruction file: `CLAUDE.md`, at `~/.claude/CLAUDE.md` for the user and `<repo>/CLAUDE.md` for a repo. Source: agent map (verified 2026-10); ticket 06.
+- user skills: `~/.claude/skills/<name>/` as a link, or the arkan plugin, which names each skill `arkan:<name>`. Source: `skills/symlink-first/SKILL.md`, agent map (verified 2026-10).
+- project skills: `<repo>/.claude/skills/<name>/`. Source: <https://code.claude.com/docs/en/skills>, read 2026-10-18.
+- instruction file: `CLAUDE.md`, at `~/.claude/CLAUDE.md` for the user and `<repo>/CLAUDE.md` for a repo. Source: agent map (verified 2026-10).
 - frontmatter: reads invocation from `SKILL.md` frontmatter, including `disable-model-invocation`. The full field list is `unverified`. Source: agent map (verified 2026-10).
 - manual only: `disable-model-invocation: true` in `SKILL.md`. Source: agent map (verified 2026-10).
 - symlinks: follows them. A link in `~/.claude/skills/` is how it reads a skill outside its own folder. Source: agent map (verified 2026-10).
 - docs: <https://code.claude.com/docs/en/skills>, read 2026-10-18.
-- setup: `apply claude-plugin` installs the plugin, with no link to an arkan skill in `~/.claude/skills/`. In a repo, `apply claude-md` links `CLAUDE.md` to `AGENTS.md`. Source: agent map (verified 2026-10); tickets 04 and 06.
+- setup: `apply claude-plugin` installs the plugin, with no link to an arkan skill in `~/.claude/skills/`. In a repo, `apply claude-md` links `CLAUDE.md` to `AGENTS.md`. Source: agent map (verified 2026-10).
 
 ## Codex
 
@@ -67,7 +67,7 @@ Version 0.2.
 
 Version 1.1.
 
-- user skills: `~/.agents/skills/`. Source: agent map (verified 2026-10). Pi name scanning is outside ticket 17's approved scope.
+- user skills: `~/.agents/skills/`. Source: agent map (verified 2026-10). Pi name scanning is outside the name scan's scope.
 - project skills: `unverified`.
 - instruction file: `~/.pi/agent/AGENTS.md` for the user. The project file is `unverified`. Source: agent map (verified 2026-10).
 - frontmatter: `unverified`.

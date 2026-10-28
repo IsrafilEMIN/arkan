@@ -4,16 +4,12 @@
 #   setup.sh apply <item> [repo-root]  install one item that needs no choice
 # states: ok, missing, out-of-date, hint (a pointer only), skip (does not apply here).
 # check changes nothing. apply touches only local files; nothing here talks to a host.
-# name clashes plug in here with ticket 17.
 set -eu
 
 skill="$(cd "$(dirname "$0")/.." && pwd -P)"
 refs="$skill/references"
-# the arkan checkout or plugin copy this skill came from, for the ci files.
+# the arkan checkout or plugin copy this skill came from.
 arkan="$(cd "$skill/../.." && pwd -P)"
-ci="$arkan/ci/github"
-runner_src="$arkan/ci/opencode_agent.py"
-runner_dst="ci/opencode_agent.py"
 home_skills="${HOME:-}/.agents/skills"
 tab="$(printf '\t')"
 
@@ -28,9 +24,6 @@ esac
 root=${1:-$(pwd -P)}
 [ -d "$root" ] || { printf 'setup: no directory %s\n' "$root" >&2; exit 2; }
 root="$(cd "$root" && pwd -P)"
-
-# the ci workflow files pre-setup copies in: <item> <arkan file> <repo file>
-ci_items="ci-review:arkan-review.yml ci-check:check.yml ci-risk:arkan-risk.yml ci-post-merge:arkan-post-merge.yml ci-merge:arkan-merge.yml"
 
 say() { printf '%-16s %s%s\n' "$1" "$2" "${3:+  $3}"; }
 has() { [ -f "$root/$1" ]; }
@@ -513,45 +506,6 @@ apply_arkan() {
 	[ "$clashes" = 0 ] || exit 1
 }
 
-file_hash() { # path
-	if command -v sha256sum >/dev/null 2>&1; then
-		sha256sum "$1" | cut -d' ' -f1
-	elif command -v shasum >/dev/null 2>&1; then
-		shasum -a 256 "$1" | cut -d' ' -f1
-	elif command -v cksum >/dev/null 2>&1; then
-		cksum "$1" | cut -d' ' -f1
-	else
-		printf 'setup: no sha256sum, shasum or cksum\n' >&2
-		return 1
-	fi
-}
-
-body_hash() { # path: the hash with every arkan-copy line removed
-	local tmp
-	tmp="$(mktemp)"
-	grep -vE '^# arkan-copy: [0-9a-f]+$' "$1" >"$tmp" || true
-	file_hash "$tmp"
-	rm -f "$tmp"
-}
-
-stamp_of() { # path
-	awk '/^# arkan-copy: [0-9a-f]+$/ { print substr($0, 15); exit }' "$1"
-}
-
-merge_path() {
-	local f="$root/docs/agents/approvals.md" broker="" gate=""
-	[ -f "$f" ] || return 0
-	if grep -qxF '**Merge path:** broker' "$f"; then broker=1; fi
-	if grep -qxF '**Merge path:** gate' "$f"; then gate=1; fi
-	if [ -n "$broker" ] && [ -n "$gate" ]; then
-		printf 'both'
-	elif [ -n "$broker" ]; then
-		printf 'broker'
-	elif [ -n "$gate" ]; then
-		printf 'gate'
-	fi
-}
-
 tracker_kind() {
 	local f="$root/docs/agents/issue-tracker.md" head
 	[ -f "$f" ] || return 0
@@ -560,7 +514,6 @@ tracker_kind() {
 	case "$head" in
 		*"local markdown"*) printf local ;;
 		*github*) printf github ;;
-		*gitlab*) printf gitlab ;;
 		*) printf other ;;
 	esac
 }
@@ -661,74 +614,6 @@ agents_board_line() {
 	' "$root/AGENTS.md"
 }
 
-# the repo's own workflow files: every .yml/.yaml in .github/workflows/ that is not arkan's.
-own_ci() {
-	local f out=""
-	for f in "$root"/.github/workflows/*.yml "$root"/.github/workflows/*.yaml; do
-		[ -f "$f" ] || continue
-		case "${f##*/}" in arkan-*.yml | check.yml) continue ;; esac
-		out="$out${out:+, }${f##*/}"
-	done
-	printf '%s' "$out"
-}
-
-check_ci() {
-	local name=$1 src=$2 dst=".github/workflows/$2" repo="$root/.github/workflows/$2" want
-	if [ ! -f "$ci/$src" ]; then
-		say "$name" skip "arkan's ci/github/$src not found next to this skill"
-	elif ! has "$dst"; then
-		if [ "$name" = ci-check ] && [ -n "$(own_ci)" ]; then
-			say "$name" hint "the repo runs its own ci ($(own_ci)); keep it, or copy $src"
-		else
-			say "$name" missing "$dst"
-		fi
-	else
-		want="$(file_hash "$ci/$src")"
-		if [ "$(body_hash "$repo")" = "$want" ]; then
-			say "$name" ok "$dst"
-		elif [ "$(stamp_of "$repo")" = "$want" ]; then
-			say "$name" ok "$dst customized"
-		else
-			say "$name" out-of-date "$dst differs from $ci/$src; update it and merge the repo's settings"
-		fi
-	fi
-}
-
-check_runner() {
-	if [ ! -f "$runner_src" ]; then
-		say ci-runner skip "arkan's $runner_dst not found next to this skill"
-	elif ! has "$runner_dst"; then
-		say ci-runner missing "$runner_dst"
-	elif [ "$(file_hash "$root/$runner_dst")" = "$(file_hash "$runner_src")" ]; then
-		say ci-runner ok "$runner_dst"
-	else
-		say ci-runner out-of-date "$runner_dst differs from $runner_src; run setup.sh apply ci-runner"
-	fi
-}
-
-check_merge() {
-	local dst=".github/workflows/arkan-merge.yml" mode
-	mode="$(merge_path)"
-	case "$mode" in
-		broker)
-			if has "$dst"; then
-				say ci-merge out-of-date "$dst is installed, but docs/agents/approvals.md records **Merge path:** broker; remove it, or record gate"
-			else
-				say ci-merge ok "broker (docs/agents/approvals.md)"
-			fi
-			;;
-		gate) check_ci ci-merge arkan-merge.yml ;;
-		both) say ci-merge out-of-date "docs/agents/approvals.md records both merge paths; keep one line" ;;
-		*)
-			if has "$dst"; then
-				check_ci ci-merge arkan-merge.yml
-			else
-				say ci-merge missing "choose gate or broker; record **Merge path:** gate or **Merge path:** broker in docs/agents/approvals.md"
-			fi
-			;;
-	esac
-}
-
 canon_dir() {
 	if [ -d "$1" ]; then
 		cd -- "$1" && pwd -P
@@ -822,23 +707,7 @@ check() {
 	fi
 	check_claude_md
 	check_board
-	check_file sensitive-paths docs/agents/sensitive-paths.md
-	check_file approvals docs/agents/approvals.md
 	check_file review-md REVIEW.md
-	local pair
-	for pair in $ci_items; do
-		if [ "${pair%%:*}" = ci-merge ]; then
-			check_merge
-		else
-			check_ci "${pair%%:*}" "${pair#*:}"
-		fi
-	done
-	if has .github/workflows/arkan-review.yml || has .github/workflows/arkan-risk.yml; then
-		check_runner
-	else
-		say ci-runner skip "no arkan-review or arkan-risk workflow"
-	fi
-	check_file codeowners .github/CODEOWNERS
 	if ls -d "$root"/.claude/skills/*verif* "$root"/.agents/skills/*verif* >/dev/null 2>&1; then
 		say verify ok
 	else
@@ -893,12 +762,6 @@ seed() { # repo file, reference file: copy only when the repo file is missing
 	cp "$refs/$2" "$root/$1"
 }
 
-install_runner() {
-	[ -f "$runner_src" ] || { printf 'setup: %s not found\n' "$runner_src" >&2; exit 1; }
-	mkdir -p "$root/$(dirname "$runner_dst")"
-	cp "$runner_src" "$root/$runner_dst"
-}
-
 apply() {
 	case "$item" in
 		git) in_git || git -C "$root" init -q ;;
@@ -914,7 +777,6 @@ apply() {
 				rm -f "$tmp"
 			fi
 			;;
-		approvals) seed docs/agents/approvals.md approvals.md ;;
 		review-md) seed REVIEW.md review.md ;;
 		claude-md)
 			if claude_detected && has AGENTS.md && [ ! -e "$root/CLAUDE.md" ] && [ ! -L "$root/CLAUDE.md" ]; then
@@ -923,35 +785,8 @@ apply() {
 			;;
 		arkan) apply_arkan; return ;;
 		claude-plugin) apply_claude_plugin; return ;;
-		ci-review | ci-check | ci-risk | ci-post-merge | ci-merge)
-			local pair src="" mode=""
-			if [ "$item" = ci-merge ]; then
-				mode="$(merge_path)"
-				if [ "$mode" = broker ]; then
-					check_merge
-					return
-				fi
-				if [ "$mode" = both ]; then
-					printf 'setup: docs/agents/approvals.md records both merge paths; keep one before installing a gate\n' >&2
-					exit 2
-				fi
-				if [ "$mode" != gate ]; then
-					printf 'setup: record **Merge path:** gate in docs/agents/approvals.md before installing the gate\n' >&2
-					exit 2
-				fi
-			fi
-			for pair in $ci_items; do [ "${pair%%:*}" = "$item" ] && src="${pair#*:}"; done
-			[ -f "$ci/$src" ] || { printf 'setup: %s not found\n' "$ci/$src" >&2; exit 1; }
-			case "$item" in ci-review | ci-risk) install_runner ;; esac
-			mkdir -p "$root/.github/workflows"
-			local want
-			want="$(file_hash "$ci/$src")" || exit 1
-			cp "$ci/$src" "$root/.github/workflows/$src"
-			printf '# arkan-copy: %s\n' "$want" >>"$root/.github/workflows/$src"
-			;;
-		ci-runner) install_runner ;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, approvals, review-md, claude-md, arkan, claude-plugin, ci-review, ci-check, ci-risk, ci-runner, ci-post-merge, ci-merge\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, review-md, claude-md, arkan, claude-plugin\n' "$item" >&2
 			exit 2
 			;;
 	esac
