@@ -20,7 +20,7 @@ pick the mode from what you were given:
 
 arkan mode runs tasks only. the work before a task is **shaping**, and a person starts each shaping step:
 
-- the idea or its words are still fuzzy → stop and tell the user to run `/grill-with-docs`.
+- the idea or its words are still fuzzy → stop and tell the user to run `/grilling`.
 - the work needs more than one pr or more than one session, and has no tickets yet → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
@@ -51,7 +51,7 @@ each line names the skill to call today.
 - code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook).
 - a behavior to build, or a bug with a cheap test path → `tdd`.
 - something is broken, flaky or slow → `diagnosing-bugs`.
-- a design question you can settle by running code → `prototype`, or the prototype playbook.
+- a design question you can settle by running code → the prototype playbook.
 - a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one as a ticket. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
 - a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
 - a pr to open → the opening-a-pr playbook. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
