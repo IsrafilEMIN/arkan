@@ -1,5 +1,3 @@
-<!-- Generated from PRACTICES.md by scripts/build-skill.js. Do not edit. -->
-
 ## The reset
 
 Start every new project with it. In an existing project add one rule at a time and look at the result, because `min-width: 0` and the font rules change how things already render.

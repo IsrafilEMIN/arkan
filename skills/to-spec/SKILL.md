@@ -12,7 +12,7 @@ The issue tracker and triage label vocabulary should have been provided to you. 
 
 1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.
 
-2. Run `/skill:simplest-path` against the plan. The command loads the skill instructions; follow them and do not skip this step. If the command fails, read `~/.agents/skills/simplest-path/SKILL.md` and follow it. If it reports overengineering, present the cuts and stop. Wait for the user to resolve them. Do not continue until the user confirms. Then proceed.
+2. Run the `simplest-path` skill against the plan, and do not skip this step. If it reports overengineering, present the cuts and stop. Wait for the user to resolve them. Do not continue until the user confirms. Then proceed.
 
 3. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
 
