@@ -25,7 +25,7 @@ arkan mode runs tasks only. the work before a task is **shaping**, and a person 
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
 
-**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the person sets the role with `/triage`, so the role is the person's go.
+**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, from `/to-tickets` after the person approves the breakdown, or from `/to-spec` when it publishes the spec.
 
 when the task is a ticket:
 
@@ -98,7 +98,7 @@ a nonzero exit means the action did not happen: report its stderr and stop.
 
 ## autonomy
 
-**do it.** reversible work goes ahead without asking: code, branches, draft prs, notes, scratch scripts. a wrong reversible choice costs less than a blocked agent. do the work, show the result, and say what the user can change.
+**do it.** reversible work goes ahead without asking: code, branches, prs, notes, scratch scripts. a wrong reversible choice costs less than a blocked agent. do the work, show the result, and say what the user can change.
 
 **always stop and ask** before an action no one can undo, or one the person owns: merge a pr, force-push to a shared branch, deploy, delete data, send a message outside the project.
 
