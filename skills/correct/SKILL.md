@@ -12,7 +12,7 @@ Assume every contributor is an agent that sees only the files it opened, copies 
 
 ## Find the mistake classes
 
-Read recent commits, reverts, review comments (the ci reviewer's finding log, `ci/finding-report.sh`, where the repo runs it), closed tickets and their comments, the agent instruction files (`AGENTS.md`, `CLAUDE.md`), and comments that explain workarounds. Group the mistakes into classes. A class counts once it has happened twice.
+Read recent commits, reverts, review comments on merged pull requests (`gh api repos/{owner}/{repo}/pulls/<n>/comments` on GitHub), closed tickets and their comments, the agent instruction files (`AGENTS.md`, `CLAUDE.md`), and comments that explain workarounds. Group the mistakes into classes. A class counts once it has happened twice.
 
 ## Fix each class at the highest level that works
 
@@ -23,12 +23,12 @@ Read recent commits, reverts, review comments (the ci reviewer's finding log, `c
 
 ## Fix and prove
 
-Fix the most frequent classes now, one commit each. Prove each new check fails on a real past mistake: plant it, show the failure, remove it. Run the same command locally and in ci (in arkan, add it to `scripts/check.sh`). Exceptions go on the offending line, with a reason, an expiry date, and the person's approval.
+Fix the most frequent classes now, one commit each. Prove each new check fails on a real past mistake: plant it, show the failure, remove it. Run the same command locally and in ci. Exceptions go on the offending line, with a reason, an expiry date, and the person's approval.
 
 ## Keep the rule table
 
 Keep a table in the repo's agent instruction file that pairs each rule with what enforces it. When the person corrects you, fix the mistake and add the rule. If the rule was already there and nothing enforces it, that is a repeat: fix it at the highest level in the same change. Drop a rule once its mistake can't happen.
 
-Ship it through the normal pull request flow; a change to `AGENTS.md` is on the sensitive-path list, so the person reviews it.
+Ship it through the normal pull request flow; the person reviews any change to `AGENTS.md`.
 
 **Reply:** each class with its evidence, the level you picked, and why a higher level didn't work.

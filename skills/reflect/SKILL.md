@@ -12,7 +12,7 @@ Run it when the person says "reflect" or "/reflect". Skip it when the conversati
 
 ## 1. Locate the transcript
 
-Find this conversation's own transcript file (where each harness keeps them: the table in `recall`). Read only the active workspace's folder; never glob across other projects, which holds unrelated private chats. List the newest files, read each one's first line, and take the file whose opening user message matches this conversation's. If none matches, or the folder is unreadable (underground's sandbox may deny it), pass a tight digest of the session instead, and say so.
+Find this conversation's own transcript file (where each harness keeps them: the table in `recall`). Read only the active workspace's folder; never glob across other projects, which holds unrelated private chats. List the newest files, read each one's first line, and take the file whose opening user message matches this conversation's. If none matches, or the folder is unreadable (a sandbox may deny it), pass a tight digest of the session instead, and say so.
 
 ## 2. Spawn three reviewers in parallel
 
@@ -38,7 +38,7 @@ Move any accepted item that a lint rule, script, metadata flag or runtime check 
 
 Show the synthesizer's full accepted / rejected / backlog output and wait for the person's explicit approval before applying any accepted edit. The person picks the subset and may redirect routings. Skill changes affect every future agent; never apply them on your own.
 
-File each backlog item as a ticket on the repo's tracker without waiting (in arkan, under `.scratch/`, then rebuild the board). Only the accepted list waits for approval.
+File each backlog item as a ticket on the repo's tracker without waiting (with a local tracker, under `.scratch/`, then rebuild the board). Only the accepted list waits for approval.
 
 Follow each approved row's routing exactly:
 
@@ -47,7 +47,7 @@ Follow each approved row's routing exactly:
 - `tune description: <skill path>` (the skill exists but didn't trigger when it should have): rework its `description` and trigger phrases per `writing-for-agents`;
 - `new skill via writing-for-agents: <kebab-name>`: create it per `writing-for-agents`; don't invent the shape ad hoc.
 
-Ship the edits as one pull request through arkan's normal flow; `scripts/check.sh` must pass (it checks each skill's front matter).
+Ship the edits as one pull request through the repo's normal flow; each edited skill keeps valid front matter (`name` and a quoted `description`).
 
 ## 6. Summarize for the person
 

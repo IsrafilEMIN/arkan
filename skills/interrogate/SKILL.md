@@ -7,7 +7,7 @@ description: "Several reviewers on different models challenge a change from inde
 
 Spawn one reviewer per model to review a change adversarially. The adversarial signal comes from model diversity, not from assigned personas. The deliverable is a judged verdict. Do not apply changes on your own.
 
-It goes further than `code-review` (one reviewer, the repo's tags and rounds). Use it for a contested design, a change on a sensitive path (`docs/agents/sensitive-paths.md`), or when the person asks; arkan-mode reaches for it on a contested design before shipping.
+It goes further than `code-review` (one reviewer, the repo's tags and rounds). Use it for a contested design, a change on a sensitive path (auth, billing, installers, release workflows, agent instruction files), or when the person asks; arkan-mode reaches for it on a contested design before shipping.
 
 ## Step 1, scope
 

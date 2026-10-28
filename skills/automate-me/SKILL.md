@@ -27,7 +27,7 @@ Update mode changes the rest of the flow:
 
 ### 1. Mine their history
 
-Find the active workspace's transcripts with the table in `recall`. Use only that folder. Never glob across other projects: that reads private chats from unrelated work. If the folder is unreadable (underground's sandbox may deny it), skip mining, say so, and lean on step 2. The repo's own record helps too: corrections in ticket comments, review replies, and `AGENTS.md` lines the person added.
+Find the active workspace's transcripts with the table in `recall`. Use only that folder. Never glob across other projects: that reads private chats from unrelated work. If the folder is unreadable (a sandbox may deny it), skip mining, say so, and lean on step 2. The repo's own record helps too: corrections in ticket comments, review replies, and `AGENTS.md` lines the person added.
 
 Spawn parallel subagents across slices of history (for example the last 2 to 4 weeks, in 3 slices so each has enough material), on a fast model where the harness lets you pick. Each reads only the path you give it, looks for the signals below, and returns a short list of patterns with evidence pointers (session id and a quote). Signals worth hunting:
 
@@ -65,10 +65,10 @@ Group the signals into sections. Use only what applies:
 
 Write it per `writing-for-agents`. Placement:
 
-- **path:** keep an existing mode skill where it is. A new personal mode goes in `~/.agents/skills/<handle>-mode/` with `~/.claude/skills/<handle>-mode` as a symlink to it (per `symlink-first`). A mode the whole team shares goes in the repo's `.agents/skills/<handle>-mode/` with the `.claude/skills/` link. If the sandbox refuses the write (underground denies session writes to skill folders), write it to `.scratch/<handle>-mode-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal.
+- **path:** keep an existing mode skill where it is. A new personal mode goes in `~/.agents/skills/<handle>-mode/` with `~/.claude/skills/<handle>-mode` as a symlink to it (per `symlink-first`). A mode the whole team shares goes in the repo's `.agents/skills/<handle>-mode/` with the `.claude/skills/` link. If the sandbox refuses the write, write it to `.scratch/<handle>-mode-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal.
 - **handle:** the person's first name or chosen identifier.
 - **`description`:** trigger on their name, `/<handle>-mode` and "work in their style", not on generic words like "write code" or "review pr". One yaml scalar, quoted.
-- **`disable-model-invocation: true`** by default, with `agents/openai.yaml` setting `allow_implicit_invocation: false` (ticket 23 rule). Drop both only if the person wants their mode on every turn.
+- **`disable-model-invocation: true`** by default, with `agents/openai.yaml` setting `allow_implicit_invocation: false`. Drop both only if the person wants their mode on every turn.
 
 ### 5. Iterate on prose
 
@@ -76,7 +76,7 @@ Apply `unslop` and `writing-for-agents` to every line. Show the draft and take f
 
 ### 6. Land it
 
-A personal skill outside any repo needs no pull request; show the final path. A repo skill goes through the repo's normal flow: a branch, a pull request per the `opening-a-pr` playbook, the repo's merge path. Never push to main.
+A personal skill outside any repo needs no pull request; show the final path. A repo skill goes through the repo's normal flow: a branch, a pull request per the `opening-a-pr` playbook, merged by the person. Never push to main.
 
 ## Guardrails
 
