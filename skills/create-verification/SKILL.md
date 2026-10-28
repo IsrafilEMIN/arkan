@@ -12,7 +12,7 @@ A person starts this skill (arkan-mode tells them when a repo has none); an agen
 
 ## Where the verify skill lives
 
-`.agents/skills/verify-<app>/` in the repo, with `.claude/skills/verify-<app>` as a symlink to it (one copy, per `symlink-first`), so every harness finds it. `pre-setup`'s `verify` item looks for a `*verif*` folder in either place.
+`.agents/skills/verify-<app>/` in the repo, with `.claude/skills/verify-<app>` as a symlink to it, so every harness finds it. `pre-setup`'s `verify` item looks for a `*verif*` folder in either place.
 
 If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`, so a session cannot plant a skill that later sessions load), write the files to `.scratch/verify-<app>-draft/` instead and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Prove the skill from the draft path; the move changes no content.
 

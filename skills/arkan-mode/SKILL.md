@@ -57,7 +57,7 @@ each line names the skill to call today.
 - a pr to open → the opening-a-pr playbook. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
 - push, pr, review, reply, diff, retarget, merge or cleanup → [the forge](#the-forge): plain `git` and `gh`, and REST when GraphQL is blocked.
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. to find the bad merge and ticket the miss, a person starts `post-merge`.
-- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. a whole pass over repeated mistakes is `correct`; lessons from one chat into skill edits is `reflect`. a person starts both.
+- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. to turn lessons from one chat into skill edits, a person starts `reflect`.
 - any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply), then `unslop`. a doc, readme or rfc → `technical-writing`. text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
 - a repo has no scripted way to prove the app works → tell the user. a person starts `create-verification`; you do not.
 - concurrency, retries, a state machine, a parser or unsafe code where tests can't reach the case that breaks → tell the user. a person starts `create-formal-verification`, and `maintain-formal-verification` after changes that skipped the check.
