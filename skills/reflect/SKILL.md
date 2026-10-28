@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: "Run three parallel reviewers over this conversation's transcript, surface durable learnings, and route each to a concrete edit on an existing skill, for the person to approve. Use when the person says reflect or /reflect."
+description: "Run three parallel reviewers over this conversation's transcript, surface durable learnings, and route each to a concrete skill edit, for the person to approve. Use when the person says reflect or /reflect."
 disable-model-invocation: true
 ---
 
