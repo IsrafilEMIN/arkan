@@ -24,7 +24,7 @@ Look for opportunities to prefactor the code to make the implementation easier. 
 
 ### 3. Run the overengineering check
 
-Run `/skill:simplest-path` against the plan. The command loads the skill instructions; follow them and do not skip this step. If the command fails, read `~/.agents/skills/simplest-path/SKILL.md` and follow it. If it reports overengineering, present the cuts and stop. Wait for the user to resolve them. Do not continue until the user confirms. Then proceed.
+Run the `simplest-path` skill against the plan, and do not skip this step. If it reports overengineering, present the cuts and stop. Wait for the user to resolve them. Do not continue until the user confirms. Then proceed.
 
 ### 4. Draft vertical slices
 

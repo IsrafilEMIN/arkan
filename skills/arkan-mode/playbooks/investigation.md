@@ -4,7 +4,7 @@
 
 Investigation requests are read-only. They produce a cited explanation or a recommendation, not a code change.
 
-1. Read the affected code. Give wide reads to a subagent and keep its summary (see **Subagents** in `SKILL.md`). For motivation questions, also read the history: `git log`, `git blame`, and the PRs and tickets that touched the code.
+1. Route through the `how` skill. For motivation questions, also route through the `why` skill.
 2. Produce this output: Overview / Key Concepts / How It Works / Where Things Live / Gotchas. If the request is a decision between alternatives, give a recommendation with a tradeoffs table instead.
 3. Write the reply per **The reply** in `SKILL.md`.
 

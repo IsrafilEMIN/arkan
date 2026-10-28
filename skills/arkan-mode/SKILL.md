@@ -92,7 +92,7 @@ read the target slug off the working repo's own origin: `git remote get-url orig
 - **merge.** the shipping playbook, step 4.
 - **clean up.** from a surviving checkout of the repo. first pin the head: `gh pr view <number> --json state,headRefOid` must read `MERGED`; its `headRefOid` is `<head-sha>`. then check both branch heads: `git rev-parse refs/heads/<branch>` and `git ls-remote --heads origin <branch>` must each print `<head-sha>`, or nothing when that ref is already gone. if either prints another sha, the branch holds later commits: stop and report both shas. then `git worktree remove <worktree-path>`, then `git branch -D <branch>` (a squash merge leaves the branch unmerged in git's eyes, so `-d` refuses it), then `git push --force-with-lease=refs/heads/<branch>:<head-sha> origin --delete <branch>`, whose lease refuses the delete if the remote head moved after the check.
 
-a nonzero exit means the action did not happen: report its stderr and stop.
+a nonzero exit does not prove the action did not happen. read the state back with the matching read call above, report what it shows and the stderr, and stop.
 
 **a merged pr is not a finished task.** cleanup is done when the worktree folder, `refs/heads/<branch>` and the remote branch are all gone, read back from a surviving checkout of the repo (`git worktree list`; `git rev-parse --verify refs/heads/<branch>`; `git ls-remote --heads origin <branch>`).
 

@@ -20,12 +20,12 @@ Ask: "What's the public interface, and which seams should we test?"
 
 When the shape of that interface is itself in question (how deep the module is, where the seam belongs, what the interface should expose), consult the `codebase-design` skill for the vocabulary: module, interface, depth, seam, adapter, leverage, locality. It is a reference to consult, not a session to run.
 
-## Two kinds, nothing else
+## Two kinds
 
 - **Positive end-to-end.** One per intended workflow, run through the whole chain with realistic mixed input (for an inbox: newsletter, personal mail, reply-owed, exception mail, all in one inbox, through to the final user-visible result and the stored state). These prove the system does its job.
 - **Negative per node.** For each decision node, the ways it can fail or be fooled: bad input, timeout, wrong time window, missing data, stale state, duplicate run. Each test fails with a message that names the node and the cause. These prove every failure is caught and reported.
 
-Everything else is overlap. If two suites cover the same path, keep the one closer to real use and delete the other.
+If two suites cover the same path, keep the one closer to real use and delete the other.
 
 ## Each assertion
 
@@ -38,4 +38,4 @@ When the user asks what tests exist, group by node and give one plain-English li
 
 ## Restraint
 
-Add tests when the user asks or when a fix needs a reproducing test. When the user says "tests later", stop adding tests and say what is untested.
+When the user says "tests later", stop adding tests and say what is untested.
