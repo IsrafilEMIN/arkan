@@ -66,7 +66,7 @@ each line names the skill to call today.
 - a small diff you don't trust, or a change that reaches past its diff → `blast-radius`.
 - you are about to report a performance number → `benchmark-checklist`.
 - "how does x work", or where code should live → `how`. why it is built that way → `why`. the person wants to really understand it → `teach`, which runs both.
-- work that no playbook fits (a large migration, a multi-part change) → `figure-it-out`. wide parallel coverage or a race → `swarm`.
+- work that no playbook fits (a large migration, a multi-part change) → `figure-it-out`. wide parallel coverage → `swarm`.
 
 more triggers:
 
