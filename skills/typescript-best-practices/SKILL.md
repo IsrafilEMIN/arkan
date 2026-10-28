@@ -1,6 +1,6 @@
 ---
 name: typescript-best-practices
-description: "TypeScript rules for arkan repos: discriminated unions, branded types, no `as`, parse at the boundary, exhaustive switches. Use when reading or editing any .ts or .tsx file."
+description: "TypeScript rules: discriminated unions, branded types, no `as`, parse at the boundary, exhaustive switches. Use when reading or editing any .ts or .tsx file."
 ---
 
 # TypeScript best practices
@@ -26,6 +26,6 @@ Apply **type system discipline** and **boundary discipline** first, per `princip
 | Real tests | Don't mock what you can run. Prefer the framework's real test primitives with leak/disposable checks, and verify UI in a running build (the repo's `verify-<app>` skill, per `create-verification`). Mock only what you can't run locally. |
 | Structured telemetry | Prefer structured logger diagnostics with enough context to debug from an id. No `console.log` in shipped code. |
 
-A rule that agents keep breaking here belongs in the repo's lint or type config, not in more prose (`correct`).
+A rule that agents keep breaking here belongs in the repo's lint or type config, not in more prose (`principle-encode-lessons-in-structure`).
 
 Examples: `references/patterns.md`.

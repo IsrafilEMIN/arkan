@@ -65,7 +65,7 @@ Group the signals into sections. Use only what applies:
 
 Write it per `writing-for-agents`. Placement:
 
-- **path:** keep an existing mode skill where it is. A new personal mode goes in `~/.agents/skills/<handle>-mode/` with `~/.claude/skills/<handle>-mode` as a symlink to it (per `symlink-first`). A mode the whole team shares goes in the repo's `.agents/skills/<handle>-mode/` with the `.claude/skills/` link. If the sandbox refuses the write, write it to `.scratch/<handle>-mode-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal.
+- **path:** keep an existing mode skill where it is. A new personal mode goes in `~/.agents/skills/<handle>-mode/` with `~/.claude/skills/<handle>-mode` as a symlink to it. A mode the whole team shares goes in the repo's `.agents/skills/<handle>-mode/` with the `.claude/skills/` link. If the sandbox refuses the write, write it to `.scratch/<handle>-mode-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal.
 - **handle:** the person's first name or chosen identifier.
 - **`description`:** trigger on their name, `/<handle>-mode` and "work in their style", not on generic words like "write code" or "review pr". One yaml scalar, quoted.
 - **`disable-model-invocation: true`** by default, with `agents/openai.yaml` setting `allow_implicit_invocation: false`. Drop both only if the person wants their mode on every turn.

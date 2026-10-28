@@ -32,7 +32,7 @@ One subagent, your strongest model, with [`references/synthesizer.md`](reference
 
 ## 4. Structural enforcement check
 
-Move any accepted item that a lint rule, script, metadata flag or runtime check would enforce more reliably to backlog, per **encode lessons in structure** (`principle-encode-lessons-in-structure`). `correct` is the skill for building that enforcement.
+Move any accepted item that a lint rule, script, metadata flag or runtime check would enforce more reliably to backlog, per **encode lessons in structure** (`principle-encode-lessons-in-structure`).
 
 ## 5. Apply
 

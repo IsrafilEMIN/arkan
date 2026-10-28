@@ -1,6 +1,6 @@
 ---
 name: figure-it-out
-description: "Design an auditable playbook when none of arkan-mode's playbooks fits: a large migration, an ambitious multi-part change, or work a person reviews after stepping away. Scales rigor to the task, runs a hypothesis loop, and logs decisions. Use for /figure-it-out or 'figure it out'."
+description: "Design an auditable playbook when none of arkan-mode's playbooks fits: a large migration or an ambitious multi-part change. Scales rigor to the task, runs a hypothesis loop, and logs decisions. Use for /figure-it-out or 'figure it out'."
 ---
 
 # Figure it out
