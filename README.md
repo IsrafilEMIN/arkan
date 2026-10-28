@@ -4,7 +4,7 @@ arkan is one bundle of agent skills for engineering work. a person shapes the wo
 
 ## install
 
-claude code reads the bundle as a plugin from [`.claude-plugin/`](.claude-plugin/). for other harnesses, link or copy each folder in [`skills/`](skills/) into the folder your harness reads skills from. then run `/pre-setup` once in each repo where you use arkan: it sets up the issue tracker, the triage labels, the domain docs and the `TODO.md` board.
+in claude code 2.1.275 or later, install the bundle as a plugin with `/plugin install arkan --marketplace IsrafilEMIN/arkan`; the manifests are in [`.claude-plugin/`](.claude-plugin/). for other harnesses, link or copy each folder in [`skills/`](skills/) into the folder your harness reads skills from. then run `/pre-setup` once in each repo where you use arkan: it sets up the issue tracker, the triage labels, the domain docs and the `TODO.md` board.
 
 ## the flow in one view
 
