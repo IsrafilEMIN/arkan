@@ -1,23 +1,19 @@
 #!/usr/bin/env bash
-# Read-only worktree prune audit. Classifies every git worktree by size, merge
-# state, uncommitted work, remote/PR state, and the most recent omp chat that
-# operated in it. Emits a table sorted by size with a suggested bucket. Never
-# deletes anything; deletion stays a human-gated step in the playbook.
-#
-# Usage: worktree-audit.sh [-b|--base <ref>] [repo-path]
-#   repo-path defaults to the current repo.
-#   -b sets the ref the MERGED column checks against (e.g. origin/integration).
-#   Without it the base is origin/HEAD, then origin/main, then origin/master.
-#   origin/HEAD is the remote's default branch, not necessarily the branch PRs
-#   merge into; pass -b when they differ.
-#   LAST_CHAT reads omp sessions only; it is "-" for chats from other harnesses.
+usage() {
+	printf '%s\n' \
+		'usage: worktree-audit.sh [-b|--base <ref>] [repo-path]' \
+		'read-only: lists every worktree with size, age, merge state, uncommitted work, remote and pr state, last omp chat and a suggested bucket. it deletes nothing.' \
+		'repo-path defaults to the current repo.' \
+		'-b sets the ref the MERGED column checks against. default: origin/HEAD, then origin/main, then origin/master.' \
+		'LAST_CHAT reads omp sessions only; it is "-" for chats from other harnesses.'
+}
 set -u
 
 base=""
 while [ $# -gt 0 ]; do
 	case "$1" in
 	-b|--base) [ $# -ge 2 ] || { echo "error: $1 needs a ref" >&2; exit 2; }; base="$2"; shift 2 ;;
-	-h|--help) sed -n '2,/^set -u/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
+	-h|--help) usage; exit 0 ;;
 	-*) echo "error: unknown option: $1" >&2; exit 2 ;;
 	*) break ;;
 	esac
@@ -38,17 +34,12 @@ if [ -z "$base" ]; then
 	echo "warn: no -b given; MERGED checks against $base" >&2
 fi
 
-# The base drives the merge check. The fetch is best-effort (stale is fine for
-# a first pass) and runs before the check, since -b may name a branch not
-# fetched yet. The explicit refspec creates it even in a single-branch clone.
 case "$base" in
 origin/*) git fetch origin "+refs/heads/${base#origin/}:refs/remotes/$base" --quiet 2>/dev/null \
 	|| echo "warn: could not fetch $base; merged column may be stale" >&2 ;;
 esac
 git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 || { echo "error: base ref not found: $base" >&2; exit 1; }
 
-# GNU coreutils (Linux, Homebrew gnubin) reads `stat -f` as file system status
-# and `date -r` as a file, so pick the stat and date flags once.
 if stat -c %Y / >/dev/null 2>&1; then
 	stat_fmt=(-c '%Y %n'); fmt_day() { date -d "@$1" '+%Y-%m-%d'; }
 else
@@ -62,11 +53,6 @@ if raw=$(gh pr list --author "@me" --state all --limit 1000 \
 fi
 [ -s "$prs" ] || echo "[]" > "$prs"
 
-# omp keeps each chat at ~/.omp/agent/sessions/<slug>/*.jsonl, keyed by the
-# chat's working directory: inside home, drop the home prefix and turn each /
-# into - (/Users/me/dev/app -> -dev-app); outside home, turn each / into - and
-# wrap in -- (/private/tmp -> --private-tmp--). A chat opened in the main repo
-# lands under the repo's slug; one opened in the worktree lands under its own.
 sessions="$HOME/.omp/agent/sessions"
 omp_slug() {
 	case "$1" in
@@ -89,8 +75,6 @@ git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt;
 	head_ts=$(git -C "$wt" log -1 --format='%ct' HEAD 2>/dev/null || echo 0)
 	age=$([ "$head_ts" -gt 0 ] 2>/dev/null && echo "$(( (now - head_ts) / 86400 ))d" || echo "?")
 
-	# Squash-merged branches are not ancestors of the base, so PR state is the
-	# real signal; merge-base only catches fast-forward/rebase merges.
 	git merge-base --is-ancestor "$head" "$base" 2>/dev/null && merged=YES || merged=no
 
 	porcelain=$(git -C "$wt" status --porcelain 2>/dev/null)
@@ -111,8 +95,6 @@ git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt;
 		'.[] | select(.head==$b) | "#\(.number)/\(.state)"' "$prs" 2>/dev/null | head -1)
 	[ -z "$pr" ] && pr="-"
 
-	# Match path followed by "/" or a quote so glint-482 does not match
-	# glint-482-r37. Every chat under the worktree's own slug ran in it.
 	last="-"; last_ts=0
 	wt_sessions="$sessions/$(omp_slug "$wt")"
 	f=$( {
