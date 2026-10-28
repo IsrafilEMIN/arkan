@@ -23,7 +23,7 @@ Invoked at the end of every other playbook.
 
 After the sections, attach videos or screenshots when they prove a claim. Full SHAs, lever-correction essays, file-by-file checklists, and "CLEAN" verdicts go in a linked artifact, not the body.
 
-**Forge.** GitHub CLI (`gh`) is the forge. When the run provides GitHub tools or a built-in PR tool, create, edit, retarget, and mark ready through them, never through `gh`, because a CLI-made PR misses what the tool tracks. Use `gh` for everything the tools do not cover. Keep one choice for create, edit, view, and watch. On the broker route (see **the forge** in `SKILL.md`) its clients replace `gh` for each step here.
+**Forge.** GitHub CLI (`gh`) is the forge (see **the forge** in `SKILL.md`). When the run provides GitHub tools or a built-in PR tool, create, edit, retarget, and mark ready through them, never through `gh`, because a CLI-made PR misses what the tool tracks. Use `gh` for everything the tools do not cover. Keep one choice for create, edit, view, and watch.
 
 **Forge without GraphQL.** `gh pr` runs on GitHub's GraphQL API. Try it first. If it fails with HTTP 403 or a GraphQL error, GraphQL is blocked: make each call over REST with `gh api`, and keep REST for the rest of the run. Paths start at `repos/<owner>/<repo>`. Pass PR text from a file (`-F body=@<file>`), never inline.
 
@@ -33,11 +33,11 @@ After the sections, attach videos or screenshots when they prove a claim. Full S
 - comment: `gh api -X POST .../issues/<n>/comments -F body=@<file>`.
 - review or verdict: `gh api -X POST .../pulls/<n>/reviews -f event=COMMENT -f commit_id=<head-sha> -F body=@<file>`.
 - edit base: `gh api -X PATCH .../pulls/<n> -f base=<branch>`.
-- merge: no raw merge call. No session calls `gh pr merge` or another raw merge api; the repo's merge path lands the PR: its `arkan-merge` gate or the broker (`agent-merge <pr> <head-sha>` after green checks and the person's `PASS` on a `manual` PR; see `playbooks/shipping.md` step 4). Read a landed PR back with the view call: `merged` is `true` and `base.ref` is the base you expect.
+- merge: `gh api -X PUT .../pulls/<n>/merge -f sha=<head-sha> -f merge_method=<squash|merge|rebase>`, only on the person's go-ahead for that PR (see `playbooks/shipping.md` step 4). Read a landed PR back with the view call: `merged` is `true` and `base.ref` is the base you expect.
 
-REST cannot mark a PR ready (`gh pr ready`); a PR created over REST without `draft` is already ready. Auto-merge stays unarmed: `gh pr merge --auto` is a merge api call, and no session calls it.
+REST cannot mark a PR ready (`gh pr ready`); a PR created over REST without `draft` is already ready. Auto-merge is a merge: arm it (`gh pr merge --auto`) only on the person's go-ahead.
 
-**Size and stacks.** Prefer five narrow PRs to one large PR. A stack is a base-branch chain. The root PR targets trunk. Each child branch starts at its parent's exact tip and its PR targets the parent branch; once the child is pushed, catch it up by merging its parent, because the broker push is fast-forward only. As a parent merges, move its child onto trunk per `playbooks/shipping.md` step 4. Create a child with `gh pr create --base <parent-branch>`, and retarget one with `gh pr edit <pr> --base <parent-branch>` (or the run's PR tool); on the broker route, `agent-gh pr-create` and `agent-gh pr-retarget <owner/repo> <pr> <parent-branch> <head-sha>` are those calls (**the forge** in `SKILL.md`). Branch from trunk only for independent work. Rebase on trunk before substantial stack work.
+**Size and stacks.** Prefer five narrow PRs to one large PR. A stack is a base-branch chain. The root PR targets trunk. Each child branch starts at its parent's exact tip and its PR targets the parent branch. As a parent merges, move its child onto trunk per `playbooks/shipping.md` step 4. Create a child with `gh pr create --base <parent-branch>`, and retarget one with `gh pr edit <pr> --base <parent-branch>` (or the run's PR tool). Branch from trunk only for independent work. Rebase on trunk before substantial stack work.
 
 **Readiness.** Open every PR ready, never as a draft. A built-in PR tool can default to draft, so set `draft: false` on every creation call through it. With `gh`, omit `--draft`. If a PR still opens as a draft, mark it ready through the PR tool or with `gh pr ready <number>`. Run `gh pr view <number>` (or the PR tool's read) before you refer to PR status.
 

@@ -38,7 +38,7 @@ Write a project-local skill with frontmatter that names the area and says when t
 
 `.agents/skills/formal-verify-<area>/` in the repo, with `.claude/skills/formal-verify-<area>` as a symlink to it (one copy, per `symlink-first`), so every harness finds it. Keep the model, harness and property files beside the code they describe (for example `verification/<area>/`), and give the skill one command that runs them. Add that command to the repo's ci only if the run is short; otherwise the skill names when to run it.
 
-If the sandbox refuses the write (underground denies writes under a project's `.agents/` and `.claude/`), write the skill to `.scratch/formal-verify-<area>-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Installing the tool usually needs the network or `sudo`: give the person the install command with a pinned version, and say so rather than working around the sandbox.
+If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`), write the skill to `.scratch/formal-verify-<area>-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Installing the tool usually needs the network or `sudo`: give the person the install command with a pinned version, and say so rather than working around the sandbox.
 
 ## Prove it before you hand off
 
@@ -46,7 +46,7 @@ Follow the generated skill once, as the next agent would, on a scratch change th
 
 ## Hand off
 
-Ship the skill and the verification files through the repo's normal flow: a branch, a pull request per the `opening-a-pr` playbook, the repo's merge path. Each finding (a property the current code breaks) becomes a ticket on the repo's tracker with its counterexample, separate from that pull request.
+Ship the skill and the verification files through the repo's normal flow: a branch, a pull request per the `opening-a-pr` playbook, merged by the person. Each finding (a property the current code breaks) becomes a ticket on the repo's tracker with its counterexample, separate from that pull request.
 
 
 Tell the user what you verified, which tool you used and why, the bounds, what the check found in plain words, how to run it, and what it does not cover. Suggest a second target only if you found a close one. Point the user at `maintain-formal-verification` for bringing the verification back in line after changes that did not recheck it.

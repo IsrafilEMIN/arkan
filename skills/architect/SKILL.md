@@ -35,7 +35,7 @@ Arena returns one synthesized design. Its synthesis decision fills the rationale
 
 Default: go straight to implementation with the synthesized design, with no checkpoint.
 
-Stop for the person's sign-off only when they asked for it ("/architect with checkpoint", "show me before you implement"). A one-way door with a large blast radius (a public api, a data schema, a seam row in `docs/seam.md`) is a product call: show the design and ask, per arkan-mode's rule on forks.
+Stop for the person's sign-off only when they asked for it ("/architect with checkpoint", "show me before you implement"). A one-way door with a large blast radius (a public api, a data schema, a wire format another repo reads) is a product call: show the design and ask, per arkan-mode's rule on forks.
 
 The synthesis can ship as its own commit either way, as the "scaffold first" mode of **foundational thinking** (`principle-foundational-thinking`). Planned breakage during fill-in is fine, per **outcome-oriented execution** (`principle-outcome-oriented-execution`). For adversarial pressure on the design before implementing, run `interrogate` on the sketch.
 

@@ -6,8 +6,6 @@ arkan copies and changes text from the projects below. each one uses the MIT lic
 - **skills** by Matt Pocock, from `mattpocock/skills` (main branch). in arkan: the matt pocock skills listed in `README.md`, some of them changed. license read from <https://github.com/mattpocock/skills/blob/main/LICENSE> on 2026-10-18.
 - **claude-code-security-review** by Anthropic, from `anthropics/claude-code-security-review` at commit `0c6a49f`, file `.claude/commands/security-review.md`. in arkan: `skills/security-review/` (a copy, changed to drop claude-code-only parts). license read from <https://github.com/anthropics/claude-code-security-review/blob/0c6a49f/LICENSE> on 2026-10-18.
 
-`skills/pr/CREDITS.md` names one more source, for part of the `pr` skill.
-
 ---
 
 ## pstack

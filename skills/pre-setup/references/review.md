@@ -1,6 +1,6 @@
 # Review
 
-What the reviewer must care about in this repo. Keep it short. The reviewer reads it on every pull request; `retro` moves repeated findings into it.
+What the reviewer must care about in this repo. Keep it short. Review skills such as `interrogate` read it; `retro` moves repeated findings into it.
 
 ## What failure looks like here
 

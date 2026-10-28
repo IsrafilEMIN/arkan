@@ -18,45 +18,12 @@ A merged change broke something. You make main safe, then turn the **miss** (the
    - **revert**: `git revert -m 1 <merge>` (no `-m` for a squash commit). The fallback whenever a fix is unclear.
    - **fix forward**: a small change, red first, through `tdd`, when the cause is plain and a revert would undo more than it saves.
 
-   _Done when_ the check passes on the branch, the repo's other checks still pass, and the branch is pushed. Open the PR with the `pr` skill. Merging is the person's call. In ci, the workflow pushes the branch and opens the PR from your output; you never push or merge.
+   _Done when_ the check passes on the branch, the repo's other checks still pass, and the branch is pushed. Open the PR with the opening-a-pr playbook in the `arkan-mode` skill (`playbooks/opening-a-pr.md`). Merging is the person's call.
 
 5. **Name the node that should have caught it.** Walk the task loop in order: build + `tdd` (a test for this case), prove (tests, build, lint, verify), `code-review`, `security-review`. Pick the first node that had what it needed to catch the bug, and say what it lacked: a missing test, a check that never ran, a rule the reviewer does not hold. _Done when_ the answer cites evidence from the bad diff or the node's own output, not a guess.
 
-6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket, then start `retro` (proposals only). In ci, return the ticket content; the workflow publishes it after it opens the PR. _Done when_ the ticket exists and its link or path is in your reply.
-
-7. **Save the miss as a review eval.** Write one case under `docs/agents/review-evals/<NN>-<slug>/`, numbered from `01` with the next free number. It holds:
-   - `bad.diff`: the change that shipped the bug. Use the bad commit from step 3 and its first parent: `git diff <bad>^ <bad> -- <path>`, or the whole `git diff <bad>^ <bad>` when the cause crosses files.
-   - `case.md`: the format in the repo's `docs/agents/review-evals/README.md`. With no such doc, use these lines: `# <NN>: <one-line bug>`, then `**Bug:**` (one sentence), `**Path:**` (one path in backticks), `**Lines:**` (the defect's range in the new side of the diff), `**Bad PR:**` (the pull request that shipped it, or `none` when a commit went straight to main), `**Fix PR:**` (step 4's fix, or its commit when there was no pull request), and `**Broke main:**` (the merge or commit that shipped it).
-
-   Then run `ci/review-eval.sh` from the repo root. If the repo has no script, save the case and say the eval is not installed. _Done when_ the case is saved and the script prints `<case> caught` or `<case> missed`. A caught case goes into `docs/agents/review-evals/baseline.txt` (`ci/review-eval.sh --update-baseline`); the update adds cases and never drops one. A missed case stays out: it is a known gap, not a regression.
-
-## In ci
-
-[`ci/github/arkan-post-merge.yml`](../../ci/github/arkan-post-merge.yml) starts this skill with no person. It runs:
-
-- on a `workflow_run` of `check` finishing on the default branch, for any conclusion from a push to that branch. The run checks main, then reads the merged commits to see whether a revert landed. A revert merged with `--merge` keeps "Merge pull request ..." as its head message, so the workflow reads the first-parent bodies `<sha>^1..<sha>` with `--first-parent` instead of the head subject; a revert inside the merged pull request does not count.
-- once a day (`schedule`, 06:17 utc) and on `workflow_dispatch`, for slow signals. The run checks main first, so a red main is a signal on its own, and reads `SIGNAL_COMMAND`, the reverts since the last successful run of this workflow, and open `incident` issues. That lookback is what keeps the daily run from ticketing a revert the event run already ticketed.
-
-A merge whose commit message carries `post-merge` starts neither job again, including a failed one. The daily run catches a red main. The work is in two jobs:
-
-- `diagnose` has the model and read-only permissions. It runs the check, detects the revert, and returns the structured output and a `git bundle` of the fix branch.
-- `publish` has no model and the write permissions. It applies the bundle, pushes the branch, opens the pull request, and publishes the ticket.
-
-The run gives you:
-
-- `CHECK_COMMAND`: the check to run, from the workflow's `env:`. The same command runs on main and while bisecting.
-- the signal: the check run and its head, a revert, or the slow signals above.
-- no person. Take each "ask the person" as the repo's default: the tracker from `docs/agents/issue-tracker.md`, the check above, and the branch you create.
-- no push, merge, issue or pull request access. The `diagnose` job has read-only permissions, and its checkout stores no credential. Return the structured output. The `publish` job pushes the branch, opens the pull request, and publishes the ticket.
-
-So in ci:
-
-- do not push, merge, create a pull request, create or edit an issue, or change repo settings.
-- do not write the ticket file either. Return its path, title and body, with `{{pr}}` where the pull request url goes. The body carries the fields `board.sh` reads, including `**Blocked by:** none` when nothing blocks. The `publish` job fills the url and rebuilds the board for a local tracker.
-- title the pull request `post-merge: ...`, and start the commit `post-merge: revert ...` or `post-merge: fix ...`. That word keeps the landed merge from starting the workflow again.
-- when the trigger is a revert and main is green, open no branch: the revert already made main safe. Return the ticket for the miss.
-- when nothing is broken, return `broken` false and `action` none with the signals you read, and stop.
+6. **Ticket the miss.** Publish one ticket on the repo's tracker, as `docs/agents/issue-tracker.md` says, with the `needs-triage` role if the repo uses triage labels. It holds: the bad merge (SHA and PR), the confirmed bug (the check and its failing output), the revert or fix PR, and step 5's answer. If the miss needs a look back over the session that made it, say so in the ticket, then start `retro` (proposals only). _Done when_ the ticket exists and its link or path is in your reply.
 
 ## Reply
 
-The signal, the first bad commit, the revert or fix PR, the node that should have caught it, the ticket, and the eval case with what the script reported.
+The signal, the first bad commit, the revert or fix PR, the node that should have caught it, and the ticket.
