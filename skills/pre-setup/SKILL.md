@@ -1,6 +1,6 @@
 ---
 name: pre-setup
-description: "Link the arkan skills into omp and set up this repo for them: issue tracker, triage labels, domain docs, the Tern board and REVIEW.md. Safe to run again: it checks first and only works on what is missing or out of date."
+description: "Link the arkan skills into omp and set up this repo for them: issue tracker, triage labels, domain docs and the Tern board. Safe to run again: it checks first and only works on what is missing or out of date."
 disable-model-invocation: true
 ---
 
@@ -47,7 +47,6 @@ Any change on the host (github) asks first, even when there is no choice: show t
 | `agents-block` | write the block below into `AGENTS.md`. With a local tracker, the `### Board` line must name `board.sh build` and `board.sh check`; the check reads `out-of-date` when it does not | no |
 | `claude-md` | with claude code detected (`claude` on PATH, or `~/.claude` exists) and `AGENTS.md` in the repo, a missing `CLAUDE.md` is `missing`; `apply claude-md` creates the relative link `CLAUDE.md -> AGENTS.md`. An existing `CLAUDE.md` of any kind is `ok` and untouched. With no `AGENTS.md`, or no claude code, it is `skip` | no |
 | `board` | `apply board` (seeds `TODO.md`, creates `.scratch/` for a local tracker, removes a `TODO.md` line from `.gitignore`). With a local tracker, the check runs `board.sh check` and reads `ok` only on `check-board: ok`; then run `board.sh build` and `board.sh check` until it passes. With github, the board is written by hand, as that tracker's seed says | no |
-| `review-md` | `apply review-md` (seeds `REVIEW.md`). Fill in the failure line from what the repo is, if it is plain | no |
 | `verify`, `hooks` (`hint`, `out-of-date`) | tell the person once: "no verify skill: run `create-verification`"; for hooks, "no commit hook for <languages>: run `setup-pre-commit`", or show the hooks path git uses and say the repo hook will not run. Change nothing | no |
 
 An `out-of-date` line on `hooks` means git's effective hooks path shadows the repo hook: show both paths and change nothing.
@@ -76,10 +75,6 @@ The five default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready
 ### Board
 
 `TODO.md` (the Tern board) shows one card per ticket; the details stay in the ticket. See the `## Board` section of `docs/agents/issue-tracker.md`. Do not edit `TODO.md` by hand: run the `pre-setup` skill's `scripts/board.sh build` from the repo root, then `scripts/board.sh check`; it must print `ok`.
-
-### Review
-
-What the reviewer cares about in this repo. See `REVIEW.md`.
 ```
 
 ### 4. Check again, then commit
