@@ -16,7 +16,7 @@ Open a todo list with one entry per phase before launching anything: 1 frame, 2 
 1. State the done predicate, and the artifact or report the swarm returns.
 2. Split the work into slices.
 3. Pick the worker model. A fast model suits most slices. Where the harness does not let you pick models, every worker runs on the current model; say so in the report.
-4. Give each worker its own writable output when it writes (its own worktree or `.scratch/swarm-<slug>/worker-<n>/`). When workers verify or measure commits, each brief names the exact shas. A measurement brief also names the method (sample count, what one sample is, order), and the worker records both in its result; for performance numbers, use `benchmark-checklist`.
+4. Give each worker its own writable output when it writes (its own worktree or `${TMPDIR:-/tmp}/<repo>-swarm-<slug>/worker-<n>/`, outside the repo; never under `.scratch/`, which is the issue tracker). When workers verify or measure commits, each brief names the exact shas. A measurement brief also names the method (sample count, what one sample is, order), and the worker records both in its result; for performance numbers, use `benchmark-checklist`.
 
 ## Phase B: fan out
 

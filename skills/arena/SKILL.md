@@ -16,7 +16,7 @@ Every candidate gets the same prompt, so the prompt is the contract.
 1. State the artifact each candidate produces.
 2. Write the rubric: 3 to 6 concrete, gradeable criteria for success on this task. It is your tool in phase D; candidates only see the task.
 3. **Pick the runners.** Two is the default. Where the harness lets you pick a model per subagent, put the runners on different model families: different models make different mistakes, and that is the point. Where it does not, run each candidate on the current model in its own fresh context, and say so in the synthesis note. If the harness refuses a model, use the closest one it accepts and say so. Add runners when the arena covers several design directions; use the same model several times when the work is generation-bound rather than judgment-bound.
-4. Give each candidate its own output place: a git worktree where possible, else `.scratch/arena-<slug>/candidate-<n>/`, per **separate before you serialize shared state** (`principle-separate-before-serializing-shared-state`).
+4. Give each candidate its own output place: a git worktree where possible, else `${TMPDIR:-/tmp}/<repo>-arena-<slug>/candidate-<n>/`, outside the repo, per **separate before you serialize shared state** (`principle-separate-before-serializing-shared-state`). Never write candidates under `.scratch/`: that folder is the issue tracker, and the board script reads it.
 
 ## Phase B: fan out
 
@@ -46,4 +46,4 @@ Verify the synthesized artifact like any other output, per **prove it works** (`
 
 ## Outputs
 
-One synthesized artifact, with a short synthesis note beside it: the base and why, the judge's verdict or that Phase C skipped the judge, each graft and its source candidate, what was rejected and why, any convergence or dropouts, which models ran (or "same model, fresh contexts"), and the verification result. Delete the candidate worktrees or `.scratch/arena-*` folders once the note is written.
+One synthesized artifact, with a short synthesis note beside it: the base and why, the judge's verdict or that Phase C skipped the judge, each graft and its source candidate, what was rejected and why, any convergence or dropouts, which models ran (or "same model, fresh contexts"), and the verification result. Delete the candidate worktrees or `<repo>-arena-*` folders once the note is written.

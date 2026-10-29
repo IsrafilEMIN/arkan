@@ -9,7 +9,7 @@ A **wizard** is a bash script that walks a human, step by step, through a manual
 
 The delightful UX is already solved by [template.sh](template.sh): stage-by-stage progress, confirmation gates, cross-platform URL opening (including WSL), hidden secret entry, idempotent `.env` upserts, `gh secret`/`gh variable` writes, and a closing summary. **Your job is only to scope the procedure and author its stages.** Every function above `run_wizard()` is the library, identical in every wizard; that consistency is the point: never hand-edit it.
 
-A wizard is ephemeral by default: built for one run, saved to `.scratch/` or `scripts/`, deleted when the job's done. Commit it only when the user wants a repeatable setup path that should live in the repo.
+A wizard is ephemeral by default: built for one run, saved outside the repo (`${TMPDIR:-/tmp}/<repo>-wizard-<slug>.sh`), deleted when the job's done. Commit it to `scripts/` only when the user wants a repeatable setup path that should live in the repo. Never save it under `.scratch/`: that folder is the issue tracker.
 
 ## When arkan reaches for it
 
