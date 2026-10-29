@@ -2,9 +2,9 @@
 
 Invoked at the end of every other playbook.
 
-**Worktree.** Work from a git worktree off main, placed by step 6 in `SKILL.md`. Subagents inherit it. Several subagents on the same branch each get their own worktree, or `git fetch && git reset --hard origin/<branch>` between them. Dirty branch with unrelated work: patch out, fresh worktree, apply. Snarled worktree: reset from main, redo minimally.
+**Worktree.** Work from a git worktree off main, placed by step 6 in `SKILL.md`. Subagents inherit it. Several subagents never share a branch: each gets its own branch and worktree, and the owner merges them. Dirty branch with unrelated work: patch out, fresh worktree, apply. Snarled worktree: start a fresh branch and worktree from main and redo minimally; never reset a branch that holds pushed work.
 
-**Commits.** Commit liberally. Rebase into small, ordered commits before opening PRs. The sequence is a future PR: landable as a whole, ordered to tell the story. Amend when the fix belongs in a just-made commit. New commit when separable. Commit bodies don't restate the subject.
+**Commits.** Commit each verified step, small and in order, and checkpoint it with `broker push`. The sequence is a future PR: landable as a whole, ordered to tell the story. Never rebase, amend or force-push pushed commits: the broker pushes fast-forward only. A fix to an earlier step is a new commit. Commit bodies don't restate the subject.
 
 **Tickets.** If the work is a ticket, run **close done** from the [tickets playbook](tickets.md) in the work's own branch, so the close reaches main with the merge.
 
