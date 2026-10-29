@@ -7,7 +7,7 @@ description: "the default way to do engineering work on one task: check that it 
 
 arkan mode is how you work on one task. it comes from pstack's `poteto-mode` and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
-other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). call them with the Skill tool when a step names them; a `principle-*` leaf is read by path, not invoked.
+other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). run or read a skill when a step names it; a `principle-*` leaf is read by path, not invoked.
 
 ## 0. check that the work is a task
 
@@ -25,7 +25,7 @@ arkan mode runs tasks only. the work before a task is **shaping**, and a person 
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
 
-**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, from `/to-tickets` after the person approves the breakdown, or from `/to-spec` when it publishes the spec.
+**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, or from `/to-tickets` after the person approves the breakdown. a spec has no role.
 
 when the task is a ticket:
 
