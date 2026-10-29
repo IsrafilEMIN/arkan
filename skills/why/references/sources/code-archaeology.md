@@ -49,3 +49,23 @@ rg -n -C2 '(TODO|FIXME|HACK|XXX|NOTE)' <target_file>
 # Related tests
 rg -l '<symbol>' --glob '*test*'
 ```
+
+## Local markdown tracker
+
+If the repo keeps its tickets as markdown under `.scratch/`, search them as the issue tracker:
+
+```bash
+# Tickets that mention the target
+rg -l -i '<symbol_or_keyword>' .scratch/*/issues/
+
+# A ticket's discussion and its recorded answer
+rg -n -A20 '^## (Comments|Answer)' .scratch/<feature>/issues/<NN>-<slug>.md
+
+# Decisions recorded on a wayfinder map
+rg -n -A30 '^## Decisions so far' .scratch/<effort>/map.md
+
+# When and why a ticket or map changed
+git log --follow -p -- .scratch/<feature>/issues/<NN>-<slug>.md
+```
+
+Read the `## Comments` section of each matching ticket for the discussion, and the `## Answer` section of a resolved wayfinder ticket for the decision. The map's Decisions so far links each decision to its ticket.
