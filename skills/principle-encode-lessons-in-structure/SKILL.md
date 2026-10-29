@@ -8,6 +8,6 @@ disable-model-invocation: true
 
 If the lesson needs judgment and cannot be encoded, make the instruction more prominent and add an example of the failure mode.
 
-The `retro` skill runs this on a whole session, when a person starts it.
+The `retro` skill runs this on a whole session, when a person starts it. The `correct` skill runs it on the whole repo's history and lands the checks.
 
 **Corollary:** If the fix is structural, only use the structural fix. The instruction is the symptom.
