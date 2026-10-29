@@ -22,14 +22,6 @@ trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; printf '%s' "${s%"${s##*[
 roles=" needs-triage needs-info ready-for-agent ready-for-human wontfix "
 types=" research prototype grilling task "
 
-if [ ! -d "$root/.scratch" ]; then
-	if [ "$verb" = fields ]; then
-		printf 'fields: ok (0 cards)\n'
-		exit 0
-	fi
-	printf '%s: no .scratch/ in %s\n' "$prefix" "$root" >&2
-	exit 2
-fi
 if [ "$verb" = check ]; then
 	[ -f "$board" ] || { printf '%s: no TODO.md in %s\n' "$prefix" "$root" >&2; exit 2; }
 fi
@@ -45,7 +37,8 @@ while IFS= read -r f; do
 		nn="${rel##*/}"; nn="${nn%%-*}"
 	fi
 	title="" role="" type="" due="" closed="" prio="" refs=""
-	while IFS= read -r line; do
+	while IFS= read -r line || [ -n "$line" ]; do
+		line="${line%$'\r'}"
 		case "$line" in
 			'## '*) break ;;
 			'# '*) [ -n "$title" ] || title="${line#'# '}" ;;
@@ -58,7 +51,13 @@ while IFS= read -r f; do
 				text="${line#'**Blocked by:**'}"
 				text="${text//\`/}"
 				text="$(trim "$(printf '%s' "$text" | tr '[:upper:]' '[:lower:]')")"
-				text="${text%%(*}"; text="${text%% —*}"; text="${text%%. *}"; text="${text%.}"
+				text="${text%% —*}"; text="${text%%. *}"; text="${text%.}"
+				IFS=, read -ra parts <<<"$text"
+				text=""
+				for part in "${parts[@]+"${parts[@]}"}"; do
+					part="$(trim "${part%%(*}")"
+					[ -z "$part" ] || text="${text:+$text, }$part"
+				done
 				refs="$(trim "$text")"
 				if [ "${refs%% *}" = none ]; then refs=none; fi
 				;;
@@ -100,6 +99,12 @@ while IFS= read -r f; do
 	if [ -z "$refs" ]; then
 		if [ "$spec" = 1 ]; then refs=none; else fail "$rel" "needs a **Blocked by:** line"; fi
 	fi
+
+	for seen in "${t_id[@]+"${t_id[@]}"}"; do
+		if [ "$spec" = 0 ] && [ -n "$nn" ] && [ "$seen" = "$feat $nn" ]; then
+			fail "$rel" "ticket number $nn is used twice in .scratch/$feat/issues/"
+		fi
+	done
 
 	k=${#t_path[@]}
 	t_path+=("$rel"); t_feat+=("$feat"); t_nn+=("$nn"); t_id+=("$feat $nn"); t_title+=("$title")
@@ -168,7 +173,8 @@ card() {
 	[ -z "${t_type[$k]}" ] || tags="$tags #${t_type[$k]}"
 	[ "${t_spec[$k]}" = 0 ] || tags="$tags #spec"
 	[ -z "${t_due[$k]}" ] || tags="$tags 📅 ${t_due[$k]}"
-	printf -- '- [%s] %s%s %s\n  `%s` · blocked by: %s\n' "$tick" "$head" "${t_title[$k]}" "$tags" "${t_path[$k]}" "${t_refs[$k]}"
+	local title="${t_title[$k]//#/＃}"
+	printf -- '- [%s] %s%s %s\n  `%s` · blocked by: %s\n' "$tick" "$head" "$title" "$tags" "${t_path[$k]}" "${t_refs[$k]}"
 }
 
 generate() {
@@ -235,12 +241,17 @@ if [ "$verb" = fields ]; then
 	exit 0
 fi
 
-out="$(mktemp)"
+out="$(mktemp "$root/.TODO.md.XXXXXX")"
 trap 'rm -f "$out"' EXIT
 generate >"$out"
 
 if [ "$verb" = build ]; then
-	cat "$out" >"$board"
+	if [ -f "$board" ] && cmp -s "$board" "$out"; then
+		printf 'build-board: TODO.md is up to date (%s cards)\n' "${#t_path[@]}"
+		exit 0
+	fi
+	chmod 644 "$out"
+	mv -f "$out" "$board"
 	printf 'build-board: wrote TODO.md (%s cards)\n' "${#t_path[@]}"
 elif cmp -s "$board" "$out"; then
 	printf 'check-board: ok (%s cards)\n' "${#t_path[@]}"
