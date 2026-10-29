@@ -1,6 +1,6 @@
 ---
 name: typescript-best-practices
-description: "TypeScript rules for arkan repos: discriminated unions, branded types, no `as`, parse at the boundary, exhaustive switches. Use when reading or editing any .ts or .tsx file."
+description: "TypeScript rules: discriminated unions, branded types, no `as`, parse at the boundary, exhaustive switches. Use when reading or editing any .ts or .tsx file."
 ---
 
 # TypeScript best practices
@@ -15,7 +15,7 @@ Apply **type system discipline** and **boundary discipline** first, per `princip
 | Simplest total type | Keep `T[]` while every operation on it stays total. Strengthen to `NonEmpty<T>` only where the loose type forces `!`, a cast, or a "should never happen" throw. |
 | `unknown` over `any` | External data is `unknown`. |
 | Schemas before guards | Before hand-writing a property-by-property type guard, use the repo's runtime schema library and infer the type from the schema, such as `z.infer`. |
-| No `as` casts | Every `as` is a runtime crash waiting. Cast only after validation. |
+| No `as` casts | Every `as` is a runtime crash waiting. |
 | Narrowing hierarchy | Discriminant switch > `in` operator > `typeof`/`instanceof` > user-defined type guard > `as`. |
 | Type guards | Must verify the claim. A lying guard is worse than `as` because the bug hides behind a name that says it's safe. Name them `isX` or `hasX`. |
 | Exhaustiveness | Inline `const _exhaustive: never = x;` in default arms so the compiler errors when a new variant is added. |
@@ -26,6 +26,6 @@ Apply **type system discipline** and **boundary discipline** first, per `princip
 | Real tests | Don't mock what you can run. Prefer the framework's real test primitives with leak/disposable checks, and verify UI in a running build (the repo's `verify-<app>` skill, per `create-verification`). Mock only what you can't run locally. |
 | Structured telemetry | Prefer structured logger diagnostics with enough context to debug from an id. No `console.log` in shipped code. |
 
-A rule that agents keep breaking here belongs in the repo's lint or type config, not in more prose (`correct`).
+A rule that agents keep breaking here belongs in the repo's lint or type config, not in more prose (`principle-encode-lessons-in-structure`).
 
 Examples: `references/patterns.md`.

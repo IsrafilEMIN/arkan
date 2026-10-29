@@ -6,17 +6,9 @@ user-invocable: false
 
 # Test-Driven Development
 
-TDD is the red → green loop. This skill is the engine: what each cycle must produce and the traps to avoid while running it. The suite policy lives in the `test-to-break` skill.
+TDD is the red → green loop. This skill is the engine: what each cycle must produce and the traps to avoid while running it.
 
 When exploring the codebase, read `GLOSSARY.md` (if it exists) so test names and interface vocabulary match the project's domain language, and respect ADRs in the area you're touching.
-
-## Policy check, before the first cycle
-
-The suite policy lives in the `test-to-break` skill (file: `../test-to-break/SKILL.md`): portfolio, seam agreement, assertion validity, restraint.
-
-If the seams are not agreed, or the change adds a workflow or decision node, read that file now and settle the policy with the user before writing the test.
-
-If the change is one clear failure at an agreed seam, run the loop directly.
 
 ## What a good test is
 
@@ -33,7 +25,7 @@ Choose the narrowest check. Prefer the closest unit, component, integration or r
 ## Anti-patterns
 
 - **Implementation-coupled**: mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.
-- **Tautological**: the expected value restates the code's own computation, so the test can never disagree with the code. The rule is in the `test-to-break` policy.
+- **Tautological**: the expected value restates the code's own computation, so the test can never disagree with the code.
 - **Horizontal slicing**: writing all tests first, then all implementation. Bulk tests verify _imagined_ behavior: you test the _shape_ of things rather than user-facing behavior, the tests go insensitive to real changes, and you commit to test structure before understanding the implementation. Work in **vertical slices** instead: one test → one implementation → repeat, each test a **tracer bullet** that responds to what the last cycle taught you.
 
 ## Rules of the loop

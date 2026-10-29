@@ -26,7 +26,7 @@ If a candidate produces nothing, go on with N-1 and note the dropout.
 
 ## Phase C: cross-judge
 
-After every candidate has finished, spawn one read-only judge subagent, on a different model family from yours where the harness allows. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with its reasons. It runs while you read in phase D. Never spawn it while candidates are still writing.
+After every candidate has finished, spawn one read-only judge subagent. The judge is never from your model family, and a model entry that inherits your model never judges. If no model from another family can run, skip the judge and say so in the synthesis note. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with its reasons. It runs while you read in phase D. Never spawn it while candidates are still writing.
 
 ## Phase D: pick a base
 
@@ -46,4 +46,4 @@ Verify the synthesized artifact like any other output, per **prove it works** (`
 
 ## Outputs
 
-One synthesized artifact, with a short synthesis note beside it: the base and why, the judge's verdict, each graft and its source candidate, what was rejected and why, any convergence or dropouts, which models ran (or "same model, fresh contexts"), and the verification result. Delete the candidate worktrees or `.scratch/arena-*` folders once the note is written.
+One synthesized artifact, with a short synthesis note beside it: the base and why, the judge's verdict or that Phase C skipped the judge, each graft and its source candidate, what was rejected and why, any convergence or dropouts, which models ran (or "same model, fresh contexts"), and the verification result. Delete the candidate worktrees or `.scratch/arena-*` folders once the note is written.

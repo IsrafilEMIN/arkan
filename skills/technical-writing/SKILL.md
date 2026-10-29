@@ -7,10 +7,8 @@ description: "Layered technical-writing standard: Diátaxis structure, Google de
 
 Write so a tired engineer understands on the first read. Apply all four layers.
 
-Three rules sit above the layers:
+One rule sits above the layers:
 
-- **Cut every word that does no work.** If the sentence survives without a word, the word goes. "In order to" is "to". "It is important to note that" is nothing.
-- **Use the short, everyday word.** "Use", not "utilize". "Help", not "facilitate". "Do", not "perform". A long word has to buy its length with precision.
 - **When a rule makes a sentence worse, fix the sentence another way or leave it alone.** A sentence that follows every rule and sounds like a machine wrote it has failed.
 
 The codebase is the word list. Write the real symbol, file, flag, or command name, not a synonym or a description of it.
@@ -57,7 +55,7 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 - Sound like a knowledgeable friend. No buzzwords, no figurative language, no "please" in instructions, and never "simply", "easy", or "quickly" in a procedure. If it were simple, the reader would not be here.
 - Don't pre-announce ("we will soon support...") and don't start consecutive sentences with the same phrase.
 - Link with words that say where the link goes: the page title or a short description. Never "click here". Prefer a sentence of context on the page over a link off it.
-- Headings carry the point, not just the topic ("Pick the mode first", not "Modes"). Sentence case. A task heading is a bare verb phrase ("Create an instance"). A concept heading is a noun phrase. One h1 per page, no skipped levels.
+- Headings carry the point, not just the topic ("Pick the mode first", not "Modes"). A task heading is a bare verb phrase ("Create an instance"). A concept heading is a noun phrase. One h1 per page, no skipped levels.
 - Numbered lists for sequences, bullets for everything else. Introduce a list with a complete sentence. Keep items parallel.
 - Code goes in code font. UI elements go in bold. Use serial commas. Drop "etc." and say up front that a list is partial.
 
@@ -81,7 +79,7 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 - Keep the small words that show structure, such as "that" in "Ensure that the switch is off". Never trade clarity for word count.
 - Repeat the article in a series when it prevents a misread: "the client and the host", not "the client and host", when they are two things.
 - Say which parts "and" or "or" joins when a sentence can group two ways. "Both...and", "either...or", and "if...then" are free disambiguators.
-- Use periods, not semicolons. Replace an em dash with a new sentence.
+- Use periods, not semicolons.
 - Make text in parentheses a full grammatical unit or its own sentence. Never form plurals with "(s)".
 - No slashes: write "a, b, or both" instead of "a/b" or "and/or".
 - Call each thing by one name, everywhere. A doc that says "the gate", "the ratchet", and "the budget check" for one thing teaches three things. Don't churn what didn't change.
@@ -90,7 +88,7 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 ## Voice and repo specifics
 
 - Apply the **unslop** skill to every doc this skill touches. That skill owns the slop-pattern catalog: AI vocabulary, filler, hedging, formatting tells.
-- PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body follows the `pr` skill's template and is a briefing a reviewer can read in under a minute. Do not paste swarm logs, SHA lists, or metric tables. Link them.
+- PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body follows the arkan-mode `opening-a-pr` playbook's template and is a briefing a reviewer can read in under a minute. Do not paste swarm logs, SHA lists, or metric tables. Link them.
 - Use the repo's own words: the terms in `GLOSSARY.md` win over synonyms (`domain-modeling` owns it).
 - Product UI strings are not documentation. Use your product's copy guidelines for those.
 - Format code snippets the way the repo does. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.

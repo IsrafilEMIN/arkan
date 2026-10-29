@@ -18,15 +18,16 @@ Context lives in two records. Your own chat history holds what you did and decid
 |---|---|
 | claude code | `~/.claude/projects/<slug>/<session-id>.jsonl`, where `<slug>` is the workspace path with each `/` turned into `-` (`/home/user` → `-home-user`); one json message per line |
 | codex | `~/.codex/sessions/<yyyy>/<mm>/<dd>/*.jsonl` (check it exists) |
+| omp | `~/.omp/agent/sessions/<slug>/<timestamp>_<uuid>.jsonl`, one file per chat, with a same-named folder beside it holding extra files; `<slug>` drops the home folder from a path inside home and turns each `/` into `-` (`/Users/me/dev/app` → `-dev-app`), and wraps a path outside home in `--` (`/private/tmp` → `--private-tmp--`) |
 | other harnesses | ask the person, or skip the chat history and say so |
 
-Under underground's sandbox these folders may be unreadable; then say so and work from the shared record and live state.
+Under a sandbox these folders may be unreadable; then say so and work from the shared record and live state.
 
 1. **Classify, then route.** Resuming one specific prior chat is the `session-pickup` playbook, not this. Turning habits into a lasting skill is `automate-me`. A person-readable summary of your work is a different task. Recall loads working context across recent chats before you act. If the person already gave you a full state capsule (paths, branch, the change), use it and skip the mining.
 2. **Lock the scope before searching.** Pin the window ("recent" is a real range: default the last 7 days), the topic if named, and the workspace (default the active one). State the scope back. Never quietly turn "all" into "recent N".
 3. **Fan out across your chat history.** Spawn parallel subagents on a fast model, each taking a slice. Tell each to order candidates by real modification time (`ls -t`), never by file name; to grep the topic first and read only the matching chats and only their relevant parts; and to skip the current chat plus obvious noise (subagent, eval and test chats). Each returns one block per chat: topic, the person's goal, decisions, open threads, struggles and corrections, and artifacts (pull requests, tickets, branches), each citing the session id. For one or two chats, skip the fan-out and search directly. The raw transcripts stay in the subagents; you get only their findings.
 4. **Sweep the shared record** whenever the topic names a feature, file, subsystem, area or bug. This is the default, and "my work on X" does not exempt it. Hand it to `why`'s source investigators, but steer their question from "why was this built this way" to "what is the current state, what has been tried and did not hold, and what is still reported". Run them in parallel with the chat mining, and keep `why`'s posture: one investigator per source, null results are findings, skip an unavailable source and say so. Skip this step only for pure activity recall with no named target ("what did I do this week").
-5. **Verify against live state.** Check the pull requests, branches and tickets the mining and the sweep surfaced with `git`, `gh` (or the broker's `agent-gh pr-view`), and the tracker. When the answer hinges on what an agent really did (the tools it ran, files it read, errors it hit), read the full transcript, not a trimmed copy.
+5. **Verify against live state.** Check the pull requests, branches and tickets the mining and the sweep surfaced with `git`, `gh`, and the tracker. When the answer hinges on what an agent really did (the tools it ran, files it read, errors it hit), read the full transcript, not a trimmed copy.
 6. **Write the brief** to the contract below. Group by thread. Stay on the named topic.
 
 ## Output contract

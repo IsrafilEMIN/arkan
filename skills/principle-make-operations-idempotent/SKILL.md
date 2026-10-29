@@ -19,4 +19,4 @@ Anything a run leaves behind, such as a lock, a temporary file, a half-written r
 2. What happens if the previous run crashed at every possible point?
 3. Does re-execution converge to the same end state?
 
-If any answer is "it depends on what state was left behind," the operation needs a reconciliation step: scan what exists, clean what is stale, and adopt what is live. Compare by content, not by creation order. Detect stale locks by process id.
+If any answer is "it depends on what state was left behind," the operation needs a reconciliation step: scan what exists, clean what is stale, and adopt what is live.

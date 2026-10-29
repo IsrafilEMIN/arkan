@@ -1,1 +1,0 @@
-../skills/pre-setup/scripts/board.sh

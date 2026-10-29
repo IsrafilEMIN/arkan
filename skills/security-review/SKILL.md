@@ -111,7 +111,6 @@ For example:
 SEVERITY GUIDELINES:
 - **HIGH**: Directly exploitable vulnerabilities leading to RCE, data breach, or authentication bypass
 - **MEDIUM**: Vulnerabilities requiring specific conditions but with significant impact
-- **LOW**: Defense-in-depth issues or lower-impact vulnerabilities
 
 CONFIDENCE SCORING:
 - 0.9-1.0: Certain exploit path identified, tested if possible

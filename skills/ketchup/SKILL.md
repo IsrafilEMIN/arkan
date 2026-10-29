@@ -1,6 +1,6 @@
 ---
 name: ketchup
-description: "Catch the person up on what changed in this chat since their last message, in plain words and small visuals, and list every item waiting on them with what they need to decide it from the reply alone. Use for /ketchup or 'catch me up on this chat'."
+description: "Catch the person up on what changed in this chat since their last message, in plain words and small visuals, and list every item waiting on them with what they need to decide it from the reply alone. Use for /ketchup."
 disable-model-invocation: true
 ---
 
@@ -14,11 +14,11 @@ Use `bro`'s voice, not its task: plain words, short sentences, no jargon, like o
 
 ## Gather what changed
 
-Keep this turn read-only. Make visuals only from what you already have: don't change code, start an app or a job, or post anything. Collect your own work since that message, subagent reports, and messages from anyone else in this chat. Check the current state of each pull request, ci run or agent this chat touched (in arkan, the gate's or broker's merge, and the board). Check each number you will show against the facts it comes from, and say so when you correct one.
+Keep this turn read-only. Make visuals only from what you already have: don't change code, start an app or a job, or post anything. Collect your own work since that message, subagent reports, and messages from anyone else in this chat. Check the current state of each pull request, ci run or agent this chat touched, and the board. Check each number you will show against the facts it comes from, and say so when you correct one.
 
-An action item is a call or step only the person can take: a product choice, a `PASS`, an approval, an irreversible action, access you lack, or a step on their machine (a tab-2 install). Include any still waiting on them, even one raised before their last message. Work you can still do yourself is not an action item. Never invent a call to fill the reply. A step they did not ask for and the work does not need is not an action item, unless it is irreversible and waiting on them: give it one line and no visual.
+An action item is a call or step only the person can take: a product choice, a merge, an approval, an irreversible action, access you lack, or a step on their machine (an install only they can run). Include any still waiting on them, even one raised before their last message. Work you can still do yourself is not an action item. Never invent a call to fill the reply. A step they did not ask for and the work does not need is not an action item, unless it is irreversible and waiting on them: give it one line and no visual.
 
-One call can cover many items, such as each pull request waiting for a `PASS`. For each item, collect its link, what it changes for users, the evidence behind your pick, its risk, and your pick. Write "unknown" for a fact the call needs that you do not know. Leave out a link you do not have.
+One call can cover many items, such as each pull request waiting for a merge. For each item, collect its link, what it changes for users, the evidence behind your pick, its risk, and your pick. Write "unknown" for a fact the call needs that you do not know. Leave out a link you do not have.
 
 ## Write the reply
 
@@ -28,7 +28,7 @@ Open with one short sentence that names what waits on the person, or says nothin
 
 Then show what happened, pictures first: the screenshots and videos the work produced, then any diagram that explains a change. Then one short bullet per thing the person asked for: what came of it, and whether it is done, still running, failed, or not checked. Write each line the way you would say it out loud: "Search was slow from a missing index", not "Search review: done". Name any bug found and fixed on the way. Each line must stay true when read alone. Never mark something done that still waits on the person, and leave out anything the action items say. Under the summary, at most three short lines that change what the person knows or must do. Then one line naming work left that you can do yourself.
 
-Then the action items. Ask the call the person owns (merge, `PASS`, approve, pick) and give your pick. A step you would take first goes in your pick; so does anything that must happen first, and anything that cannot be undone. Give the number or link of each pull request, ticket or agent a call is about.
+Then the action items. Ask the call the person owns (merge, approve, pick) and give your pick. A step you would take first goes in your pick; so does anything that must happen first, and anything that cannot be undone. Give the number or link of each pull request, ticket or agent a call is about.
 
 Fit the shape to the call. A call about one item is one bullet: the call, your pick, what it changes for users, the evidence, and its risk. When items share a call, write the call and your pick once, then one bullet per item, riskiest first: its link and name, what it changes for users, the evidence, and its risk. Give each item's risk even when low ("Low risk: only the colors change."). Say what waiting costs only when it is more than a delay (a deadline, lost data).
 

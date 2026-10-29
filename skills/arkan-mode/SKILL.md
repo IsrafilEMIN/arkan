@@ -11,7 +11,7 @@ other skills sit beside this file in the same skills folder (`../diagnosing-bugs
 
 ## 0. check that the work is a task
 
-a **task** is the smallest piece of work you can finish alone, from start to a merged and checked change, with no more decisions from a person (see `GLOSSARY.md` in the arkan repo). a ticket is a task. a small, clear request is a task.
+a **task** is the smallest piece of work you can finish alone, from start to a checked pr that waits only on the person's merge approval, with no other decision from a person. a ticket is a task. a small, clear request is a task.
 
 pick the mode from what you were given:
 
@@ -20,12 +20,12 @@ pick the mode from what you were given:
 
 arkan mode runs tasks only. the work before a task is **shaping**, and a person starts each shaping step:
 
-- the idea or its words are still fuzzy → stop and tell the user to run `/grill-with-docs`.
+- the idea or its words are still fuzzy → stop and tell the user to run `/grilling`.
 - the work needs more than one pr or more than one session, and has no tickets yet → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
 
-**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the person sets the role with `/triage`, so the role is the person's go.
+**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, from `/to-tickets` after the person approves the breakdown, or from `/to-spec` when it publishes the spec.
 
 when the task is a ticket:
 
@@ -41,32 +41,32 @@ when the task is a ticket:
 3. **read the principles you will use.** each entry in [principles](#principles) names when it applies and the `principle-<title>` skill that holds its leaf. read that leaf in full (`../<skill>/SKILL.md`) before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
 4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end. a unit that fails because a piece it needs is another open ticket's work is a missing blocker: stop the way step 0 says, instead of debugging.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
-6. **place the worktree.** work in a git worktree off the base branch, as a direct child of a dedicated worktree root, never inside the repo. on the broker route the root must be one its cleanup accepts: the broker finds the folder by name under an allowed root and refuses a path inside the repo. a worktree outside those roots leaves the local branch behind after the merge. if you do not know an allowed root, ask before you create it.
+6. **place the worktree.** work in a git worktree off the base branch, as a direct child of a dedicated worktree root, never inside the repo. if you do not know where the root goes, ask before you create it.
 
 ## 2. when to reach for another skill
 
-each line names the skill to call today. a ticket in brackets is a planned arkan skill that will take over that line.
+each line names the skill to call today.
 
-- a term or a domain rule is unclear inside the task → `grilling` and `domain-modeling`. if the answer changes what to build, stop: the work is not a task (step 0).
+- a term or a domain rule is unclear inside the task → `grilling` with domain-modeling on. if the answer changes what to build, stop: the work is not a task (step 0).
 - code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook).
 - a behavior to build, or a bug with a cheap test path → `tdd`.
 - something is broken, flaky or slow → `diagnosing-bugs`.
-- a design question you can settle by running code → `prototype`, or the prototype playbook.
+- a design question you can settle by running code → the prototype playbook.
 - a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one as a ticket. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
 - a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
-- a pr to open → the opening-a-pr playbook and the `pr` skill. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
-- push, pr, review, reply, diff, retarget, merge or cleanup → [the forge](#the-forge) for the route: the broker clients when the run offers them, `gh` and REST otherwise.
-- a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. [ticket `arkan-flow` 08]
-- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. a whole pass over repeated mistakes is `correct`; lessons from one chat into skill edits is `reflect`. a person starts both.
+- a pr to open → the opening-a-pr playbook. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
+- push, pr, review, reply, diff, retarget, merge or cleanup → [the forge](#the-forge): plain `git` and `gh`, and REST when GraphQL is blocked.
+- a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. to find the bad merge and ticket the miss, a person starts `post-merge`.
+- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. to turn lessons from one chat into skill edits, a person starts `reflect`.
 - any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply), then `unslop`. a doc, readme or rfc → `technical-writing`. text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
 - a repo has no scripted way to prove the app works → tell the user. a person starts `create-verification`; you do not.
 - concurrency, retries, a state machine, a parser or unsafe code where tests can't reach the case that breaks → tell the user. a person starts `create-formal-verification`, and `maintain-formal-verification` after changes that skipped the check.
 - you edit a `.ts` or `.tsx` file → `typescript-best-practices`.
-- a design that is a one-way door (a public api, a data schema, a seam row) → `architect`, which runs `arena`. a contested design, or a change on a sensitive path → `interrogate` before you ship.
+- a design that is a one-way door (a public api, a data schema) → `architect`, which runs `arena`. a contested design, or a change on a sensitive path → `interrogate` before you ship.
 - a small diff you don't trust, or a change that reaches past its diff → `blast-radius`.
 - you are about to report a performance number → `benchmark-checklist`.
 - "how does x work", or where code should live → `how`. why it is built that way → `why`. the person wants to really understand it → `teach`, which runs both.
-- work that no playbook fits (a large migration, a multi-part change) → `figure-it-out`. wide parallel coverage or a race → `swarm`.
+- work that no playbook fits (a large migration, a multi-part change) → `figure-it-out`. wide parallel coverage → `swarm`.
 
 more triggers:
 
@@ -78,33 +78,29 @@ more triggers:
 
 ## the forge
 
-github is the forge. pick the route once, at the start of the run.
+github is the forge, through plain `git` and `gh`. when the run provides github tools or a built-in pr tool, use them where `playbooks/opening-a-pr.md` says. when `gh pr` fails because GraphQL is blocked, use the **Forge without GraphQL** REST calls in that playbook.
 
-**the broker route** is the one to take whenever the run offers it: `agent-gh` resolves on the path, and the broker socket is there (`$AGENT_GH_SOCKET`, default `~/.agents/sandbox/broker/gh.sock`). under the guard (`AGENT_SANDBOX=1`) this route is mandatory, because the run holds no credential of its own: a missing client or socket is a stop, never a switch to the other route.
+read the target slug off the working repo's own origin: `git remote get-url origin`, then strip a leading `https://github.com/` or `git@github.com:` and a trailing `.git`. take the branch and the head sha from the working checkout (`git branch --show-current`, `git rev-parse HEAD`). pass every pr body, review and reply as a file, never inline in a shell command.
 
-**the direct route** is for a run with no broker and no guard: the `gh pr` calls the playbooks name, and the **Forge without GraphQL** REST calls in `playbooks/opening-a-pr.md` when GraphQL is blocked.
+- **push a checkpoint.** `git push -u origin <branch>`. `git ls-remote origin refs/heads/<branch>` printing the head sha is the proof.
+- **open a pr.** the opening-a-pr playbook.
+- **read a pr.** `gh pr view <number> --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,mergedAt,headRefName,headRefOid,baseRefName,latestReviews,reviewRequests,mergeCommit`. `gh pr checks <number>` reads the checks. `gh api repos/<owner>/<repo>/pulls/<number>/comments` lists the review comments, each with its `id`, `path`, `line` and `in_reply_to_id`.
+- **read the diff.** `gh pr diff <number>`.
+- **review a pr.** `gh api -X POST repos/<owner>/<repo>/pulls/<number>/reviews -f event=COMMENT -f commit_id=<head-sha> -F body=@<file>` posts a comment review bound to that head, which is how a verifier posts its verdict: the reply json reads `state` `COMMENTED` with `commit_id` at that head sha. it is a comment: the review decision, and any approval, stay the person's.
+- **reply on a thread.** `gh api -X POST repos/<owner>/<repo>/pulls/<number>/comments/<comment-id>/replies -F body=@<file>` answers one review comment, with the thread's first comment `id` as the id. the reply json carries the new comment's `id`: cite it.
+- **retarget a stacked pr.** after the parent merges, `gh pr edit <number> --base <base>` moves its child onto trunk. read the base back with `gh pr view <number> --json baseRefName`. this is the single sanctioned move of a base.
+- **merge.** the shipping playbook, step 4.
+- **clean up.** from a surviving checkout of the repo. first pin the head: `gh pr view <number> --json state,headRefOid` must read `MERGED`; its `headRefOid` is `<head-sha>`. then check both branch heads: `git rev-parse refs/heads/<branch>` and `git ls-remote --heads origin <branch>` must each print `<head-sha>`, or nothing when that ref is already gone. if either prints another sha, the branch holds later commits: stop and report both shas. then `git worktree remove <worktree-path>`, then `git branch -D <branch>` (a squash merge leaves the branch unmerged in git's eyes, so `-d` refuses it), then `git push --force-with-lease=refs/heads/<branch>:<head-sha> origin --delete <branch>`, whose lease refuses the delete if the remote head moved after the check.
 
-on the broker route the forge is its clients, in any repo the host allow-list approves. read the target slug off the working repo's own origin, the way `agent-merge` does: `git remote get-url origin`, then strip a leading `https://github.com/` or `git@github.com:` and a trailing `.git`. take the branch and the head sha from the working checkout (`git branch --show-current`, `git rev-parse HEAD`). pass each command the fields its line names. this route never falls back to `gh`, to the token file, or to a wider config. every `<body>` below is the text itself, quoted for your shell, never a `@file` path.
+a nonzero exit does not prove the action did not happen. read the state back with the matching read call above, report what it shows and the stderr, and stop.
 
-- **push a checkpoint.** `agent-gh push <owner/repo> <worktree-path> <agent/branch> <head-sha>`. the reply line `remote ref verified: <sha> <ref>` is the proof.
-- **open a pr.** `agent-gh pr-create <owner/repo> <base> <head> <title> <body>`, which opens it ready.
-- **read a pr.** `agent-gh pr-view <owner/repo> <number>` prints the pr fields — `state`, `isDraft`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `mergedAt`, `headRefName`, `headRefOid`, `baseRefName`, `baseRefOid`, `latestReviews`, `reviewRequests`, `mergeCommit` — plus a `reviewThreads` list and an `unresolvedReviewThreads` count. each thread carries `id`, `isResolved`, `isOutdated`, `path`, `line`, `author` and the first comment's `commentId`, which is the id `pr-reply` takes. thread bodies are not in it: triage from the code at that `path` and `line`, and from the review bodies in `latestReviews`. `agent-gh pr-checks <owner/repo> <number>` reads the checks.
-- **read the diff.** `agent-gh raw '{"verb":"pr-diff","repo":"<owner/repo>","number":<number>,"head_sha":"<40-hex>"}'` prints one json line with those identity fields and `diff`.
-- **review a pr.** `agent-gh pr-review <owner/repo> <number> <head-sha> <body>` posts a comment review bound to that head, with the pr open, which is how a verifier posts its verdict: stdout is the review json, and its `state` reads `COMMENTED` with `commit_id` at that head sha. it is a comment: the review decision, and any approval, stay the user's.
-- **reply on a thread.** `agent-gh pr-reply <owner/repo> <number> <comment-id> <head-sha> <body>` answers one review comment, with the thread's `commentId` as the id; the parent comment has to belong to the same pr, and the pr open at that head. stdout is the reply comment json: cite its `id`. read the thread back with `pr-view` to confirm the reply landed.
-- **retarget a stacked pr.** after the parent merges, `agent-gh pr-retarget <owner/repo> <number> <base> <head-sha>` moves its child onto `main`, `master`, or a parent `agent/*` branch, with the pr open and its head at that sha. the reply line `pr <number> base is now <base> at <sha>` is the proof. this is the single sanctioned move of a base.
-- **merge.** after every check is green, and after the person's unmarked `PASS` on the head where the pr is `manual`, `agent-merge <pr> <head-sha>` merges with the head pinned. it asks the forge to delete the remote branch, which the broker does not verify, then removes the merged local worktree and branch when it can. `agent-gh pr-merge <owner/repo> <number> <head-sha>` does the same with the repo spelled out. never call `gh pr merge` or another raw merge api.
-- **clean up.** `agent-worktree-remove <owner/repo> <worktree-name> <pr> <sha>`, with the sha passed, not defaulted. it removes the verified worktree and then its local ref, non-force: the reply lines `worktree removed: <path>` and `branch deleted: refs/heads/<branch>` are the proof.
-
-a refusal ends that action: the client exits 2 with `refused: <reason>` on stderr, so report that line and stop. any other nonzero exit means the effect was not recorded: report its stderr and stop too. `refused: unknown verb` means the installed broker predates that call: say the host broker needs the current build and stop.
-
-**a merged pr is not a finished task.** cleanup is done when the worktree folder and `refs/heads/<branch>` are both gone, read back from a surviving checkout of the repo (`git worktree list`; `git rev-parse --verify refs/heads/<branch>`). an `already merged` reply runs no cleanup: check both, and run `agent-worktree-remove` with the merged head when they remain. a cleanup that removed the folder and kept the ref answers `partial cleanup: ... refs/heads/<branch>` on stderr: report that line and touch nothing else, and leave a ref whose folder is already gone to the user's own cleanup. the broker does not verify remote branch deletion; check the remote ref where the route allows it, and report it as unverified otherwise.
+**a merged pr is not a finished task.** cleanup is done when the worktree folder, `refs/heads/<branch>` and the remote branch are all gone, read back from a surviving checkout of the repo (`git worktree list`; `git rev-parse --verify refs/heads/<branch>`; `git ls-remote --heads origin <branch>`).
 
 ## autonomy
 
-**do it.** reversible work goes ahead without asking: code, branches, draft prs, notes, scratch scripts. a wrong reversible choice costs less than a blocked agent. do the work, show the result, and say what the user can change.
+**do it.** reversible work goes ahead without asking: code, branches, prs, notes, scratch scripts. a wrong reversible choice costs less than a blocked agent. do the work, show the result, and say what the user can change.
 
-**always stop and ask** before an action no one can undo: force-push to a shared branch, deploy, delete data, send a message outside the project.
+**always stop and ask** before an action no one can undo, or one the person owns: merge a pr, force-push to a shared branch, deploy, delete data, send a message outside the project.
 
 **"keep going", "i'm going to bed", "run until done"** mean you do not stop at a checkpoint. use the autonomous-run playbook.
 
@@ -181,16 +177,24 @@ open the file at `playbooks/<file>`. where a step names a tool your harness does
 
 - **investigation** (`investigation.md`). a read-only question: how does x work, why is y like this, should we do x or y.
 - **bug fix** (`bug-fix.md`). a defect to reproduce, find the root cause of, and fix with evidence.
+- **perf issue** (`perf-issue.md`). a measured slowness to trace and improve against a baseline.
+- **hillclimb** (`hillclimb.md`). steady improvement of one metric toward a target: one change, one measurement, keep or revert. a one-off slowness is a perf issue.
+- **runtime forensics** (`runtime-forensics.md`). diagnose a runtime symptom (a leak, an idle cpu spin, a glitch) from live instrumentation. the deliverable is a diagnosis, not a fix.
+- **trace forensics** (`trace-forensics.md`). diagnose a profiling artifact handed to you after the fact (a cpuprofile, a trace, a heap snapshot). the deliverable is a diagnosis, not a fix.
 - **feature** (`feature.md`). new or changed behavior, built from a named data shape.
 - **refactor** (`refactoring.md`). the structure changes, the behavior does not.
 - **prototype** (`prototype.md`). throwaway code to make a design decision, or to settle a question by watching what happens.
+- **visual parity** (`visual-parity.md`). two ui implementations must look the same, or a styling system migrates.
 - **authoring a skill** (`authoring-a-skill.md`). writing or changing a `SKILL.md`.
+- **eval** (`eval.md`). test how a skill, structure or prompt change affects agent behavior before you promote it.
 - **autonomous run** (`autonomous-run.md`). a long task driven to a checkable end without stopping.
+- **orchestrate** (`orchestrate.md`). a standing program handed to one coordinator: many days, many prs, many subagents. autonomous run drives one task to a predicate.
 - **pause safely** (`pause-safely.md`). stop cleanly so a fresh agent can continue.
 - **session pickup** (`session-pickup.md`). continue work another agent left.
+- **worktree cleanup** (`worktree-cleanup.md`). reclaim local disk from merged or abandoned worktrees and old simulators, with [`scripts/worktree-audit.sh`](scripts/worktree-audit.sh).
 - **opening a pr** (`opening-a-pr.md`). the end of every other code playbook.
 - **babysit** (`babysit.md`). drive an open pr to merge-ready: conflicts, review threads, ci.
 - **shipping** (`shipping.md`). land a green pr that a verifier, not its author, has checked.
 - **spec** (`spec.md`). a spec with tickets: one task loop per ready ticket on an integration branch, then one review and one pr.
 
-pstack's other playbooks (perf, hillclimb, forensics, visual parity, eval, orchestrate, autopilot, worktree cleanup) are not part of arkan yet. a multi-phase plan with no tickets yet is shaping, not a task: see step 0.
+pstack's autopilot and multi-phase-plan playbooks are not part of arkan. a multi-phase plan with no tickets yet is shaping, not a task: see step 0.

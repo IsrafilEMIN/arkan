@@ -6,15 +6,15 @@ disable-model-invocation: true
 
 # Create a verification skill
 
-A repo needs a scripted way to drive the real app and prove behavior: launch it, use a feature the way a user would, and capture evidence. arkan's verifier (the `shipping` playbook), the bug-fix and refactoring playbooks, and `maintain-verification` all reach for it as "the repo's verify skill". This skill writes that skill, tailored to the repo. Write it for the next agent, not for a person: an agent reads it cold, mid-task, with no picture of the app.
+A repo needs a scripted way to drive the real app and prove behavior: launch it, use a feature the way a user would, and capture evidence. arkan-mode's `shipping`, bug-fix and refactoring playbooks and `maintain-verification` all reach for it as "the repo's verify skill". This skill writes that skill, tailored to the repo. Write it for the next agent, not for a person: an agent reads it cold, mid-task, with no picture of the app.
 
 A person starts this skill (arkan-mode tells them when a repo has none); an agent never starts it on its own.
 
 ## Where the verify skill lives
 
-`.agents/skills/verify-<app>/` in the repo, with `.claude/skills/verify-<app>` as a symlink to it (one copy, per `symlink-first`), so every harness finds it. `pre-setup`'s `verify` item looks for a `*verif*` folder in either place.
+`.agents/skills/verify-<app>/` in the repo, with `.claude/skills/verify-<app>` as a symlink to it, so every harness finds it. `pre-setup`'s `verify` item looks for a `*verif*` folder in either place.
 
-If the sandbox refuses the write (underground denies writes under a project's `.agents/` and `.claude/`, so a session cannot plant a skill that later sessions load), write the files to `.scratch/verify-<app>-draft/` instead and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Prove the skill from the draft path; the move changes no content.
+If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`, so a session cannot plant a skill that later sessions load), write the files to `.scratch/verify-<app>-draft/` instead and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Prove the skill from the draft path; the move changes no content.
 
 ## 1. Interview the repo, not the person
 
@@ -49,4 +49,4 @@ Run its own instructions end to end once: launch, doctor, drive one mapped featu
 
 ## 5. Ship it and hand over the upkeep
 
-Commit the skill on a work branch and open a pull request the way `arkan-mode`'s `opening-a-pr` playbook says; it lands through the repo's merge path (seam row 6: the gate or the broker on the person's `PASS`). Then point the person at `maintain-verification` for keeping the map true as the app changes. Suggest a cadence only if they ask.
+Commit the skill on a work branch and open a pull request the way `arkan-mode`'s `opening-a-pr` playbook says; the person decides when it merges. Then point the person at `maintain-verification` for keeping the map true as the app changes. Suggest a cadence only if they ask.

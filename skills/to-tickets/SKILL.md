@@ -24,7 +24,7 @@ Look for opportunities to prefactor the code to make the implementation easier. 
 
 ### 3. Run the overengineering check
 
-Run `/skill:simplest-path` against the plan. The command loads the skill instructions; follow them and do not skip this step. If the command fails, read `~/.agents/skills/simplest-path/SKILL.md` and follow it. If it reports overengineering, present the cuts and stop. Wait for the user to resolve them. Do not continue until the user confirms. Then proceed.
+Run the `simplest-path` skill against the plan, and do not skip this step. If it reports overengineering, present the cuts and stop. Wait for the user to resolve them. Do not continue until the user confirms. Then proceed.
 
 ### 4. Draft vertical slices
 
@@ -68,8 +68,8 @@ Iterate until the user approves the breakdown and has answered every overlap.
 
 Publish the approved tickets. **How** depends on the tracker `/pre-setup` configured; the tickets are the same either way, only the shape of the blocking edges changes:
 
-- **Local files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below: one ticket per file, never a single combined file.
-- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking / sub-issue relationship where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Apply the `ready-for-agent` triage label unless instructed otherwise; the tickets are agent-grabbable by construction.
+- **Local files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below: one ticket per file, never a single combined file. Its role is `ready-for-agent` and its priority is its `<NN>`, unless the user says otherwise.
+- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking link for blocking edges where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Use sub-issue only to attach a ticket to its parent issue. Set each ticket's role to `ready-for-agent` unless instructed otherwise, the way the issue tracker doc sets a role; the tickets are agent-grabbable by construction.
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 
@@ -79,9 +79,12 @@ Do NOT close or modify any parent issue.
 
 # <NN>: <Ticket title>
 
-**What to build:** the end-to-end behaviour this ticket makes work, from the user's perspective, not a layer-by-layer implementation list.
-
+**Role:** ready-for-agent
+**Closed:** no
+**Priority:** <NN>
 **Blocked by:** the numbers/titles of the tickets that gate this one, or "None (can start immediately)".
+
+**What to build:** the end-to-end behaviour this ticket makes work, from the user's perspective, not a layer-by-layer implementation list.
 
 **Touches:** the folders or modules this ticket will change.
 
