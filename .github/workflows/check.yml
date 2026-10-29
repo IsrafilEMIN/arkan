@@ -1,0 +1,41 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: skill frontmatter
+        run: |
+          fail=0
+          for dir in skills/*/; do
+            name=$(basename "$dir")
+            file="$dir/SKILL.md"
+            if [ ! -f "$file" ]; then
+              echo "::error file=$dir::$name has no SKILL.md"; fail=1; continue
+            fi
+            front=$(awk 'NR==1 && $0!="---"{exit} NR>1 && $0=="---"{exit} NR>1{print}' "$file")
+            if [ -z "$front" ]; then
+              echo "::error file=$file::no frontmatter"; fail=1; continue
+            fi
+            printf '%s\n' "$front" | grep -qx "name: $name" || { echo "::error file=$file::name is not '$name'"; fail=1; }
+            printf '%s\n' "$front" | grep -q '^description: .' || { echo "::error file=$file::no description"; fail=1; }
+          done
+          exit $fail
+
+      - name: script syntax
+        run: |
+          fail=0
+          while IFS= read -r script; do
+            bash -n "$script" || { echo "::error file=$script::bash -n failed"; fail=1; }
+          done < <(find skills -name '*.sh' -type f)
+          exit $fail
