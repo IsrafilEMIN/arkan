@@ -91,8 +91,8 @@ wt_paths | while IFS= read -r wt; do
 
 	git merge-base --is-ancestor "$head" "$base" 2>/dev/null && merged=in-base || merged=no
 
-	porcelain=$(git -C "$wt" status --porcelain 2>/dev/null)
-	if [ -z "$porcelain" ]; then dirty=clean
+	if ! porcelain=$(git -C "$wt" status --porcelain 2>/dev/null); then dirty=unknown
+	elif [ -z "$porcelain" ]; then dirty=clean
 	elif printf '%s\n' "$porcelain" | grep -qv '^??'; then
 		dirty="wip:$(printf '%s\n' "$porcelain" | grep -cv '^??')"
 	else dirty="scratch:$(printf '%s\n' "$porcelain" | grep -c '^??')"; fi
@@ -123,7 +123,7 @@ wt_paths | while IFS= read -r wt; do
 		last=$(fmt_day "$last_ts" 2>/dev/null); fi
 	recent=$([ "$last_ts" -gt 0 ] 2>/dev/null && [ $(( (now - last_ts) / 86400 )) -le 4 ] && echo yes || echo no)
 
-	case "$dirty" in wip:*) bucket=hold-wip ;; scratch:*) bucket=hold-scratch ;; *)
+	case "$dirty" in wip:*) bucket=hold-wip ;; scratch:*) bucket=hold-scratch ;; unknown) bucket=hold-unknown ;; *)
 		case "$pr" in */open) bucket=hold-open-pr ;; *)
 			if [ "$recent" = yes ]; then bucket=verify-recent-chat
 			elif [ "$merged" = YES ]; then bucket=safe
