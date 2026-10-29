@@ -17,8 +17,8 @@ The repo's `docs/agents/issue-tracker.md` holds the mechanics: where a ticket li
 | **claim** | no field: the pushed work branch is the claim | `arkan-mode` step 0, `spec` implementers (agent) |
 | **release** | no field. Never delete an unmerged branch to release: stop, keep the branch, and report the blocker. A person frees the ticket | `arkan-mode` (agent) |
 | **close done** | `**Closed:** yes`, in the work's own branch, so the close lands with the merge | `opening-a-pr` (agent), `spec` playbook (agent) |
-| **close wontfix** | `**Closed:** yes` and `**Role:** wontfix` | `triage` (person) |
-| **reopen** | `**Closed:** no` and `**Role:** needs-triage` | a person, or `triage` |
+| **close wontfix** | `**Closed:** yes`. A ticket with `**Role:**` also gets `**Role:** wontfix`. A wayfinder ticket keeps its `**Type:**` and gets a `## Answer` that says why. A spec gets no role | `triage` (person) |
+| **reopen** | `**Closed:** no`. A ticket with `**Role:**` also gets `**Role:** needs-triage`. A wayfinder ticket keeps its `**Type:**`. A spec stays without a role | a person, or `triage` |
 | **resolve** | appends `## Answer`, then **close done** | `wayfinder` (person or agent) |
 | **close spec** | the spec's `**Closed:** yes`, after its last ticket closes | `spec` playbook (agent) |
 
