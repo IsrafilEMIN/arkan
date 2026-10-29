@@ -16,7 +16,7 @@ Context lives in two records. Your own chat history holds what you did and decid
 
 | harness | transcripts |
 |---|---|
-| claude code | `~/.claude/projects/<slug>/<session-id>.jsonl`, where `<slug>` is the workspace path with each `/` turned into `-` (`/home/user` → `-home-user`); one json message per line |
+| claude code | `~/.claude/projects/<slug>/<session-id>.jsonl`, where `<slug>` is the workspace path with each character that is not a letter or a digit turned into `-` (`/home/user` → `-home-user`, `/Users/me/.agents` → `-Users-me--agents`); one json message per line |
 | codex | `~/.codex/sessions/<yyyy>/<mm>/<dd>/*.jsonl` (check it exists) |
 | omp | `~/.omp/agent/sessions/<slug>/<timestamp>_<uuid>.jsonl`, one file per chat, with a same-named folder beside it holding extra files; `<slug>` drops the home folder from a path inside home and turns each `/` into `-` (`/Users/me/dev/app` → `-dev-app`), and wraps a path outside home in `--` (`/private/tmp` → `--private-tmp--`) |
 | other harnesses | ask the person, or skip the chat history and say so |

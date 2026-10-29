@@ -41,6 +41,6 @@ REST cannot mark a PR ready (`gh pr ready`); a PR created over REST without `dra
 
 **Readiness.** Open every PR ready, never as a draft. A built-in PR tool can default to draft, so set `draft: false` on every creation call through it. With `gh`, run `gh pr create --base <base> --head <branch> --title <title> --body-file <file>` without `--draft`. If a PR still opens as a draft, mark it ready through the PR tool or with `gh pr ready <number>`. Run `gh pr view <number>` (or the PR tool's read) before you refer to PR status.
 
-**Babysit.** Opening a PR does not start a babysit. Post the URL and keep building. Finish the phase or stack first. Run a separate babysit pass only when the user asks for one after the whole stack exists. A babysit for each new PR stalls the build and spends checks on commits later waves restart. Push back when feedback drifts from intent.
+**Babysit.** Opening a PR does not start a babysit. Post the URL and keep building. Finish the stack first. Run a separate babysit pass only when the user asks for one after the whole stack exists. A babysit for each new PR stalls the build and spends checks on commits later waves restart. Push back when feedback drifts from intent.
 
 A subagent that opens a PR runs the `code-review` skill on its diff, removes slop and narrating comments, and posts the URL. It returns to the parent without babysitting.
