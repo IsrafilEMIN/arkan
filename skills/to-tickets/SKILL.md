@@ -69,7 +69,7 @@ Iterate until the user approves the breakdown and has answered every overlap.
 Publish the approved tickets. **How** depends on the tracker `/pre-setup` configured; the tickets are the same either way, only the shape of the blocking edges changes:
 
 - **Local files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below: one ticket per file, never a single combined file. Its role is `ready-for-agent` and its priority is its `<NN>`, unless the user says otherwise.
-- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking link for blocking edges where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Use sub-issue only to attach a ticket to its parent issue. Set each ticket's role to `ready-for-agent` unless instructed otherwise, the way the issue tracker doc sets a role; the tickets are agent-grabbable by construction.
+- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking link for blocking edges where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. If the source was an existing issue, make each ticket its sub-issue (the issue tracker doc's operation); use sub-issue for nothing else. Set each ticket's role to `ready-for-agent` unless instructed otherwise, the way the issue tracker doc sets a role; the tickets are agent-grabbable by construction.
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 
@@ -110,7 +110,7 @@ The end-to-end behaviour this ticket makes work, from the user's perspective, no
 
 ## Blocked by
 
-- A reference to each blocking ticket, or "None (can start immediately)".
+- A reference to each blocking ticket, or "None (can start immediately)". Omit this section when blockers were set as native edges.
 
 ## Touches
 

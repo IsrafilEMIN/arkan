@@ -16,6 +16,8 @@ Tests verify behavior through public interfaces, not implementation details. Cod
 
 See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for mocking guidelines.
 
+A **seam** is the public boundary you test at: the interface where you observe behavior without reaching inside. When the shape of that interface is itself in question, use the harness's skill tool to load `codebase-design` for the vocabulary.
+
 ## When a test is impractical
 
 Prefer no new test over a bad test. Skip the test when it needs broad harness setup, brittle mocks, slow end-to-end infrastructure, production-only state, vague reproduction steps, or large unrelated fixture churn. Use the closest executable check instead: a script, a manual repro command, browser automation, a snapshot comparison, a log assertion, or a focused integration check.
@@ -25,7 +27,7 @@ Choose the narrowest check. Prefer the closest unit, component, integration or r
 ## Anti-patterns
 
 - **Implementation-coupled**: mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed.
-- **Tautological**: the expected value restates the code's own computation, so the test can never disagree with the code.
+- **Tautological**: the expected value restates the code's own computation, so the test can never disagree with the code. Expected values must come from an independent source of truth: a known-good literal, a worked example, the spec.
 - **Horizontal slicing**: writing all tests first, then all implementation. Bulk tests verify _imagined_ behavior: you test the _shape_ of things rather than user-facing behavior, the tests go insensitive to real changes, and you commit to test structure before understanding the implementation. Work in **vertical slices** instead: one test → one implementation → repeat, each test a **tracer bullet** that responds to what the last cycle taught you.
 
 ## Rules of the loop
