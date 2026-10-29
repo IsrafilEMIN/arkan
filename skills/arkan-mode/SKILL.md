@@ -71,7 +71,7 @@ each line names the skill to call today.
 more triggers:
 
 - **a fork you are about to ask about.** if the answer is a fact you can see by running something (behavior, timing, layout, output, speed), it is not a question for the user. sketch it with the prototype playbook and let the result decide. ask only for a product or taste call that no experiment can settle, and give your recommended answer.
-- **review bots and security bots.** they find real bugs and they also file noise. check each claim against the code. fix the real ones, and dismiss the rest with a concrete reason. never change code only to quiet a bot.
+- **review bots and security bots.** they find real bugs and they also file noise. check each claim against the code. fix the real ones, and dismiss the rest with a concrete reason. never change code only to quiet a bot. classify each thread as fix, dismiss or ask with [`references/review-bot-triage.md`](references/review-bot-triage.md).
 - **a broken skill in the middle of a task.** fix it in its own pr. do not block on it, and do not work around it in silence.
 - **the person comes back.** they ask where things stand across recent chats → `recall`; what changed in this chat → `ketchup`. the person starts both, as well as `bro` (say it simply), `automate-me` (their working style as a mode skill), `sharpen` (frame a task before starting) and `in-your-own-words` (restate their goal).
 - **long or unattended work** ("going to bed", "run until done", "trust it when i'm back"). keep a decision trail with `show-me-your-work`: what you chose, why, and the evidence.
