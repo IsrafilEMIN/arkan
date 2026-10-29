@@ -36,7 +36,7 @@ Lead with the capsule, then the thread status, then the problems, then the next 
 
 - **Capsule.** At most 5 bullets: what this work is and where it stands.
 - **Threads.** One line each, with exactly one status tag: `[merged #N]`, `[open PR #N]`, `[in flight <branch>]`, `[verified, uncommitted]`, `[reverted #N]`, or `[planned, not started]` (a ticket on the board). A thread with no tag is not done, so tag it.
-- **Problems.** At most 5, the recurring ones, including fixes that shipped and were reverted, so the next attempt starts where the last one failed.
+- **Problems.** At most 5, the recurring ones. Include the symptoms users keep reporting and any fix that shipped and was reverted, so the next attempt starts where the last one failed.
 - **Next move.** The single most useful next action, concrete.
 
 An adjacent feature or ticket stays out unless it blocks this one. When the brief outgrows a screen, cut detail before you cut threads. Write it per `unslop`, cite chat findings by session id and shared-record findings by source (pull request, ticket, error-tracker issue), and strip private context before any public output.
