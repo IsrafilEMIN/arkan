@@ -45,7 +45,7 @@ Spawn one investigator per category that has a source, all at once, each owning 
 
 Each investigator's prompt is [`references/investigator-prompt.md`](references/investigator-prompt.md) filled in, plus:
 
-- its playbook from [`references/source-playbook.md`](references/source-playbook.md): `references/sources/code-archaeology.md` for source control and a local tracker, or the connector search steps for any other category;
+- its playbook from [`references/source-playbook.md`](references/source-playbook.md): `references/sources/code-archaeology.md` for source control and a local tracker, or the connector search steps for any other category, plus that file's evidence rules;
 - `references/sources/incident-postmortem.md` **if the target code looks defensive** (null checks, retry logic, timeouts, rate limits, feature flags, egress guards, out-of-memory handlers);
 - the code anchor and the person's original question.
 
