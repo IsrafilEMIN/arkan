@@ -35,5 +35,5 @@ Choose the narrowest check. Prefer the closest unit, component, integration or r
 - **Red before green.** Write the failing test first, then only enough code to pass it. Don't anticipate future tests or add speculative features.
 - **Confirm the failure.** Run the new test before the fix. It must fail for the intended reason. If it passes, or fails for an unrelated reason, correct the test before you change the code.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
-- **Refactoring is not part of the loop.** It belongs to the review stage (see the `code-review` skill), not the red → green implementation cycle.
+- **Refactoring is not part of the loop.** It is a separate step once the tests are green, not part of the red → green implementation cycle.
 - **Do not edit a test to match a wrong implementation.** Do not weaken an existing assertion unless the expected behavior changed and the reason is clear.
