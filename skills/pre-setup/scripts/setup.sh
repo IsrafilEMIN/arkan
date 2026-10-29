@@ -346,7 +346,6 @@ check() {
 	fi
 	check_claude_md
 	check_board
-	check_file review-md REVIEW.md
 	if ls -d "$root"/.claude/skills/*verif* "$root"/.agents/skills/*verif* >/dev/null 2>&1; then
 		say verify ok
 	else
@@ -416,7 +415,6 @@ apply() {
 				rm -f "$tmp"
 			fi
 			;;
-		review-md) seed REVIEW.md review.md ;;
 		claude-md)
 			if claude_detected && has AGENTS.md && [ ! -e "$root/CLAUDE.md" ] && [ ! -L "$root/CLAUDE.md" ]; then
 				ln -s AGENTS.md "$root/CLAUDE.md"
@@ -424,7 +422,7 @@ apply() {
 			;;
 		omp) apply_omp; return ;;
 		*)
-			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, review-md, claude-md, omp\n' "$item" >&2
+			printf 'setup: %s needs a choice or is written by the skill; apply takes git, gitattributes, board, claude-md, omp\n' "$item" >&2
 			exit 2
 			;;
 	esac
