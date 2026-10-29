@@ -2,9 +2,13 @@
 
 arkan copies and changes text from the projects below. each one uses the MIT license, which asks that its copyright notice and license text stay with every copy. the full text of each license follows.
 
-- **pstack** by Lauren Tan, from `cursor/plugins` at commit `182f2ce`, folder `pstack/`. in arkan: `skills/arkan-mode/` (its `SKILL.md` is a rewrite of pstack's mode skill; its `playbooks/` are copies, changed to drop cursor-only parts) and the 24 `principle-*` skills (copies, adapted). license read from <https://github.com/cursor/plugins/blob/182f2ce/pstack/LICENSE> on 2026-10-18.
-- **skills** by Matt Pocock, from `mattpocock/skills` (main branch). in arkan: the matt pocock skills listed in `REFERENCE.md`, some of them changed. license read from <https://github.com/mattpocock/skills/blob/main/LICENSE> on 2026-10-18.
+- **pstack** by Lauren Tan, from `cursor/plugins`, folder `pstack/`, at three commits. license read from <https://github.com/cursor/plugins/blob/182f2ce/pstack/LICENSE> on 2026-10-18; the same license and copyright notice ship at `d457567` and `c742dd6`.
+  - commit `182f2ce`: `skills/arkan-mode/` (its `SKILL.md` is a rewrite of pstack's mode skill; its `playbooks/` are copies, changed to drop cursor-only parts), the 24 `principle-*` skills (copies, adapted, several with arkan additions) and the "when a test is impractical" section of `skills/tdd/`.
+  - commit `d457567`: `create-verification`, `maintain-verification`, `blast-radius`, `architect`, `swarm`, `figure-it-out`, `benchmark-checklist`, `unslop`, `technical-writing`, `no-comments`, `show-me-your-work`, `how`, `why`, `teach`, `in-your-own-words`, `sharpen`, `recall`, `reflect`, `ketchup`, `bro`, `automate-me`, `typescript-best-practices`, `make-bot-ui`, `create-formal-verification` and `maintain-formal-verification` (ported, changed).
+  - commit `c742dd6`: `arkan-mode`'s autonomous run, perf issue, hillclimb, eval, runtime forensics, trace forensics, visual parity, orchestrate and worktree cleanup playbooks, `skills/arkan-mode/scripts/worktree-audit.sh`, `principle-explain-the-number`, `arena`, `interrogate` and `correct`, plus restored content in `swarm`, `technical-writing`, `ketchup`, `recall`, `why` and `arkan-mode`'s review-bot triage.
+- **skills** by Matt Pocock, from `mattpocock/skills` at commit `93497a8` (2026-10-06). in arkan: the matt pocock skills listed in `REFERENCE.md`, some of them changed. license read from <https://github.com/mattpocock/skills/blob/93497a8/LICENSE>.
 - **claude-code-security-review** by Anthropic, from `anthropics/claude-code-security-review` at commit `0c6a49f`, file `.claude/commands/security-review.md`. in arkan: `skills/security-review/` (a copy, changed to drop claude-code-only parts). license read from <https://github.com/anthropics/claude-code-security-review/blob/0c6a49f/LICENSE> on 2026-10-18.
+- **good-css** by Vojta Holik, from `vojtaholik/good-css` at commit `92d436b`, folder `skills/good-css/`. in arkan: `skills/good-css/`. license read from <https://github.com/vojtaholik/good-css/blob/92d436b/LICENSE>.
 
 ---
 
@@ -65,6 +69,32 @@ SOFTWARE.
 MIT License
 
 Copyright (c) 2025 Anthropic
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## good-css
+
+MIT License
+
+Copyright (c) 2026 Vojta Holik
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
