@@ -21,6 +21,21 @@ trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; printf '%s' "${s%"${s##*[
 
 roles=" needs-triage needs-info ready-for-agent ready-for-human wontfix "
 types=" research prototype grilling task "
+fields=" Role Type Closed Priority Due Blocked-by "
+labels=0
+if [ -f "$root/docs/agents/triage-labels.md" ]; then labels=1; fi
+
+real_date() {
+	[[ $1 =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})$ ]] || return 1
+	local y=$((10#${BASH_REMATCH[1]})) m=$((10#${BASH_REMATCH[2]})) d=$((10#${BASH_REMATCH[3]})) max=31
+	case $m in
+		4 | 6 | 9 | 11) max=30 ;;
+		2) if (( (y % 4 == 0 && y % 100 != 0) || y % 400 == 0 )); then max=29; else max=28; fi ;;
+		1 | 3 | 5 | 7 | 8 | 10 | 12) ;;
+		*) return 1 ;;
+	esac
+	(( d >= 1 && d <= max ))
+}
 
 if [ "$verb" = check ]; then
 	[ -f "$board" ] || { printf '%s: no TODO.md in %s\n' "$prefix" "$root" >&2; exit 2; }
@@ -46,9 +61,18 @@ while IFS= read -r f; do
 	else
 		nn="${rel##*/}"; nn="${nn%%-*}"
 	fi
-	title="" role="" type="" due="" closed="" prio="" refs=""
+	title="" role="" type="" due="" closed="" prio="" refs="" seen=" "
 	while IFS= read -r line || [ -n "$line" ]; do
 		line="${line%$'\r'}"
+		if [[ $line =~ ^\*\*([^*]+):\*\* ]]; then
+			name="${BASH_REMATCH[1]// /-}"
+			if [[ $fields != *" $name "* ]]; then
+				fail "$rel" "unknown field '**${BASH_REMATCH[1]}:**' before the first '## ' heading (known: Role, Type, Closed, Priority, Due, Blocked by; body text goes under a '## ' heading)"
+			elif [[ $seen == *" $name "* ]]; then
+				fail "$rel" "field '**${BASH_REMATCH[1]}:**' appears twice"
+			fi
+			seen="$seen$name "
+		fi
 		case "$line" in
 			'## '*) break ;;
 			'# '*) [ -n "$title" ] || title="${line#'# '}" ;;
@@ -99,11 +123,13 @@ while IFS= read -r f; do
 	fi
 	[ -n "$title" ] || fail "$rel" "no '# ' heading"
 	title="$(printf '%s' "${title:0:1}" | tr '[:lower:]' '[:upper:]')${title:1}"
-	[ "$spec" = 1 ] || [[ $roles == *" $role "* ]] || [[ $types == *" $type "* ]] ||
+	[ "$spec" = 1 ] || [ $labels = 0 ] || [[ $roles == *" $role "* ]] || [[ $types == *" $type "* ]] ||
 		fail "$rel" "needs a **Role:** line (one of:${roles% }) or a **Type:** line (one of:${types% })"
 	[ -z "$role" ] || [[ $roles == *" $role "* ]] || fail "$rel" "unknown role '$role'"
 	[ -z "$type" ] || [[ $types == *" $type "* ]] || fail "$rel" "unknown type '$type'"
-	[ -z "$due" ] || [[ $due =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "$rel" "**Due:** must be YYYY-MM-DD, got '$due'"
+	[ -z "$role" ] || [ -z "$type" ] || fail "$rel" "has both **Role:** and **Type:**; a wayfinder ticket has **Type:** in place of **Role:**"
+	[ "$spec" = 0 ] || [ -z "$role$type" ] || fail "$rel" "a spec has no **Role:** or **Type:**; its tickets carry them"
+	[ -z "$due" ] || real_date "$due" || fail "$rel" "**Due:** must be a real date, YYYY-MM-DD, got '$due'"
 	[[ $closed == yes || $closed == no ]] || fail "$rel" "needs a **Closed:** line, yes or no"
 	[[ $prio =~ ^[0-9]+$ ]] || fail "$rel" "needs a **Priority:** line, a number"
 	if [ -z "$refs" ]; then
@@ -162,7 +188,7 @@ while [ $k -lt ${#t_path[@]} ]; do
 	fi
 	t_block+=("$block ")
 	if [ "${t_spec[$k]}" = 1 ]; then ready=0; fi
-	if [ "${t_role[$k]}" != ready-for-agent ] && [ "${t_role[$k]}" != ready-for-human ] && [ -z "${t_type[$k]}" ]; then
+	if [ $labels = 1 ] && [ "${t_role[$k]}" != ready-for-agent ] && [ "${t_role[$k]}" != ready-for-human ] && [ -z "${t_type[$k]}" ]; then
 		ready=0
 	fi
 	if [ "${t_closed[$k]}" = yes ]; then
