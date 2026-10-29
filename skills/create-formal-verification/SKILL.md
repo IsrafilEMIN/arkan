@@ -38,7 +38,7 @@ Write a project-local skill with frontmatter that names the area and says when t
 
 `.agents/skills/formal-verify-<area>/` in the repo, with `.claude/skills/formal-verify-<area>` as a symlink to it, so every harness finds it. Keep the model, harness and property files beside the code they describe (for example `verification/<area>/`), and give the skill one command that runs them. Add that command to the repo's ci only if the run is short; otherwise the skill names when to run it.
 
-If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`), write the skill to `.scratch/formal-verify-<area>-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Installing the tool usually needs the network or `sudo`: give the person the install command with a pinned version, and say so rather than working around the sandbox.
+If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`), write the skill to `${TMPDIR:-/tmp}/<repo>-formal-verify-<area>-draft/`, outside the repo, and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Installing the tool usually needs the network or `sudo`: give the person the install command with a pinned version, and say so rather than working around the sandbox.
 
 ## Prove it before you hand off
 
