@@ -275,7 +275,7 @@ const config = { theme: "dark", cols: 3 } satisfies Config;
 
 Validate once where data crosses in. Trust types inside. See the `principle-boundary-discipline` skill.
 
-- **Wire formats** (proto, JSON-RPC): parse with `ignoreUnknownFields` so forward-compatible changes don't break old clients.
+- **Wire formats** (proto, JSON-RPC): parse so unknown fields are ignored (for example protobuf-es `ignoreUnknownFields`), so forward-compatible changes don't break old clients.
 - **Persisted JSON:** versioned blob with a try/catch around the parse.
 - **Don't re-validate** deep in call chains.
 
