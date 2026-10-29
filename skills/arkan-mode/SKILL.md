@@ -31,8 +31,8 @@ when the task is a ticket:
 
 - the repo has no issue tracker set up (no `docs/agents/issue-tracker.md`) → tell the user to run `/pre-setup`.
 - fetch the ticket from the issue tracker and state its title before you start. if the reference is ambiguous, ask.
-- claim the ticket before any work, the way the issue tracker doc says.
-- **a missing piece is a blocker, not a bug.** when code the ticket needs does not exist yet and belongs to another open ticket, do not build it and do not debug around it. stop, add that ticket to this ticket's `Blocked by`, drop your claim, and report which piece is missing and which ticket owns it. commit that edit and the rebuilt board on your work branch; if you have none yet, open a small branch and PR for the edit alone (the board rule in `docs/agents/issue-tracker.md`). never commit it straight to `main`.
+- claim the ticket before any work: the **claim** operation in the [tickets playbook](playbooks/tickets.md).
+- **a missing piece is a blocker, not a bug.** when code the ticket needs does not exist yet and belongs to another open ticket, do not build it and do not debug around it. stop, run **add blocker** with that ticket, then **release** (keep the branch), and report which piece is missing and which ticket owns it. commit that edit and the rebuilt board on your work branch; if you have none yet, open a small branch and PR for the edit alone (the board rule in `docs/agents/issue-tracker.md`). never commit it straight to `main`.
 
 ## 1. start every task like this
 
@@ -54,7 +54,7 @@ each line names the skill to call today.
 - a behavior to build, or a bug with a cheap test path → `tdd`.
 - something is broken, flaky or slow → `diagnosing-bugs`.
 - a design question you can settle by running code → the prototype playbook.
-- a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one as a ticket. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
+- a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one with the **create** operation, role `needs-triage`. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
 - a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
 - a pr to open → the opening-a-pr playbook. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
 - push, pr, review, reply, diff, retarget, merge or cleanup → [the forge](#the-forge): plain `git` and `gh`, and REST when GraphQL is blocked.
@@ -205,5 +205,6 @@ open the file at `playbooks/<file>`. where a step names a tool your harness does
 - **babysit** (`babysit.md`). drive an open pr to merge-ready: conflicts, review threads, ci.
 - **shipping** (`shipping.md`). land a green pr that a verifier, not its author, has checked.
 - **spec** (`spec.md`). a spec with tickets: one task loop per ready ticket on an integration branch, then one review and one pr.
+- **tickets** (`tickets.md`). every ticket change: create, set role, add blocker, claim, release, close, reopen, resolve.
 
 pstack's autopilot and multi-phase-plan playbooks are not part of arkan. a multi-phase plan with no tickets yet is shaping, not a task: see step 0.

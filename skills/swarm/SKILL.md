@@ -34,4 +34,4 @@ Read the final results. Drop a result that does not record the shas and the meth
 
 ## Phase D: report
 
-Return one report in the chat: a table (slice, result, evidence), one line per issue, and gaps and dropouts. Turn each proven issue that is not this task's work into a ticket on the repo's tracker.
+Return one report in the chat: a table (slice, result, evidence), one line per issue, and gaps and dropouts. File each proven issue that is not this task's work with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`.

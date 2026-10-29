@@ -18,7 +18,7 @@ The issue tracker and triage label vocabulary should have been provided to you. 
 
 Check with the user that these seams match their expectations.
 
-4. Write the spec using the template below, then publish it to the project issue tracker. A spec gets no triage role: its tickets do, through `/to-tickets`. On a local tracker, the spec is `.scratch/<feature-slug>/spec.md`, and it starts with these lines above the template, so the board can show it:
+4. Write the spec using the template below, then publish it with the **create spec** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md). A spec gets no triage role: its tickets do, through `/to-tickets`. On a local tracker, the spec is `.scratch/<feature-slug>/spec.md`, and it starts with these lines above the template, so the board can show it:
 
    ```markdown
    # <Spec title>
