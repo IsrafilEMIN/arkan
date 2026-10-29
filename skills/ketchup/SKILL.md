@@ -22,17 +22,17 @@ One call can cover many items, such as each pull request waiting for a merge. Fo
 
 ## Write the reply
 
-Spend words on the calls, not on the story. Keep what happened under 100 words, not counting pictures, and shorter when less happened. Leave out work that changed nothing for the person. Give each item about 30 words. The reply grows with the number of items: never cut items or shrink them to fit a word count, and never put a count or a link in place of an item. A link can add depth, but the reply alone must be enough to decide.
+Spend words on the calls, not on the story. Keep what happened under 100 words, not counting pictures, and shorter when less happened. Leave out work that changed nothing for the person. Give each item about 30 words. The reply grows with the number of items: two items need well under 150 words in all, not counting pictures, and thirty need far more. Never cut items or shrink them to fit a word count, and never put a count or a link in place of an item. A link can add depth, but the reply alone must be enough to decide.
 
 Open with one short sentence that names what waits on the person, or says nothing does. If nothing happened and nothing waits, say so and stop.
 
-Then show what happened, pictures first: the screenshots and videos the work produced, then any diagram that explains a change. Then one short bullet per thing the person asked for: what came of it, and whether it is done, still running, failed, or not checked. Write each line the way you would say it out loud: "Search was slow from a missing index", not "Search review: done". Name any bug found and fixed on the way. Each line must stay true when read alone. Never mark something done that still waits on the person, and leave out anything the action items say. Under the summary, at most three short lines that change what the person knows or must do. Then one line naming work left that you can do yourself.
+Then show what happened, pictures first: embed inline the screenshots and videos the work produced, then any diagram that explains a change. Then one short bullet per thing the person asked for: what came of it, and whether it is done, still running, failed, or not checked. Write each line the way you would say it out loud: "Search was slow from a missing index", not "Search review: done". Name any bug found and fixed on the way. Each line must stay true when read alone. Never mark something done that still waits on the person, and leave out anything the action items say. Under the summary, at most three short lines that change what the person knows or must do. Then one line naming work left that you can do yourself.
 
 Then the action items. Ask the call the person owns (merge, approve, pick) and give your pick. A step you would take first goes in your pick; so does anything that must happen first, and anything that cannot be undone. Give the number or link of each pull request, ticket or agent a call is about.
 
-Fit the shape to the call. A call about one item is one bullet: the call, your pick, what it changes for users, the evidence, and its risk. When items share a call, write the call and your pick once, then one bullet per item, riskiest first: its link and name, what it changes for users, the evidence, and its risk. Give each item's risk even when low ("Low risk: only the colors change."). Say what waiting costs only when it is more than a delay (a deadline, lost data).
+Fit the shape to the call. A call about one item is one bullet: the call, your pick, what it changes for users, the evidence, and its risk. When items share a call, write the call and your pick once, then one bullet per item, riskiest first: its link and name, what it changes for users, the evidence, and its risk. Name an item's pick only where it differs from the call's. Give each item's risk even when low ("Low risk: only the colors change."). Say what waiting costs only when it is more than a delay (a deadline, lost data).
 
-For a call between options, give every option the work weighed, each with what it gets the person and what it costs, and the current state when there is one. Those costs are the call's risk; add no separate risk line.
+For a call between options, give every option the work weighed, each with what it gets the person and what it costs, and the current state when there is one. Those costs are the call's risk; add no separate risk line. When the screenshots above show the options, write each option's gain and cost under its screenshot.
 
 ## Visuals
 
@@ -42,4 +42,4 @@ Draw when something is easier to grasp as a picture than as sentences: how a des
 
 Keep each visual readable at a glance: at most six boxes, at most eight words in each, in plain words a person would say. A fact that needs a sentence belongs in the text, or nowhere.
 
-Embed screenshots and videos when the change is visible. If a visible change has none, mark its line "no screenshot yet" and say what changed on screen. Draw diagrams and charts only from facts you have. Never invent a number, and never draw a screen you did not capture. Link only artifacts that exist.
+Embed screenshots and videos inline when the change is visible, not only as links. If a visible change has none, mark its line "no screenshot yet" and say what changed on screen. Draw diagrams and charts only from facts you have. Never invent a number, and never draw a screen you did not capture. Link only artifacts that exist.
