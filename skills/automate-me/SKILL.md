@@ -14,7 +14,7 @@ This skill sequences others; it doesn't replace them: a mining pass (step 1, the
 
 ### 0. Check for an existing skill
 
-Look for `*-mode/SKILL.md` matching the person's handle under the repo's `.agents/skills/` and `.claude/skills/`, and under `~/.agents/skills/` and `~/.claude/skills/`. If one exists, confirm intent (unless they already said "update my skill" or similar):
+Look for `*-mode/SKILL.md` matching the person's handle under the repo's `.agents/skills/` and `.claude/skills/`, under `~/.agents/skills/` and `~/.claude/skills/`, and in omp's skills folder (`~/.omp/agent/skills/`). If one exists, confirm intent (unless they already said "update my skill" or similar):
 
 - update the existing skill (default for repeat runs);
 - start fresh (rare; ask why before doing it).

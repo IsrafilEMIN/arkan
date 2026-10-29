@@ -13,7 +13,7 @@ Flag every moment the user manually supplied context the agent could have fetche
 
 Examples of the pattern:
 - User pastes a ticket title because the agent didn't query the ticket-tracker MCP. Routing: the relevant triage skill should call the ticket-tracker MCP first.
-- User describes a flaky test the agent could have queried via an observability MCP. Routing: the debugging skill should mention the observability MCP.
+- User describes a flaky test the agent could have queried via an observability MCP. Routing: the `diagnosing-bugs` skill should mention the observability MCP.
 - User links a chat thread the agent could have fetched via a chat MCP. Routing: the relevant skill should mention the chat MCP.
 
 Read the active transcript at <ABSOLUTE_PATH> (or use the digest below if no path is given).
@@ -28,7 +28,7 @@ Scan for:
 
 ## Scope to skills and tools the session actually used
 
-Route findings only to skills, tools, or MCPs this transcript used. A skill counts as used when the transcript shows a `Read` of its `SKILL.md` (under the repo's `skills/`, `.agents/skills/` or `.claude/skills/`, `~/.agents/skills/`, `~/.claude/skills/`, or a plugin folder), a subagent prompt naming its path, or a tool call (Shell, Grep, MCP, etc.) matching its documented commands. Speculative routings to skills the parent never opened do not count.
+Route findings only to skills, tools, or MCPs this transcript used. A skill counts as used when the transcript shows a read of its `SKILL.md` (under the repo's `skills/`, `.agents/skills/` or `.claude/skills/`, `~/.agents/skills/`, `~/.claude/skills/`, omp's `~/.omp/agent/skills/`, or a plugin folder), a subagent prompt naming its path, or a tool call (shell, search, MCP, etc.) matching its documented commands. Speculative routings to skills the parent never opened do not count.
 
 Two finding shapes are valid:
 - The parent invoked the skill and you found a real gap in its body. Route to the skill's relevant section.

@@ -7,7 +7,7 @@ This is a **retrospective**, started by the user or by you. You are suggesting i
 
 ## Steps
 
-1. Call the Skill tool with `writing-for-agents` for the writing style guide.
+1. Read the `writing-for-agents` skill for the writing style guide.
 
 2. Read the primary sources for the session the user specifies. This may mean searching through session logs on this machine. If the user doesn't specify a session, default to the current one. Also read the review findings of that session: each `code-review` report in it, with each finding's tag and `file:line` where it has them. Note each class of finding that comes up in more than one round.
 
