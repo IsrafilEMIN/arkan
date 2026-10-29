@@ -21,7 +21,7 @@ Ask which one applies if the run cannot see it.
 
 The person copies the webhook url and its secret from the harness's own panel for that webhook. Tell them the exact clicks only if you can read them from the harness's docs; otherwise say "open the webhook you just created and copy its url and secret". Copy the url exactly; never guess an id.
 
-The person may paste the url in chat. The secret never goes through chat. Ask for it with the harness's secret-request tool if it has one, and stop the turn there. If it has none, give the person the one command that writes it to the UI's config file (`chmod 600`), for example `read -rs KEY && printf '%s' "$KEY" > <ui-dir>/webhook.key && chmod 600 <ui-dir>/webhook.key`, and have them run it in a plain terminal. You never see the value, print it, or log it. Add the key file to `.gitignore` if the UI lives in a repo.
+The person may paste the url in chat. The secret never goes through chat. Ask for it with the harness's secret-request tool if it has one, and stop the turn there. If it has none, give the person the one command that writes it to the UI's config file with owner-only access from the first byte, for example `read -rs KEY && (umask 077 && printf '%s' "$KEY" > <ui-dir>/webhook.key)`, and have them run it in a plain terminal. You never see the value, print it, or log it. Add the key file to `.gitignore` if the UI lives in a repo.
 
 ## Host the page on this computer
 
