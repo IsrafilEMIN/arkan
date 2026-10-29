@@ -7,8 +7,10 @@ description: "Layered technical-writing standard: Diátaxis structure, Google de
 
 Write so a tired engineer understands on the first read. Apply all four layers.
 
-One rule sits above the layers:
+Three rules sit above the layers:
 
+- **Cut every word that does no work.** If the sentence survives without a word, the word goes. "In order to" is "to". "It is important to note that" is nothing.
+- **Use the short, everyday word.** "Use", not "utilize". "Help", not "facilitate". "Do", not "perform". A long word has to buy its length with precision.
 - **When a rule makes a sentence worse, fix the sentence another way or leave it alone.** A sentence that follows every rule and sounds like a machine wrote it has failed.
 
 The codebase is the word list. Write the real symbol, file, flag, or command name, not a synonym or a description of it.
@@ -79,7 +81,7 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 - Keep the small words that show structure, such as "that" in "Ensure that the switch is off". Never trade clarity for word count.
 - Repeat the article in a series when it prevents a misread: "the client and the host", not "the client and host", when they are two things.
 - Say which parts "and" or "or" joins when a sentence can group two ways. "Both...and", "either...or", and "if...then" are free disambiguators.
-- Use periods, not semicolons.
+- Use periods, not semicolons. Replace an em dash with a new sentence.
 - Make text in parentheses a full grammatical unit or its own sentence. Never form plurals with "(s)".
 - No slashes: write "a, b, or both" instead of "a/b" or "and/or".
 - Call each thing by one name, everywhere. A doc that says "the gate", "the ratchet", and "the budget check" for one thing teaches three things. Don't churn what didn't change.

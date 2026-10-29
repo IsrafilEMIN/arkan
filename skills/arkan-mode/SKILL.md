@@ -36,6 +36,8 @@ when the task is a ticket:
 
 ## 1. start every task like this
 
+your first message on a task says, in your own words, the person's goal and the smallest change you expect to meet it. do not wait for confirmation. restate that goal in each subagent brief, and open each pr's `## Why` with it.
+
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
 2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principle-model-the-domain` and `principle-type-system-discipline`.
 3. **read the principles you will use.** each entry in [principles](#principles) names when it applies and the `principle-<title>` skill that holds its leaf. read that leaf in full (`../<skill>/SKILL.md`) before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
@@ -72,7 +74,7 @@ each line names the skill to call today.
 more triggers:
 
 - **a fork you are about to ask about.** if the answer is a fact you can see by running something (behavior, timing, layout, output, speed), it is not a question for the user. sketch it with the prototype playbook and let the result decide. ask only for a product or taste call that no experiment can settle, and give your recommended answer.
-- **review bots and security bots.** they find real bugs and they also file noise. check each claim against the code. fix the real ones, and dismiss the rest with a concrete reason. never change code only to quiet a bot.
+- **review bots and security bots.** they find real bugs and they also file noise. check each claim against the code. fix the real ones, and dismiss the rest with a concrete reason. never change code only to quiet a bot. classify each thread as fix, dismiss or ask with [`references/review-bot-triage.md`](references/review-bot-triage.md).
 - **a broken skill in the middle of a task.** fix it in its own pr. do not block on it, and do not work around it in silence.
 - **the person comes back.** they ask where things stand across recent chats → `recall`; what changed in this chat → `ketchup`. the person starts both, as well as `bro` (say it simply), `automate-me` (their working style as a mode skill), `sharpen` (frame a task before starting) and `in-your-own-words` (restate their goal).
 - **long or unattended work** ("going to bed", "run until done", "trust it when i'm back"). keep a decision trail with `show-me-your-work`: what you chose, why, and the evidence.
