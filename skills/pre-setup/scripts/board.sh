@@ -28,7 +28,17 @@ fi
 
 t_path=() t_feat=() t_nn=() t_id=() t_title=() t_role=() t_type=() t_due=() t_closed=() t_prio=() t_refs=() t_spec=()
 
+files=""
+if [ -e "$root/.scratch" ]; then
+	if ! files="$(find "$root/.scratch" -type f \( -path '*/issues/*.md' -o -name spec.md \))"; then
+		printf '%s: cannot read every file under .scratch/; TODO.md not changed\n' "$prefix" >&2
+		exit 2
+	fi
+	files="$(printf '%s\n' "$files" | sort)"
+fi
+
 while IFS= read -r f; do
+	[ -n "$f" ] || continue
 	rel="${f#"$root"/}" feat="${rel#.scratch/}"; feat="${feat%%/*}"
 	spec=0 nn=""
 	if [[ $rel == */spec.md ]]; then
@@ -110,7 +120,7 @@ while IFS= read -r f; do
 	t_path+=("$rel"); t_feat+=("$feat"); t_nn+=("$nn"); t_id+=("$feat $nn"); t_title+=("$title")
 	t_role+=("$role"); t_type+=("$type"); t_due+=("$due"); t_closed+=("$closed")
 	t_prio+=("${prio:-0}"); t_refs+=("$refs"); t_spec+=("$spec")
-done < <(find "$root/.scratch" -type f \( -path '*/issues/*.md' -o -name spec.md \) 2>/dev/null | sort)
+done <<<"$files"
 
 lookup() {
 	local ref="$1" home="$2" k=0
