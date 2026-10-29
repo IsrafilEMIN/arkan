@@ -18,7 +18,7 @@ arkan owns the parts that an agent does inside any repo: review before the pr, t
 | several finders, then a separate pass that tries to disprove each finding | done before | `code-review` step 5 |
 | tag each finding `important`, `nit` or `pre-existing`; a `pre-existing` one becomes a ticket | done before | `code-review` step 5, `arkan-mode/SKILL.md` |
 | round cap of 3, diff-only re-review, no repeated findings, fix the class of bug | done before | `arkan-mode/SKILL.md`, `code-review`, `retro` |
-| `REVIEW.md`: what failure looks like, skipped paths, `file:line` evidence, a nit cap, a count first | done before | `pre-setup/references/review.md` |
+| `REVIEW.md`: what failure looks like, skipped paths, `file:line` evidence, a nit cap, a count first | removed: the reviewer reads `CODING_STANDARDS.md` | `code-review` step 3 |
 | a repeated finding moves into a lint rule, a check or a standard | done before | `retro` |
 | measure noise from what people did with each comment | done before | `retro` |
 | an approval covers one commit; a bot approval is not a person's | done before | `arkan-mode/playbooks/shipping.md` |
@@ -27,7 +27,7 @@ arkan owns the parts that an agent does inside any repo: review before the pr, t
 | grade each change `auto` or `manual` from the diff, not the author | done | `code-review` step 6 |
 | `## Risk` and `## Revert` in the pr body | done | `arkan-mode/playbooks/opening-a-pr.md` |
 | run the reviewer on known-clean prs and track rounds to pass | done | `retro` |
-| name `REVIEW.md` and `AGENTS.md` as reviewer inputs; flag a diff that makes an `AGENTS.md` line out of date | proposed | `code-review` step 3 |
+| name `CODING_STANDARDS.md` and `AGENTS.md` as reviewer inputs; flag a diff that makes an `AGENTS.md` line out of date | proposed | `code-review` step 3 |
 | turn each miss into an eval case and score the reviewer again after each change to it | proposed | `post-merge`, `arkan-mode/playbooks/eval.md` |
 | a nightly review of old code | proposed | prompt in arkan, schedule in `underground` |
 
