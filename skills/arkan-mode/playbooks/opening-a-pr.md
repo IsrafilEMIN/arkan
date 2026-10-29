@@ -6,7 +6,7 @@ Invoked at the end of every other playbook.
 
 **Commits.** Commit liberally. Rebase into small, ordered commits before opening PRs. The sequence is a future PR: landable as a whole, ordered to tell the story. Amend when the fix belongs in a just-made commit. New commit when separable. Commit bodies don't restate the subject.
 
-**Tickets.** If the work is a ticket, close it the way the issue tracker closes work, in the work's own branch, so the close reaches main with the merge (see `docs/agents/issue-tracker.md`).
+**Tickets.** If the work is a ticket, run **close done** from the [tickets playbook](tickets.md) in the work's own branch, so the close reaches main with the merge.
 
 **PRs.** Before commit, read the whole diff and remove slop: dead code, debug output, needless churn, and comments that break **Comments** in `SKILL.md`. Write every PR title, description, and commit body per **The reply** in `SKILL.md`, with the STE vocabulary rules: one word per action, keep articles, a plain verb over `-ing` where one works.
 

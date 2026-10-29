@@ -39,7 +39,7 @@ Edit only the verify skill's own folder (its `SKILL.md`, `features/`, and the ha
 
    A doctor failure caused by skill drift is drift: fix it within the edit scope and retry once (restart only what the fix invalidated) before calling the pass `blocked`. A feature that cannot be reached is `verified-unreachable` only with the concrete prerequisite (auth, entitlement, os, outside state) and the route you tried; if the map omits that prerequisite, that is drift. Any harness fix gets driven live again before it ships. Final teardown comes after the last drive of the run, re-proofs included; evidence stays.
 
-5. **Triage.** Wrong or missing user-side description → doc drift, fix it. Working behavior the harness cannot drive → harness gap, fix it (scripts executable, how to call them written in the skill body). App behavior that is really broken → product gap: record it for the person as a ticket on the repo's tracker (`docs/agents/issue-tracker.md`), and keep it out of this pull request.
+5. **Triage.** Wrong or missing user-side description → doc drift, fix it. Working behavior the harness cannot drive → harness gap, fix it (scripts executable, how to call them written in the skill body). App behavior that is really broken → product gap: file it for the person with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`, and keep it out of this pull request.
 
 6. **Ship or stop.** For **changed**: one pull request of proven fixes, every changed file re-read first, opened per `arkan-mode`'s `opening-a-pr` playbook; the person decides when it merges. For **clean** or **blocked**: no pull request; report the outcome and the coverage honestly.
 

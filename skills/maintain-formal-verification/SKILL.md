@@ -55,4 +55,4 @@ Tell the user, for each check:
 
 Say outright which failures were drift in the verification and which were bugs in the code. For a check that passed before you updated it and fails after, say that the old pass was on a stale description.
 
-Put the verification updates in a change of their own, separate from any product fix: a pull request per the `opening-a-pr` playbook. File each bug as a ticket on the repo's tracker with its counterexample. If the sandbox refuses a write to the verify skill's folder, follow the draft fallback in `create-formal-verification`.
+Put the verification updates in a change of their own, separate from any product fix: a pull request per the `opening-a-pr` playbook. File each bug with its counterexample, with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`. If the sandbox refuses a write to the verify skill's folder, follow the draft fallback in `create-formal-verification`.

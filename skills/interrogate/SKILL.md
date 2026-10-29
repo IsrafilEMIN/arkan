@@ -29,7 +29,7 @@ In place of the arena task and rationale, give each adversary the scope, the int
 
 Verify each finding per arena Phase F by rerunning its command. Keep a finding when the output shows the failure and the failure breaks the intent. Drop the rest. Merge findings that share a root cause.
 
-Tag each kept finding as `code-review` does: `important` (a defect this change brings; it blocks the PR) or `pre-existing` (the same command fails at the merge base; check it there; it becomes a ticket on the repo's tracker, not a change in this PR). A proven failure is never a `nit`.
+Tag each kept finding as `code-review` does: `important` (a defect this change brings; it blocks the PR) or `pre-existing` (the same command fails at the merge base; check it there; file it with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`, not as a change in this PR). A proven failure is never a `nit`.
 
 Skip arena Phases C, D and E. Adversaries find different failures, so the verdict keeps every verified finding, not one adversary's list.
 

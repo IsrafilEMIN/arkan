@@ -38,7 +38,7 @@ Move any accepted item that a lint rule, script, metadata flag or runtime check 
 
 Show the synthesizer's full accepted / rejected / backlog output and wait for the person's explicit approval before applying any accepted edit. The person picks the subset and may redirect routings. Skill changes affect every future agent; never apply them on your own.
 
-File each backlog item as a ticket on the repo's tracker without waiting (with a local tracker, under `.scratch/`, then rebuild the board). Only the accepted list waits for approval.
+File each backlog item without waiting, with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`. Only the accepted list waits for approval.
 
 Follow each approved row's routing exactly:
 
