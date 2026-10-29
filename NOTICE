@@ -3,7 +3,7 @@
 arkan copies and changes text from the projects below. each one uses the MIT license, which asks that its copyright notice and license text stay with every copy. the full text of each license follows.
 
 - **pstack** by Lauren Tan, from `cursor/plugins` at commit `182f2ce`, folder `pstack/`. in arkan: `skills/arkan-mode/` (its `SKILL.md` is a rewrite of pstack's mode skill; its `playbooks/` are copies, changed to drop cursor-only parts) and the 24 `principle-*` skills (copies, adapted). license read from <https://github.com/cursor/plugins/blob/182f2ce/pstack/LICENSE> on 2026-10-18.
-- **skills** by Matt Pocock, from `mattpocock/skills` (main branch). in arkan: the matt pocock skills listed in `README.md`, some of them changed. license read from <https://github.com/mattpocock/skills/blob/main/LICENSE> on 2026-10-18.
+- **skills** by Matt Pocock, from `mattpocock/skills` (main branch). in arkan: the matt pocock skills listed in `REFERENCE.md`, some of them changed. license read from <https://github.com/mattpocock/skills/blob/main/LICENSE> on 2026-10-18.
 - **claude-code-security-review** by Anthropic, from `anthropics/claude-code-security-review` at commit `0c6a49f`, file `.claude/commands/security-review.md`. in arkan: `skills/security-review/` (a copy, changed to drop claude-code-only parts). license read from <https://github.com/anthropics/claude-code-security-review/blob/0c6a49f/LICENSE> on 2026-10-18.
 
 ---
