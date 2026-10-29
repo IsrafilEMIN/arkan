@@ -29,8 +29,8 @@ Break the work into atomic units that can each land on their own. Order them ris
 
 - Build the verification harness before the work, with a baseline captured from the state before the change, so each check reads "old value vs new value". Use the repo's verify skill where it has one.
 - For a one-way-door design decision, run `architect` (it runs `arena`). Skip it for mechanical work whose shape is already concrete: a second arena over a settled design is over-engineering (**laziness protocol**, `principle-laziness-protocol`).
-- Decide what fans out. Parallelize only across seams, and give each worker its own worktree or branch (**separate before you serialize shared state**, `principle-separate-before-serializing-shared-state`). Don't over-fan; use `swarm` for the fan-out.
-- Plan the landing: each unit lands as its own pull request (or a stack), through the opening-a-pr and shipping playbooks.
+- Decide what fans out. Parallelize only across seams, and give each worker its own worktree or branch (**separate before you serialize shared state**, `principle-separate-before-serializing-shared-state`). Don't over-fan. Code units fan out as `arkan-mode` subagents, each owning one branch and one PR (the orchestrate playbook for many). `swarm` is only for audits and checks: its workers report and never push or open PRs.
+- Plan the landing: each unit lands as its own pull request on trunk, through the opening-a-pr and shipping playbooks.
 - Write the designed phase list down. That list is what the person reviews.
 
 Then run the design. Add its steps to the todo list as concrete items between phase C and phase D. Run each under the phase C loop, and write the phase D log as each step lands, a row at a time, not all at the end.
