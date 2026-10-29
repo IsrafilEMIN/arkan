@@ -17,6 +17,6 @@ Talk to subagents through context pointers: the spec, the ticket paths, the note
 6. A merge can unblock tickets. Each ticket whose blockers are now all merged joins the frontier: start an implementer for it at once (step 4). Repeat steps 4 to 6 until the frontier is empty.
 7. Once every ticket is merged, run the `code-review` skill on the integration branch in a fresh context. Fix every issue it raises in a single implementer subagent, then run the full test suite.
 8. Always open one PR for the spec, from the integration branch, with **Opening a PR**. Before you open it, run **close done** on each ticket and **close spec**, on the integration branch, so every close and the rebuilt board land on `main` with the merge.
-9. Clean up each implementer: `broker delete-branch` for its branch once it is merged into the integration branch, then remove its worktree, per **the forge** in `SKILL.md`.
+9. Keep every implementer branch and worktree until the spec PR merges into `main` and the merge is verified: they are the checkpoints. Then, per **the forge** in `SKILL.md`, run `broker delete-branch` for each implementer branch and remove its worktree. If a step fails or its result is unknown, keep that worktree and report it.
 
 **Reply:** the task graph, which tickets ran in parallel, which waited and why, what the review found and how it was fixed, and the PR link.
