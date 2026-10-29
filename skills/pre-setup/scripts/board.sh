@@ -127,6 +127,8 @@ while IFS= read -r f; do
 		fail "$rel" "needs a **Role:** line (one of:${roles% }) or a **Type:** line (one of:${types% })"
 	[ -z "$role" ] || [[ $roles == *" $role "* ]] || fail "$rel" "unknown role '$role'"
 	[ -z "$type" ] || [[ $types == *" $type "* ]] || fail "$rel" "unknown type '$type'"
+	[ -z "$role" ] || [ -z "$type" ] || fail "$rel" "has both **Role:** and **Type:**; a wayfinder ticket has **Type:** in place of **Role:**"
+	[ "$spec" = 0 ] || [ -z "$role$type" ] || fail "$rel" "a spec has no **Role:** or **Type:**; its tickets carry them"
 	[ -z "$due" ] || real_date "$due" || fail "$rel" "**Due:** must be a real date, YYYY-MM-DD, got '$due'"
 	[[ $closed == yes || $closed == no ]] || fail "$rel" "needs a **Closed:** line, yes or no"
 	[[ $prio =~ ^[0-9]+$ ]] || fail "$rel" "needs a **Priority:** line, a number"
