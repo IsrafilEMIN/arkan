@@ -78,11 +78,19 @@ more triggers:
 
 ## the forge
 
-github is the forge, through plain `git` and `gh`. when the run provides github tools or a built-in pr tool, use them where `playbooks/opening-a-pr.md` says. when `gh pr` fails because GraphQL is blocked, use the **Forge without GraphQL** REST calls in that playbook.
+github is the forge. when the `broker` command exists, every write to the forge goes through it, and reads stay on plain `git` and `gh`. without a broker, use plain `git` and `gh` for both. when the run provides github tools or a built-in pr tool, use them where `playbooks/opening-a-pr.md` says. when `gh pr` fails because GraphQL is blocked, use the **Forge without GraphQL** REST calls in that playbook.
+
+with a broker, name every work branch `agent/<task>`: the broker refuses other names. its verbs:
+
+- `broker sync <owner/repo>`: before work and before each push. it updates `origin/<default>`.
+- `broker push <owner/repo> <agent/branch>`: the reply line `remote ref verified: <sha> <ref>` is the checkpoint. without that line, the push is not verified.
+- `broker pr-create <owner/repo> <agent/branch> <title> "$(cat <body-file>)"`, `broker pr-status <owner/repo> <n>`, `broker pr-comment <owner/repo> <n> "$(cat <body-file>)"`.
+- `broker merge <owner/repo> <n> [merge|squash|rebase]`: it refuses until the owner approved the current head and every check passed.
+- `broker delete-branch <owner/repo> <agent/branch>`: after the merge, before you remove the worktree.
 
 read the target slug off the working repo's own origin: `git remote get-url origin`, then strip a leading `https://github.com/` or `git@github.com:` and a trailing `.git`. take the branch and the head sha from the working checkout (`git branch --show-current`, `git rev-parse HEAD`). pass every pr body, review and reply as a file, never inline in a shell command.
 
-- **push a checkpoint.** `git push -u origin <branch>`. `git ls-remote origin refs/heads/<branch>` printing the head sha is the proof.
+- **push a checkpoint.** with a broker, `broker push`, as above. without one, `git push -u origin <branch>`, and `git ls-remote origin refs/heads/<branch>` printing the head sha is the proof.
 - **open a pr.** the opening-a-pr playbook.
 - **read a pr.** `gh pr view <number> --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,mergedAt,headRefName,headRefOid,baseRefName,latestReviews,reviewRequests,mergeCommit`. `gh pr checks <number>` reads the checks. `gh api repos/<owner>/<repo>/pulls/<number>/comments` lists the review comments, each with its `id`, `path`, `line` and `in_reply_to_id`.
 - **read the diff.** `gh pr diff <number>`.
@@ -90,7 +98,7 @@ read the target slug off the working repo's own origin: `git remote get-url orig
 - **reply on a thread.** `gh api -X POST repos/<owner>/<repo>/pulls/<number>/comments/<comment-id>/replies -F body=@<file>` answers one review comment, with the thread's first comment `id` as the id. the reply json carries the new comment's `id`: cite it.
 - **retarget a stacked pr.** after the parent merges, `gh pr edit <number> --base <base>` moves its child onto trunk. read the base back with `gh pr view <number> --json baseRefName`. this is the single sanctioned move of a base.
 - **merge.** the shipping playbook, step 4.
-- **clean up.** from a surviving checkout of the repo. first pin the head: `gh pr view <number> --json state,headRefOid` must read `MERGED`; its `headRefOid` is `<head-sha>`. then check both branch heads: `git rev-parse refs/heads/<branch>` and `git ls-remote --heads origin <branch>` must each print `<head-sha>`, or nothing when that ref is already gone. if either prints another sha, the branch holds later commits: stop and report both shas. then `git worktree remove <worktree-path>`, then `git branch -D <branch>` (a squash merge leaves the branch unmerged in git's eyes, so `-d` refuses it), then `git push --force-with-lease=refs/heads/<branch>:<head-sha> origin --delete <branch>`, whose lease refuses the delete if the remote head moved after the check.
+- **clean up.** from a surviving checkout of the repo. first pin the head: `gh pr view <number> --json state,headRefOid` must read `MERGED`; its `headRefOid` is `<head-sha>`. then check both branch heads: `git rev-parse refs/heads/<branch>` and `git ls-remote --heads origin <branch>` must each print `<head-sha>`, or nothing when that ref is already gone. if either prints another sha, the branch holds later commits: stop and report both shas. with a broker, run `broker delete-branch <owner/repo> <branch>`, then `git worktree remove <worktree-path>` without `--force`; if a step fails or its result is unknown, keep the worktree and report it. without a broker, `git worktree remove <worktree-path>`, then `git branch -D <branch>` (a squash merge leaves the branch unmerged in git's eyes, so `-d` refuses it), then `git push --force-with-lease=refs/heads/<branch>:<head-sha> origin --delete <branch>`, whose lease refuses the delete if the remote head moved after the check.
 
 a nonzero exit does not prove the action did not happen. read the state back with the matching read call above, report what it shows and the stderr, and stop.
 
