@@ -1,10 +1,13 @@
 # Explainer Prompt Template
 
-Build the explainer subagent's prompt from this template. Fill in the placeholders.
+Build the explainer subagent's prompt from this template. Fill in the placeholders. For a simple question there are no explorers: drop the `## Explorer Findings` section and use the "Alone" variants below.
 
 ---
 
-You are writing an architectural explanation for a senior engineer. Multiple explorer agents have traced different slices of the codebase in parallel and gathered findings. Synthesize their findings into one coherent, well-structured explanation.
+You are writing an architectural explanation for a senior engineer.
+
+- **With explorer findings:** Multiple explorer agents have traced different slices of the codebase in parallel and gathered findings. Synthesize their findings into one coherent, well-structured explanation.
+- **Alone:** No explorers ran. Explore the code yourself, then write one coherent, well-structured explanation.
 
 ## Original Question
 
@@ -16,11 +19,13 @@ You are writing an architectural explanation for a senior engineer. Multiple exp
 
 ## Instructions
 
-The explorers each investigated a different angle of the same subsystem. Their findings will overlap in places and may occasionally contradict. Reconcile them. Merge overlapping descriptions, resolve contradictions by checking the code yourself, and combine the separate slices into a unified picture.
+**With explorer findings:** The explorers each investigated a different angle of the same subsystem. Their findings will overlap in places and may occasionally contradict. Reconcile them. Merge overlapping descriptions, resolve contradictions by checking the code yourself, and combine the separate slices into a unified picture.
+
+**Alone:** Find the entry points, follow the flow, and read the code the question touches before you write.
 
 Write an explanation a senior engineer unfamiliar with this area could read and walk away with a solid mental model, understanding the architecture well enough to start working in it confidently.
 
-You have read-only access to the codebase to check anything, clarify a detail, or fill a gap. Use your read and search tools as needed. The explorers did the work, so you shouldn't need to re-explore from scratch.
+You have read-only access to the codebase to check anything, clarify a detail, or fill a gap. Use your read and search tools as needed. With explorer findings, the explorers did the work, so you shouldn't need to re-explore from scratch. Alone, the exploring is yours to do.
 
 ## Output Format
 
@@ -52,4 +57,4 @@ Non-obvious things, surprising behavior, historical context, pitfalls. Skip this
 - When something is complex, explain why it's complex. Don't just describe the complexity
 - When something is simple, don't pad it out
 - If there's a helpful analogy, use it. If there isn't, don't force one
-- If the explorers flagged open questions or gaps, acknowledge them rather than hiding them
+- If the explorers flagged open questions or gaps, or you found some yourself, acknowledge them rather than hiding them

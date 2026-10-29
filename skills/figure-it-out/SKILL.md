@@ -5,7 +5,7 @@ description: "Design an auditable playbook when none of arkan-mode's playbooks f
 
 # Figure it out
 
-When a task matches none of arkan-mode's playbooks (`skills/arkan-mode/playbooks/`), design one. The deliverable before any code is the workflow itself: a list of phases that scales rigor to the task, runs the scientific method, and leaves a decision trail a person can audit after stepping away.
+When a task matches none of arkan-mode's playbooks (`../arkan-mode/playbooks/`), design one. The deliverable before any code is the workflow itself: a list of phases that scales rigor to the task, runs the scientific method, and leaves a decision trail a person can audit after stepping away.
 
 It is still a task: if the goal itself is unclear, that is shaping (arkan-mode step 0), and a person starts `grilling` or `to-spec` instead.
 

@@ -7,7 +7,7 @@ description: "Use for \"how does X work\", code walkthroughs before changing som
 
 Explore the codebase to answer "how does X work?". Produce the explanation a senior engineer would give someone joining the subsystem: enough to build a working mental model, not so much that it reads like annotated source.
 
-`architect`, `teach`, `no-comments` and `blast-radius` call this skill. It reads; it never edits.
+`architect`, `teach` and `no-comments` call this skill. It reads; it never edits.
 
 **Subagents.** Every spawn is read-only, in a fresh context. Explorers suit a fast model; the explainer suits your strongest one, where the harness lets you pick. Where it does not, use the current model and carry on.
 

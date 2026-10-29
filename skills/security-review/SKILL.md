@@ -60,7 +60,7 @@ SECURITY CATEGORIES TO EXAMINE:
 - Certificate validation bypasses
 
 **Injection & Code Execution:**
-- Remote code execution via deseralization
+- Remote code execution via deserialization
 - Pickle injection in Python
 - YAML deserialization vulnerabilities
 - Eval injection in dynamic code execution
@@ -112,11 +112,10 @@ SEVERITY GUIDELINES:
 - **HIGH**: Directly exploitable vulnerabilities leading to RCE, data breach, or authentication bypass
 - **MEDIUM**: Vulnerabilities requiring specific conditions but with significant impact
 
-CONFIDENCE SCORING:
-- 0.9-1.0: Certain exploit path identified, tested if possible
-- 0.8-0.9: Clear vulnerability pattern with known exploitation methods
-- 0.7-0.8: Suspicious pattern requiring specific conditions to exploit
-- Below 0.7: Don't report (too speculative)
+CONFIDENCE SCORING (1-10, the same scale the false-positive filter uses):
+- 9-10: Certain exploit path identified, tested if possible
+- 8: Clear vulnerability pattern with known exploitation methods
+- 7 or below: Suspicious pattern requiring specific conditions to exploit, or too speculative. Don't report
 
 FINAL REMINDER:
 Focus on HIGH and MEDIUM findings only. Better to miss some theoretical issues than flood the report with false positives. Each finding should be something a security engineer would confidently raise in a PR review.
@@ -142,8 +141,8 @@ FALSE POSITIVE FILTERING:
 > 14. Including user-controlled content in AI system prompts is not a vulnerability.
 > 15. Regex injection. Injecting untrusted content into a regex is not a vulnerability.
 > 16. Regex DOS concerns.
-> 16. Insecure documentation. Do not report any findings in documentation files such as markdown files.
-> 17. A lack of audit logs is not a vulnerability.
+> 17. Insecure documentation. Do not report any findings in documentation files such as markdown files.
+> 18. A lack of audit logs is not a vulnerability.
 > 
 > PRECEDENTS -
 > 1. Logging high value secrets in plaintext is a vulnerability. Logging URLs is assumed to be safe.
@@ -167,8 +166,8 @@ FALSE POSITIVE FILTERING:
 > 
 > For each finding, assign a confidence score from 1-10:
 > - 1-3: Low confidence, likely false positive or noise
-> - 4-6: Medium confidence, needs investigation
-> - 7-10: High confidence, likely true vulnerability
+> - 4-7: Medium confidence, needs investigation
+> - 8-10: High confidence, likely true vulnerability
 
 START ANALYSIS:
 
