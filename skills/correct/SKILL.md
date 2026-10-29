@@ -10,7 +10,7 @@ The person keeps correcting agents in this repo for the same mistakes. Change th
 
 Assume every contributor is an agent that sees only the files it opened, copies the nearest example, and takes the shortest path that compiles. Design the repo so a change that looks right from one file is right for the whole repo.
 
-This is the `principle-encode-lessons-in-structure` rule applied to the whole repo. `retro` looks at one session and only proposes; this skill reads the repo's history and lands the fixes.
+This is the `principle-encode-lessons-in-structure` rule applied to the whole repo. `retro` looks at one session and applies only what the person approves; this skill reads the repo's history and lands the fixes.
 
 ## Find the mistake classes
 

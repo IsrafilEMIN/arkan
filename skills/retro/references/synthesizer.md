@@ -53,4 +53,4 @@ For each rejected finding:
 
 ## Backlog
 
-For each item, describe the pattern, what was hit, and the suggested mechanism. The parent files each as a ticket on the repo's tracker (`docs/agents/issue-tracker.md`).
+For each item, describe the pattern, what was hit, and the suggested mechanism. The parent files each as a ticket with the **create** operation in the tickets playbook, role `needs-triage`.

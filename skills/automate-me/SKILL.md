@@ -96,4 +96,4 @@ A mode skill is subjective. Check it with the person: does it read like them? Di
 
 - A task-specific skill (not working conventions): `writing-for-agents` alone, no mining.
 - One narrow workflow ("how i write commit messages"): a regular skill, not a mode skill.
-- Lessons from one chat into existing skills: `reflect`.
+- Lessons from one chat into existing skills: `retro`.
