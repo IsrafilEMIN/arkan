@@ -13,7 +13,7 @@ Flag every moment the user manually supplied context the agent could have fetche
 
 Examples of the pattern:
 - User pastes a ticket title because the agent didn't query the ticket-tracker MCP. Routing: the relevant triage skill should call the ticket-tracker MCP first.
-- User describes a flaky test the agent could have queried via an observability MCP. Routing: the `diagnosing-bugs` skill should mention the observability MCP.
+- User describes a flaky test the agent could have queried via an observability MCP. Routing: the `arkan-mode` skill's bug-fix playbook should mention the observability MCP.
 - User links a chat thread the agent could have fetched via a chat MCP. Routing: the relevant skill should mention the chat MCP.
 
 Read the active transcript at <ABSOLUTE_PATH> (or use the digest below if no path is given).
