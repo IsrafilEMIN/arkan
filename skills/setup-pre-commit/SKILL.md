@@ -43,7 +43,7 @@ If the script stops with `exists and arkan did not write it` or `was edited afte
 
 ### 3.1 Detect package manager
 
-Check for `package-lock.json` (npm), `pnpm-lock.yaml` (pnpm), `yarn.lock` (yarn), `bun.lockb` (bun). Use whichever is present. Default to npm if unclear.
+Check for `package-lock.json` (npm), `pnpm-lock.yaml` (pnpm), `yarn.lock` (yarn), `bun.lock` or `bun.lockb` (bun). Use whichever is present. Default to npm if unclear.
 
 ### 3.2 Install dependencies
 
