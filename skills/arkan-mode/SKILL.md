@@ -36,6 +36,8 @@ when the task is a ticket:
 
 ## 1. start every task like this
 
+your first message on a task says, in your own words, the person's goal and the smallest change you expect to meet it. do not wait for confirmation. restate that goal in each subagent brief, and open each pr's `## Why` with it.
+
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
 2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principle-model-the-domain` and `principle-type-system-discipline`.
 3. **read the principles you will use.** each entry in [principles](#principles) names when it applies and the `principle-<title>` skill that holds its leaf. read that leaf in full (`../<skill>/SKILL.md`) before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
