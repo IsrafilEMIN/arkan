@@ -1,13 +1,13 @@
 ---
 name: arkan-mode
-description: "the default way to do engineering work on one task: check that it is a task, pick a playbook, apply the principles, prove the result, and drive it to a merged change. use at the start of any non-trivial coding task (a ticket, a feature, a bug, a refactor, a question about the code, a long unattended run), or when the user says arkan, /arkan-mode or 'do this properly'."
+description: "the default way to do engineering work on one task: check that it is a task, pick a playbook, apply the principles, prove the result, and drive it to a merged change. use at the start of any non-trivial coding task (a ticket, a feature, a bug, a refactor, a question about the code, a long unattended run), when the user says arkan, /arkan-mode or 'do this properly', or when the user says 'diagnose' or 'debug this', or reports something broken, throwing, failing or slow."
 ---
 
 # arkan mode
 
 arkan mode is how you work on one task. it comes from pstack's `poteto-mode` and keeps the same shape: pick a playbook, apply the principles that change your decisions, prove the result, and own the change until it merges.
 
-other skills sit beside this file in the same skills folder (`../diagnosing-bugs/SKILL.md`, and so on). run or read a skill when a step names it; a `principle-*` leaf is read by path, not invoked.
+other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, and so on). run or read a skill when a step names it; a `principle-*` leaf is read by path, not invoked.
 
 ## 0. check that the work is a task
 
@@ -52,7 +52,7 @@ each line names the skill to call today.
 - a term or a domain rule is unclear inside the task → `grilling` with domain-modeling on. if the answer changes what to build, stop: the work is not a task (step 0).
 - code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook).
 - a behavior to build, or a bug with a cheap test path → `tdd`.
-- something is broken, flaky or slow → `diagnosing-bugs`.
+- something is broken, throwing, flaky or slow → the bug-fix playbook. a measured slowness with no functional bug → the perf issue playbook.
 - a design question you can settle by running code → the prototype playbook.
 - a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one with the **create** operation, role `needs-triage`. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
 - a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
@@ -185,7 +185,7 @@ each entry names its `principle-<title>` skill. read that leaf in full before yo
 open the file at `playbooks/<file>`. where a step names a tool your harness does not have, do what the step means with the tools you have, and say so in the reply.
 
 - **investigation** (`investigation.md`). a read-only question: how does x work, why is y like this, should we do x or y.
-- **bug fix** (`bug-fix.md`). a defect to reproduce, find the root cause of, and fix with evidence.
+- **bug fix** (`bug-fix.md`). a defect to reproduce, find the root cause of, and fix with evidence: feedback loop first, then minimise, hypotheses, instrumentation, a regression test at the right seam, and cleanup. [`scripts/hitl-loop.template.sh`](scripts/hitl-loop.template.sh) drives a person when the loop needs one.
 - **perf issue** (`perf-issue.md`). a measured slowness to trace and improve against a baseline.
 - **hillclimb** (`hillclimb.md`). steady improvement of one metric toward a target: one change, one measurement, keep or revert. a one-off slowness is a perf issue.
 - **runtime forensics** (`runtime-forensics.md`). diagnose a runtime symptom (a leak, an idle cpu spin, a glitch) from live instrumentation. the deliverable is a diagnosis, not a fix.

@@ -17,7 +17,7 @@ idea
 ═══ task ═══════════════ the smallest piece an agent can finish alone
  │   task loop: arkan-mode drives it
  0  arkan-mode ────────── checks it is a task, picks a playbook, applies the principles
- 1  build + tdd ───────── diagnosing-bugs when something is broken
+ 1  build + tdd ───────── the bug-fix playbook when something is broken
  2  prove ─────────────── tests, build, lint, and the repo's verify skill
  3  code-review ───────── in a fresh context, before the pr
  4  pr ────────────────── the opening-a-pr, babysit and shipping playbooks
