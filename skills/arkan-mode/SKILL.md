@@ -25,7 +25,7 @@ arkan mode runs tasks only. the work before a task is **shaping**, and a person 
 
 when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
 
-**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, from `/to-tickets` after the person approves the breakdown, or from `/to-spec` when it publishes the spec.
+**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, or from `/to-tickets` after the person approves the breakdown. a spec has no role.
 
 when the task is a ticket:
 
