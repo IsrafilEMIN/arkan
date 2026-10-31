@@ -1,5 +1,0 @@
-interface:
-  display_name: "Create Verification"
-  short_description: "Generate the repo's verify skill and prove it"
-policy:
-  allow_implicit_invocation: false

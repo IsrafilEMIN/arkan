@@ -1,6 +1,6 @@
 ---
 name: blast-radius
-description: "Find what a change could break somewhere else before it ships, beyond the diff, and prove the one fact it is safe because of by running real code instead of writing it up. Use for 'blast radius of X', 'what could this break', or a small diff you don't trust."
+description: "Map what a change could break somewhere else before it ships, beyond the diff (impact only; code quality is `code-review`'s), and prove the one fact it is safe because of by running real code instead of writing it up. Use for 'blast radius of X', 'what could this break', or a small diff you don't trust."
 ---
 
 # Blast radius

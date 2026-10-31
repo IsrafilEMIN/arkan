@@ -25,7 +25,7 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
 - **Map**: `.scratch/<effort>/map.md` (the Notes / Decisions-so-far / Fog body).
 - **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`. It starts with `# NN: <title>`, then the field lines (see **Fields** below): `**Type:**` (`research`/`prototype`/`grilling`/`task`), `**Closed:** no`, `**Priority:** NN` and `**Blocked by:**`. The question goes under `## Question`. `**Closed:** yes` records resolved; the pushed work branch records the claim.
 - **Blocking**: a `**Blocked by:** NN, NN` line near the top. A ticket is unblocked when every ticket it lists is closed. `board.sh` reads only the bold field names, so a plain `Type:` or `Blocked by:` line is not a field.
-- **Frontier**: the cards in `Todo` tagged `#<effort>`; the first one on the board wins.
+- **Frontier**: the cards in `Todo` tagged `#<effort>`. Claims live on work branches and PRs, not on the board, so drop each ticket with a live claim before taking the first one left on the board.
 - **Claim**: create and push the ticket's work branch before any work. The card does not move.
 - **Resolve**: append the answer under an `## Answer` heading, apply the board **Resolve** operation, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
 

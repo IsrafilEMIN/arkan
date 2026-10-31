@@ -30,7 +30,7 @@ After every candidate has finished, spawn one read-only judge subagent. The judg
 
 ## Phase D: pick a base
 
-Read every candidate end to end before picking. Score each against the rubric criterion by criterion, not on overall feel, and compare with the judge. Agreement on the base confirms the pick. Disagreement means one of you is biased or the rubric was ambiguous: read both rationales before deciding.
+Read every candidate end to end before picking. Score each against the rubric criterion by criterion, not on overall feel, and compare with the judge when Phase C ran one. Agreement on the base confirms the pick. Disagreement means one of you is biased or the rubric was ambiguous: read both rationales before deciding.
 
 Pick the base a future maintainer can extend most easily without breaking its invariants. When two feel tied, prefer the cleaner boundary or the smaller api, per the **laziness protocol** (`principle-laziness-protocol`).
 

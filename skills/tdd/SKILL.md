@@ -16,7 +16,11 @@ Tests verify behavior through public interfaces, not implementation details. Cod
 
 See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for mocking guidelines.
 
-A **seam** is the public boundary you test at: the interface where you observe behavior without reaching inside. When the shape of that interface is itself in question, use the harness's skill tool to load `codebase-design` for the vocabulary.
+A **seam** is the public boundary you test at: the interface where you observe behavior without reaching inside.
+
+**Test only at pre-agreed seams.** Before writing any test, write down the seams under test and confirm them with the user when one is in the loop; otherwise record them in the ticket or PR body and proceed. No test is written at a seam that is neither confirmed nor recorded. You can't test everything, so agreeing the seams up front is how testing effort lands on the critical paths and complex logic instead of every edge case.
+
+Ask: "What's the public interface, and which seams should we test?" Give each proposed seam a one-line note on what it catches and what it misses. When the shape of that interface is itself in question, read the `architect` skill's [deep-modules reference](../architect/references/deep-modules.md) for the vocabulary.
 
 ## When a test is impractical
 

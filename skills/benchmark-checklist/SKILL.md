@@ -33,3 +33,7 @@ For a quick ballpark the person asked for, one run is enough. Still check questi
 - Call the verdict inconclusive when you claim a difference but cannot name the limiter, when a side ran untuned, or when you could not check questions 4 and 7. Name the gap.
 - Keep a pull request body to one primary number, in its verification section (the arkan-mode `opening-a-pr` playbook's template). Put the runs, range and limiter evidence in a linked file or notes.
 - When a later change is judged against this number, keep the harness frozen and have it print error and work counts, so each keep-or-revert checks questions 4 and 7 for free.
+
+## Other perf material
+
+- Vet the baseline of the [perf-issue playbook](../arkan-mode/playbooks/perf-issue.md) before the playbook plans from it, and every number after that.

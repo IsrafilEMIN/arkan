@@ -10,7 +10,7 @@ The repo's `docs/agents/issue-tracker.md` holds the mechanics: where a ticket li
 
 | operation | sets | who runs it |
 |---|---|---|
-| **create** | a new ticket: heading, `**Role:**` (or `**Type:**` for wayfinder), `**Closed:** no`, `**Priority:**`, `**Blocked by:**`; body under `##` headings | `to-tickets` (person), `wayfinder` (person), `post-merge` (person), `retro` (person or agent), and agents filing a finding: `arkan-mode` (`pre-existing` review findings), `interrogate`, `swarm`, `create-formal-verification`, `maintain-formal-verification`, `maintain-verification`, `no-comments` |
+| **create** | a new ticket: heading, `**Role:**` (or `**Type:**` for wayfinder), `**Closed:** no`, `**Priority:**`, `**Blocked by:**`; body under `##` headings | `to-tickets` (person), `wayfinder` (person), `post-merge` (person), `retro` (person or agent), and agents filing a finding: `arkan-mode` (`pre-existing` review findings), `interrogate`, `swarm`, `formal-verification`, `verification`, `no-comments` |
 | **create spec** | `spec.md`: heading, `**Closed:** no`, `**Priority:** 0`; no role | `to-spec` (person) |
 | **set role** | `**Role:**` | `triage` (person) |
 | **add blocker** | appends a ref to `**Blocked by:**`; never removes one | `arkan-mode` step 0 when a missing piece belongs to another ticket (agent), `wayfinder` (person) |

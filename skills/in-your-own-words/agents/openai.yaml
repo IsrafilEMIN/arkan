@@ -1,5 +1,0 @@
-interface:
-  display_name: "In Your Own Words"
-  short_description: "Restate the person's goal before working"
-policy:
-  allow_implicit_invocation: false

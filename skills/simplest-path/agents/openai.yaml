@@ -1,3 +1,5 @@
 interface:
   display_name: "Simplest Path"
   short_description: "Find the simplest way to meet the goal"
+policy:
+  allow_implicit_invocation: true

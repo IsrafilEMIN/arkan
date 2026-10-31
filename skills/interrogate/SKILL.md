@@ -1,6 +1,6 @@
 ---
 name: interrogate
-description: "Adversaries try to break a change or design, and only findings proven by a run survive. Use for \"interrogate\", \"adversarial review\", \"multi-model review\", \"challenge this\", \"stress test this code\", \"find blind spots\", or \"tear this apart\"."
+description: "Adversaries try to break a change or design, and only findings proven by a run survive. Use for \"interrogate\", \"adversarial review\", \"multi-model review\", \"challenge this\", \"find blind spots\", or \"tear this apart\"."
 ---
 
 # Interrogate
@@ -11,7 +11,7 @@ It goes further than `code-review` (one reviewer, the repo's tags and rounds). U
 
 ## Frame
 
-The scope is what the person names. Otherwise it is the branch diff from its merge base with the base branch, through the working tree. State the intent with the `in-your-own-words` skill, from the person's message, the commits and the pull request body. Ask the person when the intent is unclear.
+The scope is what the person names. Otherwise it is the branch diff from its merge base with the base branch, through the working tree. Restate the intent in your own words, from the person's message, the commits and the pull request body. Ask the person when the intent is unclear.
 
 ## Fan out
 

@@ -1,6 +1,6 @@
 ---
 name: simplest-path
-description: Check a plan or build for overengineering and find the simplest thing that meets the goal. Use before a multi-step build, when scope keeps growing, or when the user asks "are we overengineering?", "is this the simplest/best way?", "why is this so long?".
+description: "Cut scope before building: decide what to leave out and find the simplest thing that meets the goal; the shape of the code is `architect`'s. Use before a multi-step build, when scope keeps growing, or when the user asks \"are we overengineering?\", \"is this the simplest/best way?\", \"why is this so long?\"."
 ---
 
 # Simplest path

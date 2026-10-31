@@ -58,7 +58,7 @@ The maintainer invokes `/triage` and describes what they want in natural languag
 Query the issue tracker and present three buckets, oldest first:
 
 1. **Unlabeled**: never triaged.
-2. **`needs-triage`**: evaluation in progress.
+2. **`needs-triage`**: evaluation in progress. `post-merge` files these after a red main, each holding the bad merge (SHA and PR), the failing check and its output, the revert or fix PR, and the node that should have caught it.
 3. **`needs-info` with reporter activity since the last triage notes**: needs re-evaluation.
 
 When PRs are in scope, include external PRs in these buckets and tag each line `[PR]` or `[issue]`. Discovery surfaces only *external* PRs (the tracker config defines who counts as external), so a collaborator's in-flight PR is not triage work. This filter is discovery-only; an explicitly named PR is always triaged regardless of author.

@@ -346,10 +346,10 @@ check() {
 	fi
 	check_claude_md
 	check_board
-	if ls -d "$root"/.claude/skills/*verif* "$root"/.agents/skills/*verif* >/dev/null 2>&1; then
+	if ls -d "$root"/.claude/skills/verify-* "$root"/.agents/skills/verify-* >/dev/null 2>&1; then
 		say verify ok
 	else
-		say verify hint "no verify skill: run create-verification"
+		say verify hint "no verify skill: run verification"
 	fi
 	local langs="" target="" common="" effective="" hook_file="" husky=0 missing="" lang covered=0 covered_any=0
 	has Cargo.toml && langs="$langs rust"

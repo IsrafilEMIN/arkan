@@ -1,6 +1,6 @@
 ---
 name: security-review
-description: "complete a security review of the pending changes on the current branch. use when a diff is ready and touches input, auth, secrets, ci or installers, or when the user says security review or /security-review."
+description: "complete a security review of the pending changes on the current branch. covers only pending changes that touch input, auth, secrets, ci or installers. use when such a diff is ready, or when the user says security review or /security-review."
 ---
 
 <!-- copied from .claude/commands/security-review.md in anthropics/claude-code-security-review at commit 0c6a49f (MIT, see NOTICE). changed: the `!` lines that filled in git output are now steps, and `allowed-tools` is now the read-only rules below. -->

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Formal Verification"
+  short_description: "Verify one property in every case, and keep it in sync"
+policy:
+  allow_implicit_invocation: false
