@@ -19,13 +19,12 @@ Invoked at the end of every other playbook.
 - `## Scope`: always. 1–3 short items on what it covers and what it deliberately leaves out (a follow-up, a known gap). No symbols, paths, or file-by-file essay.
 - `## Tradeoffs`: only rejected alternatives a reviewer would otherwise ask about. Skip when there was no real choice.
 - `## Blast Radius`: 1–2 sentences on who or what it touches and why that is safe or risky. If main is red, state the cost of leaving it red.
-- `## Risk`: always. The `auto` or `manual` grade from the last `code-review` round, with its one-line reason.
 - `## Revert`: always. 1–2 sentences on how to undo it: revert the merge commit, or turn off the flag. Name any effect a revert alone does not undo, such as a data migration, a published release or outside state.
 - `## Verification`: 1–3 bullets, each a real run path and its outcome. Perf: one primary number with its unit, `before → after`, and a link to the full results. No sample-size methodology or metric tables.
 
 After the sections, attach videos or screenshots when they prove a claim. Full SHAs, lever-correction essays, file-by-file checklists, and "CLEAN" verdicts go in a linked artifact, not the body.
 
-**Forge.** The broker makes every write: `broker pr-create`, `broker pr-comment`, `broker merge` (see **the forge** in `SKILL.md`). If it is missing or refuses, stop and report its exact error; never write through `gh`, REST or a built-in PR tool instead. `gh` is for reads only.
+**Forge.** The broker makes every PR write (see [`references/broker.md`](../references/broker.md)). If it is missing or refuses, stop and report its exact error; never write through `gh`, REST or a built-in PR tool instead. `gh` is for reads only.
 
 **Forge without GraphQL.** `gh pr` reads run on GitHub's GraphQL API. Try them first. If one fails with HTTP 403 or a GraphQL error, GraphQL is blocked: make each read over REST with `gh api`, and keep REST for the rest of the run. Paths start at `repos/<owner>/<repo>`.
 
@@ -37,8 +36,8 @@ Auto-merge is a merge, and the broker has no verb for it: do not arm it.
 
 **Size.** Prefer five narrow PRs to one large PR. `broker pr-create` takes no base, so every PR targets trunk: no stacks. Split work into narrow PRs that each land on trunk alone.
 
-**Readiness.** `broker pr-create` opens the PR. Read it with `broker pr-status <owner/repo> <n>` or `gh pr view <number>` before you refer to PR status. If it opened as a draft, report it; do not mark it ready through another tool.
+**Readiness.** `broker pr-create` opens the PR. Read it with `broker pr-status <owner/repo> <n>` before you refer to PR status. If it opened as a draft, report it; do not mark it ready through another tool. The PR now waits for the three reviewer verdicts on its head (**reviewer sessions** in `references/broker.md`).
 
-**Babysit.** Opening a PR does not start a babysit. Post the URL and keep building. Finish the stack first. Run a separate babysit pass only when the user asks for one after the whole stack exists. A babysit for each new PR stalls the build and spends checks on commits later waves restart. Push back when feedback drifts from intent.
+**Babysit.** Opening a PR does not start a babysit. Post the URL and keep building. Finish the run of PRs first, then drive each one to merge with the babysit playbook. A babysit for each new PR stalls the build and spends checks on commits later waves restart.
 
 A subagent that opens a PR runs the `code-review` skill on its diff, removes slop and narrating comments, and posts the URL. It returns to the parent without babysitting.

@@ -67,7 +67,7 @@ Close calls the descriptions do not settle on their own:
 - `figure-it-out` designs one rigorous run that no playbook fits. The orchestrate playbook runs a program that spans days and many prs. The autonomous run playbook drives one task to a checkable end.
 - `sharpen` returns a better prompt and does not do the task. `arkan-help` returns a prompt for the right skill and does not do the task either.
 
-Playbooks are step lists inside `arkan-mode`, not skills, so they have no slash command. Inside `/arkan-mode`, describing the task picks one, and phrases name one directly: "babysit this pr" or "check on pr 123" runs babysit, which drives the pr to merge-ready and does not merge; "land this pr" runs shipping; "take over this branch" runs session pickup; "pause safely" runs pause safely; "run the eval playbook" runs eval.
+Playbooks are step lists inside `arkan-mode`, not skills, so they have no slash command. Inside `/arkan-mode`, describing the task picks one, and phrases name one directly: "babysit this pr" or "check on pr 123" runs babysit, which drives the pr until it meets the broker's merge rule; "land this pr" runs shipping, which merges it; "take over this branch" runs session pickup; "pause safely" runs pause safely; "run the eval playbook" runs eval.
 
 Principles are one-rule skills that `arkan-mode` reads and cites in its replies. The person rarely invokes one. They steer with the names instead, as in "apply prove it works. show me the real output."
 

@@ -54,10 +54,10 @@ each line names the skill to call today.
 - a behavior to build, or a bug with a cheap test path → `tdd`.
 - something is broken, throwing, flaky or slow → the bug-fix playbook. a measured slowness with no functional bug → the perf issue playbook.
 - a design question you can settle by running code → the prototype playbook.
-- a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one with the **create** operation, role `needs-triage`. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot.
-- a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context.
-- a pr to open → the opening-a-pr playbook. a pr to drive to green → the babysit playbook. a green pr to land → the shipping playbook.
-- push, pr, review, reply, diff, retarget, merge or cleanup → [the forge](#the-forge): plain `git` and `gh`, and REST when GraphQL is blocked.
+- a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one with the **create** operation, role `needs-triage`. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot. these rounds are your own check; the verdicts that gate the merge come from the reviewer sessions in [`references/broker.md`](references/broker.md).
+- a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context, before you open the pr.
+- a pr to open → the opening-a-pr playbook. a pr to drive to merge → the babysit playbook, then the shipping playbook.
+- push, pr, review records, ci logs, merge or cleanup → [the forge](#the-forge).
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. to find the bad merge and ticket the miss, a person starts `post-merge`.
 - the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. to turn lessons from one session into checks and skill edits, start `retro` (proposals only), or suggest it if you cannot. to sweep the repo for mistakes agents keep repeating and land a check for each, a person starts `correct`.
 - any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply), then `unslop`. a doc, readme or rfc → `technical-writing`. text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
@@ -82,35 +82,17 @@ more triggers:
 
 ## the forge
 
-github is the forge. every write to it goes through the `broker`: push, pr, comment, merge and branch delete. reads stay on plain `git` and `gh`. when `gh pr` reads fail because GraphQL is blocked, use the **Forge without GraphQL** read calls in `playbooks/opening-a-pr.md`. if the broker is missing or refuses a call, stop and report its exact error. never fall back to `git push`, `gh pr create`, `gh pr merge`, a REST write or a built-in pr tool.
+github is the forge. every pr write goes through the `broker`, and [`references/broker.md`](references/broker.md) holds its commands, the role that may run each one, the merge rule, holds and attempts. read it before the first broker call of a session. if the broker is missing or refuses a call, stop and report its exact error. never fall back to `git push`, `gh pr create`, `gh pr merge`, a REST write or a built-in pr tool.
 
-name every work branch `agent/<task>`: the broker refuses other names. its verbs:
+name every work branch `agent/<task>`: the broker refuses other names. run `broker sync` before work and before each push. read a pr with `broker pr-status` and its diff with local git (`git diff origin/<default>...<branch>`). `gh` is optional: use it only for reads, and only when it works in the session.
 
-- `broker sync <owner/repo>`: before work and before each push. it updates `origin/<default>`.
-- `broker push <owner/repo> <agent/branch>`: the reply line `remote ref verified: <sha> <ref>` is the checkpoint. without that line, the push is not verified.
-- `broker pr-create <owner/repo> <agent/branch> <title> "$(cat <body-file>)"`, `broker pr-status <owner/repo> <n>`, `broker pr-comment <owner/repo> <n> "$(cat <body-file>)"`.
-- `broker merge <owner/repo> <n> [merge|squash|rebase]`: it refuses until the owner approved the current head and every check passed.
-- `broker delete-branch <owner/repo> <agent/branch>`: after the merge, before you remove the worktree.
-
-read the target slug off the working repo's own origin: `git remote get-url origin`, then strip a leading `https://github.com/` or `git@github.com:` and a trailing `.git`. take the branch and the head sha from the working checkout (`git branch --show-current`, `git rev-parse HEAD`). pass every pr body, review and reply as a file, never inline in a shell command.
-
-- **push a checkpoint.** `broker push`, as above.
-- **open a pr.** the opening-a-pr playbook.
-- **read a pr.** `gh pr view <number> --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,mergedAt,headRefName,headRefOid,baseRefName,latestReviews,reviewRequests,mergeCommit`. `gh pr checks <number>` reads the checks. `gh api repos/<owner>/<repo>/pulls/<number>/comments` lists the review comments, each with its `id`, `path`, `line` and `in_reply_to_id`.
-- **read the diff.** `gh pr diff <number>`.
-- **post a verdict or a reply.** `broker pr-comment <owner/repo> <n> "$(cat <body-file>)"`. it is a comment: the review decision, and any approval, stay the person's. the broker has no verb for a reply inside a review thread, so answer the thread in a pr comment that quotes it.
-- **merge.** the shipping playbook, step 4.
-- **clean up.** from a surviving checkout of the repo. first pin the head: `gh pr view <number> --json state,headRefOid` must read `MERGED`; its `headRefOid` is `<head-sha>`. then check both branch heads: `git rev-parse refs/heads/<branch>` and `git ls-remote --heads origin <branch>` must each print `<head-sha>`, or nothing when that ref is already gone. if either prints another sha, the branch holds later commits: stop and report both shas. then `broker delete-branch <owner/repo> <branch>`, then `git worktree remove <worktree-path>` without `--force`. if a step fails or its result is unknown, keep the worktree and report it.
-
-a nonzero exit does not prove the action did not happen. read the state back with the matching read call above, report what it shows and the stderr, and stop.
-
-**a merged pr is not a finished task.** cleanup is done when the worktree folder, `refs/heads/<branch>` and the remote branch are all gone, read back from a surviving checkout of the repo (`git worktree list`; `git rev-parse --verify refs/heads/<branch>`; `git ls-remote --heads origin <branch>`).
+**a merged pr is not a finished task.** `broker merge` removes the local worktree and the local branch when the branch still points at the merged head, and prints a line for each. read those lines: a `kept` line or an error leaves cleanup to you, so report it. the broker cannot delete the remote branch, so report it as left over unless the repo deletes merged branches on its own (`git ls-remote --heads origin <branch>` prints nothing).
 
 ## autonomy
 
 **do it.** reversible work goes ahead without asking: code, branches, prs, notes, scratch scripts. a wrong reversible choice costs less than a blocked agent. do the work, show the result, and say what the user can change.
 
-**always stop and ask** before an action no one can undo, or one the person owns: merge a pr, force-push to a shared branch, deploy, delete data, send a message outside the project.
+**always stop and ask** before an action no one can undo, or one the person owns: force-push to a shared branch, deploy, delete data, send a message outside the project. a merge is not one of them: the broker's merge rule is the gate, so call `broker merge` once it can pass, and report a hold to the person.
 
 **"keep going", "i'm going to bed", "run until done"** mean you do not stop at a checkpoint. use the autonomous-run playbook.
 
@@ -203,7 +185,7 @@ open the file at `playbooks/<file>`. where a step names a tool your harness does
 - **session pickup** (`session-pickup.md`). continue work another agent left.
 - **worktree cleanup** (`worktree-cleanup.md`). reclaim local disk from merged or abandoned worktrees and old simulators, with [`scripts/worktree-audit.sh`](scripts/worktree-audit.sh).
 - **opening a pr** (`opening-a-pr.md`). the end of every other code playbook.
-- **babysit** (`babysit.md`). drive an open pr to merge-ready: conflicts, review threads, ci.
-- **shipping** (`shipping.md`). land a green pr that a verifier, not its author, has checked.
+- **babysit** (`babysit.md`). drive an open pr until it meets the broker's merge rule: conflicts, `block` reasons, ci.
+- **shipping** (`shipping.md`). land a pr that a verifier, not its author, has run, through `broker merge`.
 - **spec** (`spec.md`). a spec with tickets: one task loop per ready ticket on an integration branch, then one review and one pr.
 - **tickets** (`tickets.md`). every ticket change: create, set role, add blocker, claim, release, close, reopen, resolve.
