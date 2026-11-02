@@ -84,7 +84,7 @@ more triggers:
 
 github is the forge. every pr write goes through the `broker`, and [`references/broker.md`](references/broker.md) holds its commands, the role that may run each one, the merge rule, holds and attempts. read it before the first broker call of a session. if the broker is missing or refuses a call, stop and report its exact error. never fall back to `git push`, `gh pr create`, `gh pr merge`, a REST write or a built-in pr tool.
 
-name every work branch `agent/<task>`: the broker refuses other names. run `broker sync` before work and before each push. reads that the broker does not cover, such as the diff (`gh pr diff <number>`), stay on plain `git` and `gh`; when `gh pr` reads fail because GraphQL is blocked, use the **Forge without GraphQL** calls in `playbooks/opening-a-pr.md`.
+name every work branch `agent/<task>`: the broker refuses other names. run `broker sync` before work and before each push. read a pr with `broker pr-status` and its diff with local git (`git diff origin/<default>...<branch>`). `gh` is optional: use it only for reads, and only when it works in the session.
 
 **a merged pr is not a finished task.** `broker merge` removes the local worktree and the local branch when the branch still points at the merged head, and prints a line for each. read those lines: a `kept` line or an error leaves cleanup to you, so report it. the broker cannot delete the remote branch, so report it as left over unless the repo deletes merged branches on its own (`git ls-remote --heads origin <branch>` prints nothing).
 

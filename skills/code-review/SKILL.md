@@ -16,13 +16,15 @@ The issue tracker should have been provided to you. If `docs/agents/issue-tracke
 
 ### 1. Pin the fixed point
 
-Whatever the user said is the fixed point (a commit SHA, branch name, tag, `main`, `HEAD~5`, etc.). If they didn't specify one, ask for it.
+Whatever the user said is the fixed point (a commit SHA, branch name, tag, `main`, `HEAD~5`, etc.). If they didn't specify one, ask for it. The head is `HEAD`.
 
-Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
+**Reviewer mode.** In a `code-review` reviewer session, follow **reviewer sessions** in `../arkan-mode/references/broker.md`: the fixed point is `origin/<default>`, the head is `origin/pr/<n>`, every git command below runs as `git --git-dir "$UG_REVIEW_STORE" …`, and a file is read with `git show <head>:<path>`. Put these three rules in every sub-agent brief.
 
-Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside two parallel sub-agents.
+Capture the diff command once: `git diff <fixed-point>...<head>` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..<head> --oneline`.
 
-**Re-review.** If you were given an earlier round's report, review only the new diff: `git diff <reviewed-commit>..HEAD`, where `<reviewed-commit>` is the commit that report names. Keep the original fixed point only to decide `pre-existing` in step 5. Pass the earlier findings to every sub-agent, and never report one again, fixed or not: the caller already has it.
+Before going further, confirm both refs resolve (`git rev-parse <fixed-point> <head>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside two parallel sub-agents.
+
+**Re-review.** If you were given an earlier round's report, review only the new diff: `git diff <reviewed-commit>..<head>`, where `<reviewed-commit>` is the commit that report names. Keep the original fixed point only to decide `pre-existing` in step 5. Pass the earlier findings to every sub-agent, and never report one again, fixed or not: the caller already has it.
 
 ### 2. Identify the spec source
 
@@ -87,7 +89,7 @@ Drop every finding the pass disproves, and every finding with no `file:line`.
 
 Present the kept findings under `## Standards` and `## Spec` headings, one per line: `` `<tag>` `<file:line>`: <finding> ``. Do **not** merge or rerank findings across axes, because the two axes are deliberately separate (see _Why two axes_). After them, list the dropped findings, one line each with the reason.
 
-End with a one-line summary: the count of each tag per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent. Name the commit you reviewed (`git rev-parse HEAD`), so the next round reviews only what came after it.
+End with a one-line summary: the count of each tag per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent. Name the commit you reviewed (`git rev-parse <head>`), so the next round reviews only what came after it.
 
 Then give the verdict for the commit you reviewed: `block` when any `important` finding is open, else `pass`, with a one-line reason that names the worst `important` finding or says none is open. In a `code-review` reviewer session, record it with `broker review` on that head (see `../arkan-mode/references/broker.md`). The merge grade belongs to `risk-review`.
 

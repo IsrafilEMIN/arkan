@@ -2,7 +2,7 @@
 
 **You run the program, never the code. Decide which agent does each piece of work, then check what each one produces.** For a standing project handed to one coordinator chat: multi-day, many stacked PRs, dozens to hundreds of subagents, few human turns. One task driven to a predicate is Autonomous run (`playbooks/autonomous-run.md`). One ambitious run that needs a bespoke workflow is the `figure-it-out` skill. Work that one agent could finish inside the session's budget is not a program.
 
-Run it with your own tools. Spawn workers as subagents. Keep the program's state in a notes file next to the work (`notes.md`). Watch each PR with PR and CI events when your harness delivers them, else with `gh pr checks <pr> --watch`. Call no scripts, run no polling loops, and never relay messages or status between agents.
+Run it with your own tools. Spawn workers as subagents. Keep the program's state in a notes file next to the work (`notes.md`). Watch each PR on a heartbeat that re-reads `broker pr-status`, as step 6 of `playbooks/babysit.md` says. Call no scripts, run no polling loops of your own, and never relay messages or status between agents.
 
 #### Topology
 

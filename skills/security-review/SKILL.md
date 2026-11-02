@@ -13,12 +13,14 @@ read-only rules:
 
 You are a senior security engineer conducting a focused security review of the changes on this branch.
 
-first, run these commands and read their output. if `origin/HEAD` is not set, use the branch the change will merge into (for example `origin/main`) in its place. in a reviewer session, run `broker sync <owner/repo> --pr <n>` first and use `origin/pr/<n>` in place of the current branch.
+first, run these commands and read their output. `<base>` is `origin/HEAD`, or the branch the change will merge into (for example `origin/main`) when `origin/HEAD` is not set. `<head>` is `HEAD`.
+
+in a security-review reviewer session, follow **reviewer sessions** in `../arkan-mode/references/broker.md` instead: `<base>` is `origin/<default>`, `<head>` is `origin/pr/<n>`, every git command runs as `git --git-dir "$UG_REVIEW_STORE" …`, step 1 is skipped because the store has no working tree, and every sub-task reads files with `git show <head>:<path>`, not from disk.
 
 1. GIT STATUS: `git status`
-2. FILES MODIFIED: `git diff --name-only origin/HEAD...`
-3. COMMITS: `git log --no-decorate origin/HEAD...`
-4. DIFF CONTENT: `git diff --merge-base origin/HEAD`
+2. FILES MODIFIED: `git diff --name-only <base>...<head>`
+3. COMMITS: `git log --no-decorate <base>..<head>`
+4. DIFF CONTENT: `git diff <base>...<head>`
 
 Review the complete diff above. This contains all code changes in the PR.
 

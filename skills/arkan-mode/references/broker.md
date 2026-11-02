@@ -54,10 +54,16 @@ an **attempt** is one head with a `block` from any role; two roles that block on
 
 ## reviewer sessions
 
-each reviewer runs in its own session, started outside the author session with `omp --role <name>`; the names come from the broker's roles file. a reviewer session:
+each reviewer runs in its own session, started outside the author session with `omp --role <name>`; the names come from the broker's roles file. the session starts in the folder of its review store, a bare git repo at `$UG_REVIEW_STORE` with no checkout. so in a reviewer session:
 
-1. runs `broker sync <owner/repo> --pr <n>` and reviews `origin/pr/<n>` against `origin/<default>`.
-2. runs its skill: `code-review`, `security-review` or `risk-review`.
-3. records one verdict with `broker review` on the head it reviewed, with the skill's reason.
+- run every git command as `git --git-dir "$UG_REVIEW_STORE" …`.
+- the base is `origin/<default>` and the head is `origin/pr/<n>`. there is no `HEAD`, no working tree and no `git status`.
+- read a file at the head with `git --git-dir "$UG_REVIEW_STORE" show origin/pr/<n>:<path>`, never from disk.
+
+the steps:
+
+1. run `broker sync <owner/repo>`, then `broker sync <owner/repo> --pr <n>`. the second prints `origin/pr/<n> is now <sha>`: that sha is the head you review.
+2. run its skill in reviewer mode: `code-review`, `security-review` or `risk-review`.
+3. record one verdict with `broker review <owner/repo> <n> <sha> <verdict> "<reason>"` on that sha. if the pr moved on, the broker refuses: sync again and review the new head.
 
 the author never records or imitates a verdict. after each push it waits on `broker pr-status` until each role has a verdict on the head.
