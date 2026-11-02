@@ -89,12 +89,7 @@ Present the kept findings under `## Standards` and `## Spec` headings, one per l
 
 End with a one-line summary: the count of each tag per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent. Name the commit you reviewed (`git rev-parse HEAD`), so the next round reviews only what came after it.
 
-Then grade the merge `auto` or `manual`, with a one-line reason. Grade from the diff, never from who wrote it:
-
-- `manual` when the diff touches auth, billing, secrets, CI workflows, installers, release or auto-update paths, caching, system prompts, data migrations or a public API; when any `important` finding is still open; or when you are unsure.
-- `auto` only for docs, copy, tests, internal-only code, or additive behaviour behind a flag, with no open `important` finding.
-
-Paths the repo's guards list as sensitive (set by `underground`) always need a person; the grade never overrides them. The grade covers the commit you reviewed, so a new commit needs a new grade. It is a review output, not an approval.
+Then give the verdict for the commit you reviewed: `block` when any `important` finding is open, else `pass`, with a one-line reason that names the worst `important` finding or says none is open. In a `code-review` reviewer session, record it with `broker review` on that head (see `../arkan-mode/references/broker.md`). The merge grade belongs to `risk-review`.
 
 ## Why two axes
 

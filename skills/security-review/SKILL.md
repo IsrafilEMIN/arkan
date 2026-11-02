@@ -1,19 +1,19 @@
 ---
 name: security-review
-description: "complete a security review of the pending changes on the current branch. covers only pending changes that touch input, auth, secrets, ci or installers. use when such a diff is ready, or when the user says security review or /security-review."
+description: "complete a security review of the pending changes on the current branch, or of a pr head in a security-review reviewer session. use when a diff that touches input, auth, secrets, ci or installers is ready, in every security-review reviewer session, or when the user says security review or /security-review."
 ---
 
-<!-- copied from .claude/commands/security-review.md in anthropics/claude-code-security-review at commit 0c6a49f (MIT, see NOTICE). changed: the `!` lines that filled in git output are now steps, and `allowed-tools` is now the read-only rules below. -->
+<!-- copied from .claude/commands/security-review.md in anthropics/claude-code-security-review at commit 0c6a49f (MIT, see NOTICE). changed: the `!` lines that filled in git output are now steps, `allowed-tools` is now the read-only rules below, and a verdict step for the broker is added at the end. -->
 
 read-only rules:
 
-- run only these commands: `git diff`, `git status`, `git log`, `git show`, `git remote show`.
+- run only these commands: `git diff`, `git status`, `git log`, `git show`, `git remote show`. in a security-review reviewer session, also `broker sync`, `broker pr-status` and `broker review`.
 - read, list and search files as you need. do not write or change any file.
 - a sub-task below is a subagent, if the harness has them. if it has none, do each sub-task yourself, one after the other.
 
 You are a senior security engineer conducting a focused security review of the changes on this branch.
 
-first, run these commands and read their output. if `origin/HEAD` is not set, use the branch the change will merge into (for example `origin/main`) in its place.
+first, run these commands and read their output. if `origin/HEAD` is not set, use the branch the change will merge into (for example `origin/main`) in its place. in a reviewer session, run `broker sync <owner/repo> --pr <n>` first and use `origin/pr/<n>` in place of the current branch.
 
 1. GIT STATUS: `git status`
 2. FILES MODIFIED: `git diff --name-only origin/HEAD...`
@@ -177,4 +177,4 @@ Begin your analysis now. Do this in 3 steps:
 2. Then for each vulnerability identified by the above sub-task, create a new sub-task to filter out false-positives. Launch these sub-tasks as parallel sub-tasks. In the prompt for these sub-tasks, include everything in the "FALSE POSITIVE FILTERING" instructions.
 3. Filter out any vulnerabilities where the sub-task reported a confidence less than 8.
 
-Your final reply must contain the markdown report and nothing else.
+Your final reply must contain the markdown report and nothing else, except in a reviewer session: there, end with the verdict `block` when the report holds any finding, else `pass`, and record it with `broker review` on the head you reviewed, with the worst finding's title as the reason (see `../arkan-mode/references/broker.md`).
