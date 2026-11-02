@@ -18,7 +18,7 @@ This file holds no skill table. The routing lives in the files below; read the o
 - `arkan-mode` section 2: which skill to reach for in which situation, including the skills only the person starts.
 - `arkan-mode`'s `## playbooks` list: each playbook in [`../arkan-mode/playbooks/`](../arkan-mode/playbooks/) and when it applies.
 - `arkan-mode`'s `## principles` list: each `principle-*` skill and the decision it changes.
-- Every other skill in this skills folder: the `description` in its frontmatter. A skill whose frontmatter sets `disable-model-invocation: true` is person-started: it runs only when the person types it.
+- Every other skill in this skills folder: the `description` in its frontmatter. A skill whose frontmatter sets `disable-model-invocation: true` is person-started: it stays out of the model's skill list, so the model never picks it on its own. It runs when the person types it. `arkan-mode` also reads `principle-*` skills by path.
 
 To answer "which skill for X", match X against section 2 first, then against the descriptions. Link the file by its path in the arkan checkout, such as `skills/arkan-mode/playbooks/babysit.md`.
 
@@ -36,7 +36,7 @@ Check the repo state that changes the answer, and mention it only when it does:
 
 - No `docs/agents/issue-tracker.md` means `pre-setup` has not run in this repo. Ticket work and the shaping skills need it.
 - No `verify-*` skill in the repo means agents have no scripted way to drive the app. Mention `verification` (create) when the question is about proving a change works.
-- No formal verification in the repo means no property is checked past what tests reach. Mention `formal-verification` when the question is about a race, an invariant or another case tests rarely hit, and its maintain mode when the code it covers changed since it last passed.
+- No `formal-verify-*` skill in the repo means no property is checked past what tests reach. Mention `formal-verification` when the question is about a race, an invariant or another case tests rarely hit, and its maintain mode when the code it covers changed since it last passed.
 
 ## Get set up
 
@@ -76,7 +76,7 @@ Principles are one-rule skills that `arkan-mode` reads and cites in its replies.
 | Symptom | Fix |
 |---|---|
 | A question got treated as the next step of the last task | Say "new task", or say the turn does not need the mode. |
-| A skill did not load on its own | Person-started skills (`disable-model-invocation: true`) run only when typed. Others load when `arkan-mode` reaches for them, and it does not run every skill. |
+| A skill did not load on its own | Person-started skills (`disable-model-invocation: true`) stay out of the model's skill list: they run when the person types them, or, for `principle-*` skills, when `arkan-mode` reads them by path. Others load when `arkan-mode` reaches for them, and it does not run every skill. |
 | Parallel agents overwrote each other | Give each agent its own worktree, as step 6 of `arkan-mode` section 1 says. |
 | An unattended run moved but finished nothing | Give it a check that can pass or fail, not a duration. That is the autonomous run playbook. |
 | The reply claims success from a green build | Ask for the real command, flow, stored value or profile. That is `principle-prove-it-works`. |
