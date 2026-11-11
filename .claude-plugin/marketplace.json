@@ -1,0 +1,18 @@
+{
+	"name": "arkan",
+	"owner": {
+		"name": "IsrafilEMIN"
+	},
+	"metadata": {
+		"description": "arkan: one bundle of agent skills for engineering work"
+	},
+	"plugins": [
+		{
+			"name": "arkan",
+			"description": "agent skills that drive one task to a checked change, with the arkan-agent and comment-sicko subagents",
+			"source": "./",
+			"category": "development",
+			"homepage": "https://github.com/IsrafilEMIN/arkan"
+		}
+	]
+}
