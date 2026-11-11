@@ -34,8 +34,8 @@ each line names the skill to call today.
 - a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user.
 - the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. to turn lessons from one session into checks and skill edits, start `reflect` (proposals only), or suggest it if you cannot. to sweep the repo for mistakes agents keep repeating and land a check for each, a person starts `correct`.
 - any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply), then `unslop`. a doc, readme or rfc → `technical-writing`.
-- a repo has no scripted way to prove the app works → tell the user. a person starts `verification` (create); you do not.
-- concurrency, retries, a state machine, a parser or unsafe code where tests can't reach the case that breaks → tell the user. a person starts `formal-verification` (create), and its maintain mode after changes that skipped the check.
+- a repo has no scripted way to prove the app works → tell the user. a person starts `create-verification-skill`; you do not. `maintain-verification-skill` brings a drifted one up to date.
+- concurrency, retries, a state machine, a parser or unsafe code where tests can't reach the case that breaks → tell the user. a person starts `create-formal-verification-skill`, and `maintain-formal-verification-skill` after changes that skipped the check.
 - a model check's result, or a bug to show as a path through states → a person starts `statechart`.
 - you edit a `.ts` or `.tsx` file → `typescript-best-practices`.
 - a design that is a one-way door (a public api, a data schema) → `architect`, which runs `arena`. a contested design, or a change on a sensitive path → `interrogate` before you ship.
