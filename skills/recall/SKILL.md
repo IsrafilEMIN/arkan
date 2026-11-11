@@ -35,7 +35,7 @@ Under a sandbox these folders may be unreadable; then say so and work from the s
 Lead with the capsule, then the thread status, then the problems, then the next move.
 
 - **Capsule.** At most 5 bullets: what this work is and where it stands.
-- **Threads.** One line each, with exactly one status tag: `[merged #N]`, `[open PR #N]`, `[in flight <branch>]`, `[verified, uncommitted]`, `[reverted #N]`, or `[planned, not started]` (a ticket on the board). A thread with no tag is not done, so tag it.
+- **Threads.** One line each, with exactly one status tag: `[merged #N]`, `[open PR #N]`, `[in flight <branch>]`, `[verified, uncommitted]`, `[reverted #N]`, or `[planned, not started]`. A thread with no tag is not done, so tag it.
 - **Problems.** At most 5, the recurring ones. Include the symptoms users keep reporting and any fix that shipped and was reverted, so the next attempt starts where the last one failed.
 - **Next move.** The single most useful next action, concrete.
 
@@ -51,7 +51,7 @@ Use `bro`'s voice, not its task: plain words, short sentences, no jargon, like o
 
 ### Gather what changed
 
-Keep this turn read-only. Make visuals only from what you already have: don't change code, start an app or a job, or post anything. Collect your own work since that message, subagent reports, and messages from anyone else in this chat. Check the current state of each pull request, ci run or agent this chat touched, and the board. Check each number you will show against the facts it comes from, and say so when you correct one.
+Keep this turn read-only. Make visuals only from what you already have: don't change code, start an app or a job, or post anything. Collect your own work since that message, subagent reports, and messages from anyone else in this chat. Check the current state of each pull request, ci run or agent this chat touched. Check each number you will show against the facts it comes from, and say so when you correct one.
 
 An action item is a call or step only the person can take: a product choice, a merge, an approval, an irreversible action, access you lack, or a step on their machine (an install only they can run). Include any still waiting on them, even one raised before their last message. Work you can still do yourself is not an action item. Never invent a call to fill the reply. A step they did not ask for and the work does not need is not an action item, unless it is irreversible and waiting on them: give it one line and no visual.
 

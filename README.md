@@ -14,8 +14,9 @@ task
  0  arkan-mode ────────── picks a playbook, applies the principles
  1  build ─────────────── the bug-fix playbook when something is broken, `tdd` when a test is cheap
  2  prove ─────────────── tests, build, lint, and the repo's verify skill
- 3  pr ────────────────── the opening-a-pr, babysit and shipping playbooks
- 4  review ────────────── reviewer sessions run `interrogate` on the pr head; gh-broker's merge rule gates the merge
+ 3  pr ────────────────── the opening-a-pr and babysit playbooks
+ 4  review ────────────── reviewer sessions run `interrogate` on the pr head and record a verdict
+ 5  merge ─────────────── the shipping playbook, once the broker's merge rule passes
 ```
 
 a person hands over the task. the agent works alone from there and comes back to the person for approval and for any action that cannot be undone.

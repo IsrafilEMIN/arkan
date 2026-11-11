@@ -64,6 +64,6 @@ the steps:
 
 1. run `broker sync <owner/repo>`, then `broker sync <owner/repo> --pr <n>`. the second prints `origin/pr/<n> is now <sha>`: that sha is the head you review.
 2. run `interrogate` on the diff from `origin/<default>` to that sha.
-3. record one verdict with `broker review <owner/repo> <n> <sha> <verdict> "<reason>"` on that sha: `block` when `interrogate` keeps a finding that this change brings, with the findings as the reason; `pass` when none survives. if the pr moved on, the broker refuses: sync again and review the new head.
+3. record one verdict with `broker review <owner/repo> <n> <sha> <verdict> "<reason>"` on that sha. before you count a finding, run its command at `origin/<default>` too: a failure that also shows there is not this change's, so name it in the reason and do not block on it. `block` when a finding that this change brings is left, with the findings as the reason; `pass` when none is. if the pr moved on, the broker refuses: sync again and review the new head.
 
 the author never records or imitates a verdict. after each push it waits on `broker pr-status` until each role has a verdict on the head.
