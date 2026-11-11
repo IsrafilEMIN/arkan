@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations. Issue writes stay on `gh`, because the broker has no issue verbs; only PR writes go through the broker.
+Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations. Issue writes stay on `gh`, because gh-broker has no issue verbs; only PR writes go through gh-broker.
 
 ## Conventions
 

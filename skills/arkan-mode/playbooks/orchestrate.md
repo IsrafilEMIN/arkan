@@ -2,7 +2,7 @@
 
 **You run the program, never the code. Decide which agent does each piece of work, then check what each one produces.** For a standing project handed to one coordinator chat: multi-day, many stacked PRs, dozens to hundreds of subagents, few human turns. One task driven to a predicate is Autonomous run (`playbooks/autonomous-run.md`). One ambitious run that needs a bespoke workflow is the `figure-it-out` skill. Work that one agent could finish inside the session's budget is not a program.
 
-Run it with your own tools. Spawn workers as subagents. Keep the program's state in a notes file next to the work (`notes.md`). Watch each PR on a heartbeat that re-reads `broker pr-status`, as step 6 of `playbooks/babysit.md` says. Call no scripts, run no polling loops of your own, and never relay messages or status between agents.
+Run it with your own tools. Spawn workers as subagents. Keep the program's state in a notes file next to the work (`notes.md`). Watch each PR on a heartbeat that re-reads `gh-broker pr-status`, as step 6 of `playbooks/babysit.md` says. Call no scripts, run no polling loops of your own, and never relay messages or status between agents.
 
 #### Topology
 
@@ -18,7 +18,7 @@ Run it with your own tools. Spawn workers as subagents. Keep the program's state
 - **Each kickoff names the evidence that proves the work is done,** such as a command and its expected output, a check with the repo's verify skill, or an artifact. It also names the goal, the paths the worker may and may not write, and the actions it must not take. If you can't name the evidence, the unit isn't scoped yet.
 - **Read the diff or the artifact, not only the worker's summary.** Green CI is an input to a verdict, not a verdict. Behavioral work needs more than a type check. A verdict covers one head SHA, so a new push needs a new verdict. Read a sample of each sub-coordinator's kickoffs while its workers run, and fix its instructions when one fails.
 - **Send back work that drifts from scope or grows past what was asked.** Keep only the fixes that block the program, and park the rest as follow-ups.
-- **Check a PR's live state before you report on it,** with `broker pr-status`, not the worker's last report. Account for every worker you spawned as done, replaced, or absorbed into another worker's scope.
+- **Check a PR's live state before you report on it,** with `gh-broker pr-status`, not the worker's last report. Account for every worker you spawned as done, replaced, or absorbed into another worker's scope.
 - **Stop or replace a worker that stalls or loops.** Judge it by its pushes and PR activity, not its status text. Retry by cause: a smaller scope after a context or memory limit, the same kickoff after a dropped connection, and a different model after a tool error. After two retries, drop the unit and replan around it. When a stopped worker returns late, check its result against the PR's current state, and hand any unique findings to a fresh worker.
 - **Ask the person only for a real decision or a blocker,** such as a hold the broker reports, an irreversible action, a product or preference call that no experiment settles, or a dead end that survived a replan. Merge mechanics, retries, CI flakes, `block` fixes, review triage, and "should I keep going" never reach the person.
 

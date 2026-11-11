@@ -11,7 +11,7 @@
    - **Smallest safe decomposition.** If one worker is best, name why.
 4. Delegate code-writing to a subagent with a specific scope: file paths, the named data shape and its organizing structure (**model the domain**, `principle-model-the-domain`: a state machine over scattered booleans, a table or registry over branching, a typed model over repeated shape assumptions), chosen before the delegate writes logic, and success criteria. Match each subagent's model to the job, per **Subagents** in `SKILL.md`. Keep review separation: the agent that writes the code does not review it. A subagent that cannot spawn its own subagents owns the diff directly. No "standing by" reply that waits on a nested agent. Comments per **Comments** in `SKILL.md`. Surgical edits, re-ground against the source for upstream-derived files. Port shared-primitive improvements to all consumers and verify each. Commit liberally.
 5. Verify on the matching surface. "Inconclusive" or wrong-surface is not a pass. Flag it.
-6. Commit each verified unit as you go, small and in order, and checkpoint it with `broker push` (see **Commits** in `playbooks/opening-a-pr.md`). Follow-ups are their own PRs on trunk.
+6. Commit each verified unit as you go, small and in order, and checkpoint it with `gh-broker push` (see **Commits** in `playbooks/opening-a-pr.md`). Follow-ups are their own PRs on trunk.
    Use the **sequence verifiable units** principle (`principle-sequence-verifiable-units`), building and checking each small unit before the next.
 7. Review the diff with the `code-review` skill in a fresh context. If the design is contested, name the alternatives in the PR.
 8. Run **Opening a PR**.
