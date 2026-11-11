@@ -39,7 +39,7 @@ Check the repo state that changes the answer, and mention it only when it does:
 
 ## Get set up
 
-Arkan has no installer. The person links or copies each `skills/<name>` folder into the folder their harness reads skills from. It is safe to redo.
+Arkan installs as a plugin, per the `## install` section of the repo's `README.md`: add the repo as a marketplace, install `arkan@arkan`, then reload the plugins. It is safe to redo.
 
 Then start a real task with `/arkan-mode`, a goal, and a check that can pass or fail. Offer to word that first prompt with them, per [`references/prompting.md`](references/prompting.md).
 

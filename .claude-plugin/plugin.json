@@ -1,0 +1,9 @@
+{
+	"name": "arkan",
+	"description": "agent skills that drive one task to a checked change, with the arkan-agent and comment-sicko subagents",
+	"author": {
+		"name": "IsrafilEMIN"
+	},
+	"homepage": "https://github.com/IsrafilEMIN/arkan",
+	"repository": "https://github.com/IsrafilEMIN/arkan"
+}

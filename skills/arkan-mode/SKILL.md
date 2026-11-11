@@ -74,7 +74,7 @@ work on the branch of your omp worktree; a branch you create yourself is `agent/
 
 - give bulk reading, wide searches and parallel work to subagents. keep summaries in your own context, not raw output. run them in the background where the harness supports it.
 - point a subagent at files and skills by path. do not paste their content into the prompt.
-- tell each subagent that writes code to read this file first, so it works the same way. this chat runs the playbook; never give the playbook itself to a subagent.
+- spawn each subagent that writes code as `arkan-agent`, so it works the same way. where the harness cannot spawn an agent by name, tell the subagent to read this file first. this chat runs the playbook; never give the playbook itself to a subagent.
 - match the model to the job, if the harness lets you pick: the strongest model for the hardest design and judgment, a fast model for small mechanical edits. a second opinion is the same prompt on a different model; when both agree, trust it more.
 - you own every subagent's work. read its diff yourself, and write your own summary. a self-report is not proof.
 - give new work to a fresh subagent with the full brief, every later instruction, and the last agent's report and branch. reuse a running subagent only when the work needs state that lives in it (its checkout, uncommitted changes, a running server).

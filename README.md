@@ -4,7 +4,24 @@ arkan is one bundle of agent skills for engineering work. a person hands it one 
 
 ## install
 
-link or copy each folder in [`skills/`](skills/) into the folder your harness reads skills from.
+arkan is a plugin for omp and claude code. in omp:
+
+```
+/marketplace add IsrafilEMIN/arkan
+/marketplace install arkan@arkan
+/reload-plugins
+```
+
+in claude code:
+
+```
+/plugin marketplace add IsrafilEMIN/arkan
+/plugin install arkan@arkan
+```
+
+to update in omp, run `/marketplace update arkan`, then `/marketplace upgrade arkan@arkan`, then `/reload-plugins`.
+
+for any other harness, link or copy each folder in [`skills/`](skills/) into the folder it reads skills from.
 
 ## the flow in one view
 
