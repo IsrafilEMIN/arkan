@@ -1,6 +1,6 @@
 ---
 name: verification
-description: "Create or maintain a repo's own verify skill: a scripted way to launch the real app, drive it the way a user does, and capture proof, plus a feature map kept true as the app changes. Any language or platform. Create mode generates and proves the skill; maintain mode runs one read-only source reader per feature, one live session driving every feature, and at most one pull request of proven fixes. Use when a person says /verification, /create-verification, /maintain-verification, \"make a verify skill for this repo\", \"audit the verify skill\", or when pre-setup or arkan-mode reports that the repo has no verify skill."
+description: "Create or maintain a repo's own verify skill: a scripted way to launch the real app, drive it the way a user does, and capture proof, plus a feature map kept true as the app changes. Any language or platform. Create mode generates and proves the skill; maintain mode runs one read-only source reader per feature, one live session driving every feature, and at most one pull request of proven fixes. Use when a person says /verification, /create-verification, /maintain-verification, \"make a verify skill for this repo\", \"audit the verify skill\", or when arkan-mode reports that the repo has no verify skill."
 disable-model-invocation: true
 ---
 
@@ -19,11 +19,11 @@ Say which mode you are in before you start.
 
 ## Where the verify skill lives
 
-`.agents/skills/verify-<app>/` in the repo, with `.claude/skills/verify-<app>` as a symlink to it, so every harness finds it. `pre-setup`'s `verify` item looks for a `verify-*` folder in either place.
+`.agents/skills/verify-<app>/` in the repo, with `.claude/skills/verify-<app>` as a symlink to it, so every harness finds it.
 
 If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`, so a session cannot plant a skill that later sessions load), write the files to `${TMPDIR:-/tmp}/<repo>-verify-<app>-draft/`, outside the repo, and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Prove the skill from the draft path; the move changes no content.
 
-App behavior that is really broken is a product gap, in either mode: file it for the person with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`, and keep it out of the verify skill's pull request.
+App behavior that is really broken is a product gap, in either mode: record it for the person and keep it out of the verify skill's pull request.
 
 ## Create
 
@@ -95,7 +95,7 @@ Edit only the verify skill's own folder (its `SKILL.md`, `features/`, and the ha
 
    A doctor failure caused by skill drift is drift: fix it within the edit scope and retry once (restart only what the fix invalidated) before calling the pass `blocked`. A feature that cannot be reached is `verified-unreachable` only with the concrete prerequisite (auth, entitlement, os, outside state) and the route you tried; if the map omits that prerequisite, that is drift. Any harness fix gets driven live again before it ships. Final teardown comes after the last drive of the run, re-proofs included; evidence stays.
 
-5. **Triage.** Wrong or missing user-side description → doc drift, fix it. Working behavior the harness cannot drive → harness gap, fix it (scripts executable, how to call them written in the skill body). App behavior that is really broken → product gap: file it as above.
+5. **Triage.** Wrong or missing user-side description → doc drift, fix it. Working behavior the harness cannot drive → harness gap, fix it (scripts executable, how to call them written in the skill body). App behavior that is really broken → product gap: record it as above.
 
 6. **Ship or stop.** For **changed**: one pull request of proven fixes, every changed file re-read first, opened per `arkan-mode`'s `opening-a-pr` playbook; the person decides when it merges. For **clean** or **blocked**: no pull request; report the outcome and the coverage honestly.
 

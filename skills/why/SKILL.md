@@ -39,13 +39,13 @@ List the connectors (mcp servers) this run can call: in claude code, the tools n
 6. error / exception tracking
 7. product analytics warehouse
 
-Source control is always available through `git` (and `gh`). The repo's own tracker is always available too: read `docs/agents/issue-tracker.md`; for a local markdown tracker, the tickets and their `## Comments` and `## Answer` sections under `.scratch/` are category 2, searchable with `grep`. For the other categories, classify by the connector's name, instructions and tools. If one could fit two categories, pick its main evidence and note the ambiguity in the coverage map.
+Source control is always available through `git` (and `gh`). For the other categories, classify by the connector's name, instructions and tools. If one could fit two categories, pick its main evidence and note the ambiguity in the coverage map.
 
 Spawn one investigator per category that has a source, all at once, each owning exactly one source. Don't ask one agent to cover several.
 
 Each investigator's prompt is [`references/investigator-prompt.md`](references/investigator-prompt.md) filled in, plus:
 
-- its playbook from [`references/source-playbook.md`](references/source-playbook.md): `references/sources/code-archaeology.md` for source control and a local tracker, or the connector search steps for any other category, plus that file's evidence rules;
+- its playbook from [`references/source-playbook.md`](references/source-playbook.md): `references/sources/code-archaeology.md` for source control, or the connector search steps for any other category, plus that file's evidence rules;
 - `references/sources/incident-postmortem.md` **if the target code looks defensive** (null checks, retry logic, timeouts, rate limits, feature flags, egress guards, out-of-memory handlers);
 - the code anchor and the person's original question.
 
@@ -80,7 +80,7 @@ Present the synthesizer's output. You may lightly edit for clarity or add contex
 
 The structure in `references/synthesizer-prompt.md`: the question, the code in question, what we found, what we can reasonably infer, competing hypotheses, what we don't know, sources consulted, confidence summary. Adapt as needed, but keep the confidence separation, and keep sources consulted as one line per investigator, including those that returned nothing or were skipped, with the reason.
 
-If the question is a step before changing this code, turn the findings into a **preserve / change / avoid / risk** set for planning the change. A decision with lasting effect that the investigation surfaces, and that no adr records, is worth an adr through `domain-modeling`.
+If the question is a step before changing this code, turn the findings into a **preserve / change / avoid / risk** set for planning the change.
 
 ## Common failure modes
 

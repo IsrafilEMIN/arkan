@@ -9,4 +9,4 @@
 5. **Leave the PRs alone while they land.** Change no branch while a merge is pending, because a merge lands whatever its branch holds at that moment. If a merge stalls, find out why before you change anything.
 6. **Move to the next PR.** The next lowest PR starts again at step 1 on its own head.
 
-**Reply:** each PR with its link, head sha, user-path verdict and who produced it, the three reviewer verdicts, what landed, the cleanup lines, any remote branch left over, and any hold with its reason.
+**Reply:** each PR with its link, head sha, user-path verdict and who produced it, the reviewer verdicts, what landed, the cleanup lines, any remote branch left over, and any hold with its reason.

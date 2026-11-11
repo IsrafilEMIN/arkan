@@ -1,13 +1,13 @@
 ---
 name: blast-radius
-description: "Map what a change could break somewhere else before it ships, beyond the diff (impact only; code quality is `code-review`'s), and prove the one fact it is safe because of by running real code instead of writing it up. Use for 'blast radius of X', 'what could this break', or a small diff you don't trust."
+description: "Map what a change could break somewhere else before it ships, beyond the diff, and prove the one fact it is safe because of by running real code instead of writing it up. Use for 'blast radius of X', 'what could this break', or a small diff you don't trust."
 ---
 
 # Blast radius
 
 Find what a change breaks somewhere else, before it ships. Use for "blast radius of X", "what could this break", or a small diff you don't trust yet.
 
-A companion to `how` and `why`: `how` says what the code does, `why` says why it is shaped that way, blast radius says what it breaks elsewhere. It is not a replacement for `code-review`, which reads the diff itself; this skill reads what the diff touches from a distance.
+A companion to `how` and `why`: `how` says what the code does, `why` says why it is shaped that way, blast radius says what it breaks elsewhere.
 
 Listing the callers is not the job: grep does that in a second. The job is the breakage grep won't show you.
 

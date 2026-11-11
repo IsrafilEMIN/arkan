@@ -27,7 +27,7 @@ Say which mode you are in before you start.
 
 If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`), write the skill to `${TMPDIR:-/tmp}/<repo>-formal-verify-<area>-draft/`, outside the repo, and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Installing the tool usually needs the network or `sudo`: give the person the install command with a pinned version, and say so rather than working around the sandbox.
 
-A finding (a property the current code breaks) is filed in either mode with its counterexample, separate from the verification's pull request, with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`.
+A finding (a property the current code breaks) is reported in either mode with its counterexample in the code's own terms, and kept separate from the verification's pull request.
 
 ## Create
 
@@ -63,7 +63,7 @@ Follow the generated skill once, as the next agent would, on a scratch change th
 
 ### Hand off
 
-Ship the skill and the verification files through the repo's normal flow: a branch, a pull request per the `opening-a-pr` playbook, merged by the person. File each finding as above.
+Ship the skill and the verification files through the repo's normal flow: a branch, a pull request per the `opening-a-pr` playbook, merged by the person. Report each finding as above.
 
 Tell the user what you verified, which tool you used and why, the bounds, what the check found in plain words, how to run it, and what it does not cover. Suggest a second target only if you found a close one. Tell the user to run this skill in maintain mode after changes that did not recheck the verification.
 
@@ -118,4 +118,4 @@ Tell the user, for each check:
 
 Say outright which failures were drift in the verification and which were bugs in the code. For a check that passed before you updated it and fails after, say that the old pass was on a stale description.
 
-Put the verification updates in a change of their own, separate from any product fix: a pull request per the `opening-a-pr` playbook. File each bug as above.
+Put the verification updates in a change of their own, separate from any product fix: a pull request per the `opening-a-pr` playbook. Report each bug as above.
