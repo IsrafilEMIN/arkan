@@ -62,8 +62,8 @@ each reviewer runs in its own session, started outside the author session with `
 
 the steps:
 
-1. run `gh-broker sync <owner/repo>`, then `gh-broker sync <owner/repo> --pr <n>`. the second prints `origin/pr/<n> is now <sha>`: that sha is the head you review.
+1. run `broker sync <owner/repo>`, then `broker sync <owner/repo> --pr <n>`. the second prints `origin/pr/<n> is now <sha>`: that sha is the head you review.
 2. run its skill in reviewer mode: `code-review`, `security-review` or `risk-review`.
 3. record one verdict with `broker review <owner/repo> <n> <sha> <verdict> "<reason>"` on that sha. if the pr moved on, the broker refuses: sync again and review the new head.
 
-the author never records or imitates a verdict. after each push it waits on `gh-broker pr-status` until each role has a verdict on the head.
+the author never records or imitates a verdict. after each push it waits on `broker pr-status` until each role has a verdict on the head.

@@ -7,7 +7,7 @@ description: "complete a security review of the pending changes on the current b
 
 read-only rules:
 
-- run only these commands: `git diff`, `git status`, `git log`, `git show`, `git remote show`. in a security-review reviewer session, also `gh-broker sync`, `gh-broker pr-status` and `broker review`.
+- run only these commands: `git diff`, `git status`, `git log`, `git show`, `git remote show`. in a security-review reviewer session, also `broker sync`, `broker pr-status` and `broker review`.
 - read, list and search files as you need. do not write or change any file.
 - a sub-task below is a subagent, if the harness has them. if it has none, do each sub-task yourself, one after the other.
 
