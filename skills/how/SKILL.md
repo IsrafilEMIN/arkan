@@ -22,7 +22,7 @@ When in doubt, take the simple path.
 
 ## 2. Explore (complex only)
 
-Split the question into 2 to 4 angles, each a distinct slice of the subsystem. Spawn all explorers at once, each with [`references/explorer-prompt.md`](references/explorer-prompt.md) and its angle filled in. Give them the repo's `GLOSSARY.md` and the relevant adrs in `docs/adr/`, so they use the repo's own words.
+Split the question into 2 to 4 angles, each a distinct slice of the subsystem. Spawn all explorers at once, each with [`references/explorer-prompt.md`](references/explorer-prompt.md) and its angle filled in.
 
 ## 3. Synthesize (complex only)
 

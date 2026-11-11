@@ -12,11 +12,6 @@ Swap in the real paths, skills and done checks. Informal wording works.
 - `/teach me why you implemented it this way and not <other way>. what did you trade off?`
 - `/arkan-mode take over this branch. read the decision log, find what's done, and continue. don't redo finished work.`
 
-## Shape
-
-- `/grilling <fuzzy idea>`
-- `/to-spec <settled design>`, then `/to-tickets`.
-
 ## Build
 
 - Bug: `/arkan-mode <symptom>. repro first, then fix and verify.`
@@ -26,12 +21,14 @@ Swap in the real paths, skills and done checks. Informal wording works.
 - Refactor: `/arkan-mode move <code> into one module, zero behavior change. record the current output first and prove it's unchanged after.`
 - Perf: `/arkan-mode <operation> takes <time> on <fixture>. trace it, fix the measured cause, show me before and after.`
 
-## Design
+## Design and plan
 
 - `/arkan-mode prototype a few options for <feature>. take screenshots or videos for me to compare.`
 - `/arkan-mode we need <feature>. /architect it first, and answer open questions with prototypes. let me review before proceeding.`
 - `/arkan-mode write a tutorial for how i would use <new package> first. then /teach me why it beats the current one.`
 - `ask /arena for a second opinion on this thread and our approach.`
+- `/arkan-mode turn this design into a plan. small verifiable prs, each with its own verification steps.`
+- `/arkan-mode plan the migration of <library> to <target>. small verifiable prs. the result must match the original exactly, bugs included.`
 
 ## Review and ship
 
@@ -47,5 +44,5 @@ Swap in the real paths, skills and done checks. Informal wording works.
 - `/arkan-mode im going to bed. <goal> in a fresh worktree off <base>. done means <checks>. keep a decision log. don't ask me before committing. run until done. if you're truly stuck after a few hours, stop and write up why.`
 - `/show-me-your-work catch me up on what you did last night.` Read its attention section first.
 - `/recall what changed in this chat` catches you up since your last message and lists every call that waits on you.
-- `/retro capture what we learned so the next run doesn't repeat it.` Approve only edits that change a future decision.
+- `/reflect capture what we learned so the next run doesn't repeat it.` Approve only edits that change a future decision.
 - `/bro` restates the last reply in plain words.

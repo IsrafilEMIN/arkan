@@ -10,7 +10,7 @@ The person keeps correcting agents in this repo for the same mistakes. Change th
 
 Assume every contributor is an agent that sees only the files it opened, copies the nearest example, and takes the shortest path that compiles. Design the repo so a change that looks right from one file is right for the whole repo.
 
-This is the `principle-encode-lessons-in-structure` rule applied to the whole repo. `retro` looks at one session and applies only what the person approves; this skill reads the repo's history and lands the fixes.
+This is the `principle-encode-lessons-in-structure` rule applied to the whole repo. `reflect` looks at one session and applies only what the person approves; this skill reads the repo's history and lands the fixes.
 
 ## Find the mistake classes
 
@@ -21,7 +21,7 @@ First, read recent commits, reverts, review comments, agent instruction files (`
 1. **Eliminate it with architecture.** Give each piece of state one owner and each task one supported way. Hide internals so the wrong import fails. Replace hand-synced lists with one source of truth. Delete old ways and dead code an agent would copy.
 2. **Enforce it with types so the bad state can't be written.** If bad code still compiles, add a lint or CI check whose error names the file, type, or function to use instead. If the pattern is already common, fail only when a change adds more.
 3. **Test the behavior.** Fix or delete any test that still passes when the behavior it checks breaks, or that fails when only the internals change.
-4. **Write docs or agent rules last, only for judgment calls.** Nothing fails when an agent skips them. A judgment call the reviewer can check goes in `CODING_STANDARDS.md`, which `code-review` reads.
+4. **Write docs or agent rules last, only for judgment calls.** Nothing fails when an agent skips them.
 
 ## Fix and prove
 

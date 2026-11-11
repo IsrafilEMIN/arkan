@@ -1,6 +1,6 @@
 ---
 name: automate-me
-description: "Use for \"automate me\", \"create/update/refresh my -mode skill\", \"turn my preferences or working style into a skill\", or wanting agents to follow how the person works. Drafts or revises a personal <handle>-mode skill per writing-for-agents and unslop, from the person's answers and their recent chats."
+description: "Use for \"automate me\", \"create/update/refresh my -mode skill\", \"turn my preferences or working style into a skill\", or wanting agents to follow how the person works. Drafts or revises a personal <handle>-mode skill per arkan-mode's authoring-a-skill playbook and unslop, from the person's answers and their recent chats."
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 A guided flow that turns the person's working conventions into a skill agents follow. The output is one `<handle>-mode` skill made for them (for example `jay-mode`). It sits on top of `arkan-mode`: it holds only what is personal, never a copy of arkan-mode's rules.
 
-This skill sequences others; it doesn't replace them: a mining pass (step 1, the same way `recall` mines chats), `writing-for-agents` (authoring) and `unslop` (prose).
+This skill sequences others; it doesn't replace them: a mining pass (step 1, the same way `recall` mines chats), arkan-mode's [authoring-a-skill playbook](../arkan-mode/playbooks/authoring-a-skill.md) (authoring) and `unslop` (prose).
 
 ## Flow
 
@@ -52,7 +52,7 @@ Group the signals into sections. Use only what applies:
 
 - **reply style:** length, tone, format, case.
 - **autonomy:** how much to do without asking; which connectors to use.
-- **understand first:** which skills to reach for when scoping (`how`, `why`, `grilling`).
+- **understand first:** which skills to reach for when scoping (`how`, `why`).
 - **subagents:** default, parallel work, model per task.
 - **prose and code discipline:** principles, lint tools, style guides.
 - **review and verify:** repro posture, verify skills, live-testing tools.
@@ -63,16 +63,16 @@ Group the signals into sections. Use only what applies:
 
 ### 4. Draft the skill
 
-Write it per `writing-for-agents`. Placement:
+Write it per the authoring-a-skill playbook. Placement:
 
-- **path:** keep an existing mode skill where it is. A new personal mode goes in `~/.agents/skills/<handle>-mode/` with `~/.claude/skills/<handle>-mode` as a symlink to it. A mode the whole team shares goes in the repo's `.agents/skills/<handle>-mode/` with the `.claude/skills/` link. If the sandbox refuses the write, write it to `.scratch/<handle>-mode-draft/` and give the person the exact `mv` and `ln -s` commands to run in a plain terminal.
+- **path:** keep an existing mode skill where it is. A new personal mode goes in `~/.agents/skills/<handle>-mode/` with `~/.claude/skills/<handle>-mode` as a symlink to it. A mode the whole team shares goes in the repo's `.agents/skills/<handle>-mode/` with the `.claude/skills/` link. If the sandbox refuses the write, write it to `${TMPDIR:-/tmp}/<handle>-mode-draft/`, outside the repo, and give the person the exact `mv` and `ln -s` commands to run in a plain terminal.
 - **handle:** the person's first name or chosen identifier.
 - **`description`:** trigger on their name, `/<handle>-mode` and "work in their style", not on generic words like "write code" or "review pr". One yaml scalar, quoted.
 - **`disable-model-invocation: true`** by default. Drop it only if the person wants their mode on every turn.
 
 ### 5. Iterate on prose
 
-Apply `unslop` and `writing-for-agents` to every line. Show the draft and take feedback. Expect several rounds. Cut hard: a mode skill is not a manual.
+Apply `unslop` and the authoring-a-skill playbook to every line. Show the draft and take feedback. Expect several rounds. Cut hard: a mode skill is not a manual.
 
 ### 6. Land it
 
@@ -94,6 +94,6 @@ A mode skill is subjective. Check it with the person: does it read like them? Di
 
 ## When not to use
 
-- A task-specific skill (not working conventions): `writing-for-agents` alone, no mining.
+- A task-specific skill (not working conventions): the authoring-a-skill playbook alone, no mining.
 - One narrow workflow ("how i write commit messages"): a regular skill, not a mode skill.
-- Lessons from one chat into existing skills: `retro`.
+- Lessons from one chat into existing skills: `reflect`.

@@ -5,7 +5,6 @@ The why skill spawns one investigator per available evidence category, each read
 | Category | Playbook |
 |---|---|
 | Source control history | [`code-archaeology.md`](./sources/code-archaeology.md) (git, `gh`) |
-| The repo's local markdown tracker | [`code-archaeology.md`](./sources/code-archaeology.md) (`grep` under `.scratch/`) |
 | Any other category, through a connector | the connector search steps below |
 
 ## Connector search steps

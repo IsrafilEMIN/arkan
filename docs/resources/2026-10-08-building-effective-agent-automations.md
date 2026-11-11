@@ -14,7 +14,7 @@ arkan owns how its skills read sources and report state. the scheduled agent its
 
 | item | status | where |
 |---|---|---|
-| a source you cannot read is reported as unread, never as a quiet day | done | `post-merge` step 2 |
+| a source you cannot read is reported as unread, never as a quiet day | removed 2026-11-11: skill removed in the pstack-only cleanup | - |
 | the same rule for the shared record | done before | `recall` step 4 |
 | re-check the live state of each item just before you report it | done before | `recall` this-chat scope and step 5 |
 | count an action as done only after you read it back | done before | `arkan-mode/playbooks/shipping.md` |

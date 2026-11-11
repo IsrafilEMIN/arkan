@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 Keep it tight and on topic. Read only what the in-scope threads need, then stop.
 
-Context lives in two records. Your own chat history holds what you did and decided. The shared record holds everything that happened around the same code under other names: the tickets and their comments (`docs/agents/issue-tracker.md`; for a local tracker, `.scratch/` and the board in `TODO.md`), the fixes that shipped and got reverted, the errors still firing. That second record is what the `why` skill searches. A feature with a long bug tail keeps most of its story there, so don't rebuild it from transcripts alone.
+Context lives in two records. Your own chat history holds what you did and decided. The shared record holds everything that happened around the same code under other names: the symptoms users keep reporting, the fixes that shipped and got reverted, the errors still firing. That second record is what the `why` skill searches, across source control, the issue tracker, chat and issue channels, long-form docs, and error tracking. A feature with a long bug tail keeps most of its story there, so don't rebuild it from transcripts alone.
 
 **Where transcripts live** (read only the active workspace's; never another project's without being asked):
 

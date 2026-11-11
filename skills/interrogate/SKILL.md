@@ -7,7 +7,7 @@ description: "Adversaries try to break a change or design, and only findings pro
 
 Adversaries try to break a change or a design. A finding survives only when a run proves it. Report the findings. Do not apply fixes.
 
-It goes further than `code-review` (one reviewer, the repo's tags and rounds). Use it for a contested design, a change on a sensitive path (auth, billing, installers, release workflows, agent instruction files), or when the person asks. arkan-mode reaches for it on a contested design before shipping.
+Use it for a contested design, a change on a sensitive path (auth, billing, installers, release workflows, agent instruction files), or when the person asks. arkan-mode reaches for it on a contested design before shipping.
 
 ## Frame
 
@@ -29,15 +29,13 @@ In place of the arena task and rationale, give each adversary the scope, the int
 
 Verify each finding per arena Phase F by rerunning its command. Keep a finding when the output shows the failure and the failure breaks the intent. Drop the rest. Merge findings that share a root cause.
 
-Tag each kept finding as `code-review` does: `important` (a defect this change brings; it blocks the PR) or `pre-existing` (the same command fails at the merge base; check it there; file it with the **create** operation in the [tickets playbook](../arkan-mode/playbooks/tickets.md), role `needs-triage`, not as a change in this PR). A proven failure is never a `nit`.
-
 Skip arena Phases C, D and E. Adversaries find different failures, so the verdict keeps every verified finding, not one adversary's list.
 
 ## Output
 
 - **Intent**: the restatement.
 - **Adversaries**: one line each, with its model, or "same model, fresh context" where models could not differ.
-- **Findings**: for each verified finding, its tag, the command, its output, how it breaks the intent, and the adversaries that found it. Say "no verified findings" when none survive.
+- **Findings**: for each verified finding, the command, its output, how it breaks the intent, and the adversaries that found it. Say "no verified findings" when none survive.
 - **Dropped**: for each adversary, the count of dropped findings and why.
 
 Delete the adversary worktrees once the report is written.
