@@ -11,6 +11,7 @@
 			"name": "arkan",
 			"description": "agent skills that drive one task to a checked change, with the arkan-agent and comment-sicko subagents",
 			"source": "./",
+			"version": "0.0.1",
 			"category": "development",
 			"homepage": "https://github.com/IsrafilEMIN/arkan"
 		}
