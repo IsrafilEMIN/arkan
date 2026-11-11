@@ -4,7 +4,7 @@ Invoked at the end of every other playbook.
 
 **Worktree.** Work from a git worktree off main, placed by step 6 in `SKILL.md`. Subagents inherit it. Several subagents never share a branch: each gets its own branch and worktree, and the owner merges them. Dirty branch with unrelated work: patch out, fresh worktree, apply. Snarled worktree: start a fresh branch and worktree from main and redo minimally; never reset a branch that holds pushed work.
 
-**Commits.** Commit each verified step, small and in order, and checkpoint it with `broker push`. The sequence is a future PR: landable as a whole, ordered to tell the story. Never rebase, amend or force-push pushed commits: the broker pushes fast-forward only. A fix to an earlier step is a new commit. Commit bodies don't restate the subject.
+**Commits.** Commit each verified step, small and in order, and checkpoint it with `gh-broker push`. The sequence is a future PR: landable as a whole, ordered to tell the story. Never rebase or amend pushed commits: `gh-broker push` replaces the remote branch without a warning, so a rewrite silently changes what was pushed. A fix to an earlier step is a new commit. Commit bodies don't restate the subject.
 
 **Tickets.** If the work is a ticket, run **close done** from the [tickets playbook](tickets.md) in the work's own branch, so the close reaches main with the merge.
 
@@ -24,7 +24,7 @@ Invoked at the end of every other playbook.
 
 After the sections, attach videos or screenshots when they prove a claim. Full SHAs, lever-correction essays, file-by-file checklists, and "CLEAN" verdicts go in a linked artifact, not the body.
 
-**Forge.** The broker makes every PR write (see [`references/broker.md`](../references/broker.md)). If it is missing or refuses, stop and report its exact error; never write through `gh`, REST or a built-in PR tool instead. `gh` is for reads only.
+**Forge.** `gh-broker` makes every PR write (see [`references/broker.md`](../references/broker.md)). If it is missing or refuses, stop and report its exact error; never write through `gh`, REST or a built-in PR tool instead. `gh` is for reads only.
 
 **Forge without GraphQL.** `gh pr` reads run on GitHub's GraphQL API. Try them first. If one fails with HTTP 403 or a GraphQL error, GraphQL is blocked: make each read over REST with `gh api`, and keep REST for the rest of the run. Paths start at `repos/<owner>/<repo>`.
 
@@ -32,11 +32,11 @@ After the sections, attach videos or screenshots when they prove a claim. Full S
 - checks: `gh api .../commits/<head-sha>/check-runs` and `gh api .../commits/<head-sha>/status`. A status with `total_count` 0 reads `pending` but has no statuses. In place of `--watch`, `gh run watch <run-id> --exit-status`, with the run ids from `gh run list --commit <head-sha>`.
 - a landed PR: the view call reads `merged` `true` and `base.ref` the base you expect.
 
-Auto-merge is a merge, and the broker has no verb for it: do not arm it.
+Auto-merge is a merge, and gh-broker has no verb for it: do not arm it.
 
-**Size.** Prefer five narrow PRs to one large PR. `broker pr-create` takes no base, so every PR targets trunk: no stacks. Split work into narrow PRs that each land on trunk alone.
+**Size.** Prefer five narrow PRs to one large PR. `gh-broker pr-create` takes no base, so every PR targets trunk: no stacks. Split work into narrow PRs that each land on trunk alone.
 
-**Readiness.** `broker pr-create` opens the PR. Read it with `broker pr-status <owner/repo> <n>` before you refer to PR status. If it opened as a draft, report it; do not mark it ready through another tool. The PR now waits for the three reviewer verdicts on its head (**reviewer sessions** in `references/broker.md`).
+**Readiness.** `gh-broker pr-create` opens the PR. Read it with `gh-broker pr-status <owner/repo> <n>` before you refer to PR status. If it opened as a draft, report it; do not mark it ready through another tool. The PR now waits for the three reviewer verdicts on its head (**reviewer sessions** in `references/broker.md`).
 
 **Babysit.** Opening a PR does not start a babysit. Post the URL and keep building. Finish the run of PRs first, then drive each one to merge with the babysit playbook. A babysit for each new PR stalls the build and spends checks on commits later waves restart.
 

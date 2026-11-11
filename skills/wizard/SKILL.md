@@ -16,7 +16,7 @@ A wizard is ephemeral by default: built for one run, saved outside the repo (`${
 - A **Task** ticket in `wayfinder` that the agent can't drive alone (HITL). The wizard is the precise checklist that ticket hands the human. Its closing summary feeds the resolution comment: where the values landed, what is still to do by hand.
 - A step the person owns in the `arkan-mode` skill: signing up for a service, creating an account or API key, pasting a secret into a dashboard, an irreversible cutover only they may run. Do every step you can yourself first. Wrap only the rest.
 
-The human runs the wizard, not you. Its `gh secret set` and `gh variable set` calls are the human's own writes to the forge. Never run them yourself; your forge writes go through the `broker` (see the `arkan-mode` skill).
+The human runs the wizard, not you. Its `gh secret set` and `gh variable set` calls are the human's own writes to the forge. Never run them yourself; your forge writes go through `gh-broker` (see the `arkan-mode` skill).
 
 ## Process
 
