@@ -1,5 +1,0 @@
-interface:
-  display_name: "Fix Root Causes"
-  short_description: "Apply when debugging."
-policy:
-  allow_implicit_invocation: false

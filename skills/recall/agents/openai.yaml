@@ -1,5 +1,0 @@
-interface:
-  display_name: "Recall"
-  short_description: "Catch up on where things stand, across recent chats or this one"
-policy:
-  allow_implicit_invocation: false

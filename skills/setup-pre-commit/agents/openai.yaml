@@ -1,5 +1,0 @@
-interface:
-  display_name: "Setup Pre-Commit"
-  short_description: "Add language-aware format and lint hooks"
-policy:
-  allow_implicit_invocation: false

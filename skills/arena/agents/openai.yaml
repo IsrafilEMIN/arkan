@@ -1,5 +1,0 @@
-interface:
-  display_name: "Arena"
-  short_description: "Parallel candidates, pick a base, graft the rest"
-policy:
-  allow_implicit_invocation: true

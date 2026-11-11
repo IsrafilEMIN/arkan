@@ -1,5 +1,0 @@
-interface:
-  display_name: "Architect"
-  short_description: "Sketch designs before code, deepen shallow modules"
-policy:
-  allow_implicit_invocation: true

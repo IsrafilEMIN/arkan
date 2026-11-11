@@ -1,5 +1,0 @@
-interface:
-  display_name: "Model the Domain"
-  short_description: "Apply when writing stateful logic, or when code branches a lot or repeats a shape assumption across files."
-policy:
-  allow_implicit_invocation: false
