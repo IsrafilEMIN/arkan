@@ -7,8 +7,6 @@ description: "Design an auditable playbook when none of arkan-mode's playbooks f
 
 When a task matches none of arkan-mode's playbooks (`../arkan-mode/playbooks/`), design one. The deliverable before any code is the workflow itself: a list of phases that scales rigor to the task, runs the scientific method, and leaves a decision trail a person can audit after stepping away.
 
-It is still a task: if the goal itself is unclear, that is shaping (arkan-mode step 0), and a person starts `grilling` or `to-spec` instead.
-
 ## Start
 
 Open a todo list whose first item is to read arkan-mode's principles (`../arkan-mode/SKILL.md#principles`) and the `principle-<title>` leaf each entry names. Then add the phases below as todos.
@@ -49,6 +47,6 @@ Log the run with `show-me-your-work`. Work this size usually earns a committed t
 
 ## Phase E: verify and hand back
 
-Check the whole against the phase A predicate on the real product, not just the harness. Turn any repeated correction into a gate, a lint rule, a check or a script (**encode lessons in structure**, `principle-encode-lessons-in-structure`); a correction that keeps coming back in review goes to `retro`.
+Check the whole against the phase A predicate on the real product, not just the harness. Turn any repeated correction into a gate, a lint rule, a check or a script (**encode lessons in structure**, `principle-encode-lessons-in-structure`); a correction that keeps coming back in review goes to `reflect`.
 
 **Reply:** the playbook you designed, the rigor level and why, the decision trail's path, what is verified against the predicate, and what is still open.

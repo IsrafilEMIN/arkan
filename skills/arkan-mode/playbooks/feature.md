@@ -13,7 +13,7 @@
 5. Verify on the matching surface. "Inconclusive" or wrong-surface is not a pass. Flag it.
 6. Commit each verified unit as you go, small and in order, and checkpoint it with `gh-broker push` (see **Commits** in `playbooks/opening-a-pr.md`). Follow-ups are their own PRs on trunk.
    Use the **sequence verifiable units** principle (`principle-sequence-verifiable-units`), building and checking each small unit before the next.
-7. Review the diff with the `code-review` skill in a fresh context. If the design is contested, name the alternatives in the PR.
+7. If the design is contested, `interrogate` before shipping.
 8. Run **Opening a PR**.
 
 Code-coupled work (one feature, one migration) goes to a single owner with the checkpoint inline. That owner fans out internally after the blocking phase. Parent-level fan-out is for slices that produce independent artifacts (audits, cross-subsystem investigations, competing experiments). Rewrite the checkpoint at phase boundaries. Spawn a fresh owner rather than chaining interrupts.

@@ -1,6 +1,6 @@
 ---
 name: arkan-mode
-description: "the default way to do engineering work on one task: check that it is a task, pick a playbook, apply the principles, prove the result, and drive it to a merged change. use at the start of any non-trivial coding task (a ticket, a feature, a bug, a refactor, a question about the code, a long unattended run), when the user says arkan, /arkan-mode or 'do this properly', or when the user says 'diagnose' or 'debug this', or reports something broken, throwing, failing or slow."
+description: "the default way to do engineering work on one task: pick a playbook, apply the principles, prove the result, and drive it to a merged change. use at the start of any non-trivial coding task (a feature, a bug, a refactor, a question about the code, a long unattended run), when the user says arkan, /arkan-mode or 'do this properly', or when the user says 'diagnose' or 'debug this', or reports something broken, throwing, failing or slow."
 ---
 
 # arkan mode
@@ -9,64 +9,36 @@ arkan mode is how you work on one task: pick a playbook, apply the principles th
 
 other skills sit beside this file in the same skills folder (`../tdd/SKILL.md`, and so on). run or read a skill when a step names it; a `principle-*` leaf is read by path, not invoked.
 
-## 0. check that the work is a task
-
-a **task** is the smallest piece of work you can finish alone, from start to a checked pr that waits only on the person's merge approval, with no other decision from a person. a ticket is a task. a small, clear request is a task.
-
-pick the mode from what you were given:
-
-- one ticket, or a small, clear request → one task loop, from section 1 on.
-- a spec with tickets → the spec playbook (`playbooks/spec.md`): one task loop per ready ticket, in parallel where the blocking edges allow, then one review and one pr.
-
-arkan mode runs tasks only. the work before a task is **shaping**, and a person starts each shaping step:
-
-- the idea or its words are still fuzzy → stop and tell the user to run `/grilling`.
-- the work needs more than one pr or more than one session, and has no tickets yet → stop and tell the user to run `/to-spec`, then `/to-tickets`. if the destination itself is unclear, `/wayfinder`.
-
-when you stop, say why the work is not a task yet, and which shaping step you recommend. a plain question about the code is a task: use the investigation playbook.
-
-**the gate.** you may pick up a ticket on your own when its role is `ready-for-agent` and it is ready by the issue tracker doc's rule (on a `TODO.md` board: a `Todo` card tagged `#ready-for-agent`). for a spec, you may run every such ticket in parallel. a `ready-for-human` or `needs-info` ticket waits: name it in the reply and do not start it. if the person names one, say its role and ask before you start. the role comes from the person through `/triage`, or from `/to-tickets` after the person approves the breakdown. a spec has no role.
-
-when the task is a ticket:
-
-- the repo has no issue tracker set up (no `docs/agents/issue-tracker.md`) → tell the user to run `/pre-setup`.
-- fetch the ticket from the issue tracker and state its title before you start. if the reference is ambiguous, ask.
-- claim the ticket before any work: the **claim** operation in the [tickets playbook](playbooks/tickets.md).
-- **a missing piece is a blocker, not a bug.** when code the ticket needs does not exist yet and belongs to another open ticket, do not build it and do not debug around it. stop, run **add blocker** with that ticket, then **release** (keep the branch), and report which piece is missing and which ticket owns it. commit that edit and the rebuilt board on your work branch; if you have none yet, open a small branch and PR for the edit alone (the board rule in `docs/agents/issue-tracker.md`). never commit it straight to `main`.
-
-## 1. start every task like this
+## 0. start every task like this
 
 your first message on a task says, in your own words, the person's goal and the smallest change you expect to meet it. do not wait for confirmation. if the evidence rules out the change the person asked for, show it and stop. restate that goal in each subagent brief, and open each pr's `## Why` with it.
 
 1. **match a playbook.** read the list in [playbooks](#playbooks). open the matched file and copy its steps into your todo list, word for word, before any other todo. if you skip a step, keep it in the list with `skip: <reason>`.
 2. **name the data shape first.** before you write logic, write down the core types and how the data is read and changed. see `principle-model-the-domain` and `principle-type-system-discipline`.
 3. **read the principles you will use.** each entry in [principles](#principles) names when it applies and the `principle-<title>` skill that holds its leaf. read that leaf in full (`../<skill>/SKILL.md`) before you apply it. in your reply, name each principle that changed a decision, and say which decision. cite only principles whose text you read in this session.
-4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end. a unit that fails because a piece it needs is another open ticket's work is a missing blocker: stop the way step 0 says, instead of debugging.
+4. **work in small checked units.** each unit ends in a state you can check. do not start the next unit while the current one is red. run the type check and single test files often, and the full test suite once at the end.
 5. **prove it.** check the real thing (run the feature, read the real value, run the test), not a proxy. "it compiles" is not proof.
 6. **place the worktree.** work in a git worktree off the base branch, as a direct child of a dedicated worktree root, never inside the repo. if you do not know where the root goes, ask before you create it.
 
-## 2. when to reach for another skill
+## 1. when to reach for another skill
 
 each line names the skill to call today.
 
-- a term or a domain rule is unclear inside the task → `grilling` with domain-modeling on. if the answer changes what to build, stop: the work is not a task (step 0).
 - code crosses a function boundary → sketch the types and signatures with empty bodies before the code (the feature playbook).
-- a behavior to build, or a bug with a cheap test path → `tdd`.
+- the person asks for tdd, a failing test or a regression test, or a bug has an obvious cheap local test path → `tdd`.
 - something is broken, throwing, flaky or slow → the bug-fix playbook. a measured slowness with no functional bug → the perf issue playbook.
 - a design question you can settle by running code → the prototype playbook.
-- a diff is ready → `code-review` in a fresh context, before you open a pr. that is round 1. fix every `important` finding and the `nit`s worth fixing, and file each `pre-existing` one with the **create** operation, role `needs-triage`. run the full test suite again, then review again with the earlier report, so it reviews only the new diff. if a class of finding comes back in a second round, start `retro` (proposals only). a round with no `important` finding ends the loop. after round 3, do not start a fourth: stop, tell the person which findings keep coming back, ask them to rethink the approach, and start `retro` (proposals only), or suggest it if you cannot. these rounds are your own check; the verdicts that gate the merge come from the reviewer sessions in [`references/broker.md`](references/broker.md).
-- a diff is ready and touches input, auth, secrets, ci or installers → `security-review` in a fresh context, before you open the pr.
+- before review → `no-comments`. the verdicts that gate the merge come from the reviewer sessions in [`references/broker.md`](references/broker.md).
 - a pr to open → the opening-a-pr playbook. a pr to drive to merge → the babysit playbook, then the shipping playbook.
 - push, pr, review records, ci logs, merge or cleanup → [the forge](#the-forge).
-- a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user. to find the bad merge and ticket the miss, a person starts `post-merge`.
-- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. to turn lessons from one session into checks and skill edits, start `retro` (proposals only), or suggest it if you cannot. to sweep the repo for mistakes agents keep repeating and land a check for each, a person starts `correct`.
-- any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply), then `unslop`. a doc, readme or rfc → `technical-writing`. text that agents read (skills, `AGENTS.md`) → `writing-for-agents`.
+- a merged change broke something → fix forward or revert, whichever is safer faster, and tell the user.
+- the user corrected you, or a session went badly → make the mistake hard to repeat: structure, then a type, then a lint rule, then a test, and a written rule only last. to turn lessons from one session into checks and skill edits, start `reflect` (proposals only), or suggest it if you cannot. to sweep the repo for mistakes agents keep repeating and land a check for each, a person starts `correct`.
+- any prose (replies, docs, pr bodies, commit messages) → the rules in [the reply](#the-reply), then `unslop`. a doc, readme or rfc → `technical-writing`.
 - a repo has no scripted way to prove the app works → tell the user. a person starts `verification` (create); you do not.
-- a step only the person can do (sign up, create a key, paste a secret into a dashboard, run a cutover they own) → do every step you can first, then hand them the rest as a script with `wizard`. the same holds for a HITL task ticket in `wayfinder`.
 - concurrency, retries, a state machine, a parser or unsafe code where tests can't reach the case that breaks → tell the user. a person starts `formal-verification` (create), and its maintain mode after changes that skipped the check.
 - a model check's result, or a bug to show as a path through states → a person starts `statechart`.
 - you edit a `.ts` or `.tsx` file → `typescript-best-practices`.
-- a design that is a one-way door (a public api, a data schema) → `architect`, which runs `arena`. the person asks to improve or audit the architecture of existing code → `architect`, which walks it for shallow modules first. a contested design, or a change on a sensitive path → `interrogate` before you ship.
+- a design that is a one-way door (a public api, a data schema) → `architect`, which runs `arena`. a contested design, or a change on a sensitive path → `interrogate` before you ship.
 - a small diff you don't trust, or a change that reaches past its diff → `blast-radius`.
 - you are about to report a performance number → `benchmark-checklist`.
 - "how does x work", or where code should live → `how`. why it is built that way → `why`. the person wants to really understand it → `teach`, which runs both.
@@ -168,7 +140,7 @@ each entry names its `principle-<title>` skill. read that leaf in full before yo
 open the file at `playbooks/<file>`. where a step names a tool your harness does not have, do what the step means with the tools you have, and say so in the reply.
 
 - **investigation** (`investigation.md`). a read-only question: how does x work, why is y like this, should we do x or y.
-- **bug fix** (`bug-fix.md`). a defect to reproduce, find the root cause of, and fix with evidence: feedback loop first, then minimise, hypotheses, instrumentation, a regression test at the right seam, and cleanup. [`scripts/hitl-loop.template.sh`](scripts/hitl-loop.template.sh) drives a person when the loop needs one.
+- **bug fix** (`bug-fix.md`). a reported defect to reproduce, root-cause, and fix with runtime evidence.
 - **perf issue** (`perf-issue.md`). a measured slowness to trace and improve against a baseline.
 - **hillclimb** (`hillclimb.md`). steady improvement of one metric toward a target: one change, one measurement, keep or revert. a one-off slowness is a perf issue.
 - **runtime forensics** (`runtime-forensics.md`). diagnose a runtime symptom (a leak, an idle cpu spin, a glitch) from live instrumentation. the deliverable is a diagnosis, not a fix.
@@ -187,5 +159,3 @@ open the file at `playbooks/<file>`. where a step names a tool your harness does
 - **opening a pr** (`opening-a-pr.md`). the end of every other code playbook.
 - **babysit** (`babysit.md`). drive an open pr until it meets the broker's merge rule: conflicts, `block` reasons, ci.
 - **shipping** (`shipping.md`). land a pr that a verifier, not its author, has run, through `broker merge`.
-- **spec** (`spec.md`). a spec with tickets: one task loop per ready ticket on an integration branch, then one review and one pr.
-- **tickets** (`tickets.md`). every ticket change: create, set role, add blocker, claim, release, close, reopen, resolve.

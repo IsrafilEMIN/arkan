@@ -6,8 +6,6 @@ Invoked at the end of every other playbook.
 
 **Commits.** Commit each verified step, small and in order, and checkpoint it with `gh-broker push`. The sequence is a future PR: landable as a whole, ordered to tell the story. Never rebase or amend pushed commits: `gh-broker push` replaces the remote branch without a warning, so a rewrite silently changes what was pushed. A fix to an earlier step is a new commit. Commit bodies don't restate the subject.
 
-**Tickets.** If the work is a ticket, run **close done** from the [tickets playbook](tickets.md) in the work's own branch, so the close reaches main with the merge.
-
 **PRs.** Before commit, read the whole diff and remove slop: dead code, debug output, needless churn, and comments that break **Comments** in `SKILL.md`. Write every PR title, description, and commit body per **The reply** in `SKILL.md`, with the STE vocabulary rules: one word per action, keep articles, a plain verb over `-ing` where one works.
 
 **Titles.** Conventional Commits `type(scope): subject`, no trailing period. Type such as `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, or `perf`. Scope is the area, such as `arkan-mode`. Subject is short, imperative, and names a real symbol when one carries the change, for example `fix(arkan-mode): retarget opening-a-pr babysit trigger`.
@@ -19,7 +17,6 @@ Invoked at the end of every other playbook.
 - `## Scope`: always. 1–3 short items on what it covers and what it deliberately leaves out (a follow-up, a known gap). No symbols, paths, or file-by-file essay.
 - `## Tradeoffs`: only rejected alternatives a reviewer would otherwise ask about. Skip when there was no real choice.
 - `## Blast Radius`: 1–2 sentences on who or what it touches and why that is safe or risky. If main is red, state the cost of leaving it red.
-- `## Revert`: always. 1–2 sentences on how to undo it: revert the merge commit, or turn off the flag. Name any effect a revert alone does not undo, such as a data migration, a published release or outside state.
 - `## Verification`: 1–3 bullets, each a real run path and its outcome. Perf: one primary number with its unit, `before → after`, and a link to the full results. No sample-size methodology or metric tables.
 
 After the sections, attach videos or screenshots when they prove a claim. Full SHAs, lever-correction essays, file-by-file checklists, and "CLEAN" verdicts go in a linked artifact, not the body.
@@ -36,8 +33,8 @@ Auto-merge is a merge, and gh-broker has no verb for it: do not arm it.
 
 **Size.** Prefer five narrow PRs to one large PR. `gh-broker pr-create` takes no base, so every PR targets trunk: no stacks. Split work into narrow PRs that each land on trunk alone.
 
-**Readiness.** `gh-broker pr-create` opens the PR. Read it with `gh-broker pr-status <owner/repo> <n>` before you refer to PR status. If it opened as a draft, report it; do not mark it ready through another tool. The PR now waits for the three reviewer verdicts on its head (**reviewer sessions** in `references/broker.md`).
+**Readiness.** `gh-broker pr-create` opens the PR. Read it with `gh-broker pr-status <owner/repo> <n>` before you refer to PR status. If it opened as a draft, report it; do not mark it ready through another tool. The PR now waits for the reviewer verdicts on its head (**reviewer sessions** in `references/broker.md`).
 
 **Babysit.** Opening a PR does not start a babysit. Post the URL and keep building. Finish the run of PRs first, then drive each one to merge with the babysit playbook. A babysit for each new PR stalls the build and spends checks on commits later waves restart.
 
-A subagent that opens a PR runs the `code-review` skill on its diff, removes slop and narrating comments, and posts the URL. It returns to the parent without babysitting.
+A subagent that opens a PR removes slop and narrating comments, and posts the URL. It returns to the parent without babysitting.
