@@ -32,4 +32,4 @@ after a merge breaks main, a person starts `post-merge`: it finds the first bad 
 
 ## sources
 
-[`REFERENCE.md`](REFERENCE.md) lists where each skill comes from and the articles that shaped arkan. [`NOTICE`](NOTICE) keeps the license text of each source.
+[`NOTICE`](NOTICE) lists the project each copied skill comes from and keeps the license text of each source. [`docs/resources/`](docs/resources/) has one file for each article that shaped arkan.
