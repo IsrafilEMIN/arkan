@@ -1,5 +1,0 @@
-interface:
-  display_name: "Technical Writing"
-  short_description: "A layered standard for docs, pr bodies and commits"
-policy:
-  allow_implicit_invocation: true

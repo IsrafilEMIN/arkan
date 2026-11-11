@@ -1,5 +1,0 @@
-interface:
-  display_name: "Why"
-  short_description: "Find the cited reasons code is built the way it is"
-policy:
-  allow_implicit_invocation: true

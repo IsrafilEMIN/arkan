@@ -1,5 +1,0 @@
-interface:
-  display_name: "Sharpen"
-  short_description: "Rewrite a prompt deeper, not bigger"
-policy:
-  allow_implicit_invocation: false

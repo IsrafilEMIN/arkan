@@ -1,5 +1,0 @@
-interface:
-  display_name: "Arkan Help"
-  short_description: "Pick the skill or playbook for a task"
-policy:
-  allow_implicit_invocation: false

@@ -1,7 +1,6 @@
 ---
 name: good-css
 description: Modern CSS techniques that replace breakpoint ladders, wrapper elements and scripts. Use whenever you write, edit or review styles in any form, including plain CSS, Tailwind classes, StyleX, CSS-in-JS and inline styles, and whenever you build or restyle a page or component, even if the user never mentions CSS.
-user-invocable: false
 ---
 
 # Good CSS

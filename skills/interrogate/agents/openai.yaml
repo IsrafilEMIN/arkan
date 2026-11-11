@@ -1,5 +1,0 @@
-interface:
-  display_name: "Interrogate"
-  short_description: "Adversaries break a change; only proven findings survive"
-policy:
-  allow_implicit_invocation: true
