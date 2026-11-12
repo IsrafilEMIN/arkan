@@ -43,6 +43,6 @@ Swap in the real paths, skills and done checks. Informal wording works.
 
 - `/arkan-mode im going to bed. <goal> in a fresh worktree off <base>. done means <checks>. keep a decision log. don't ask me before committing. run until done. if you're truly stuck after a few hours, stop and write up why.`
 - `/show-me-your-work catch me up on what you did last night.` Read its attention section first.
-- `/recall what changed in this chat` catches you up since your last message and lists every call that waits on you.
+- `/ketchup` catches you up on this chat since your last message and lists every call that waits on you. `/ketchup-video` shows it as a short video.
 - `/reflect capture what we learned so the next run doesn't repeat it.` Approve only edits that change a future decision.
 - `/bro` restates the last reply in plain words.

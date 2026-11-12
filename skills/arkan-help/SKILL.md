@@ -62,7 +62,7 @@ Close calls the descriptions do not settle on their own:
 - `how` explains what the code does. `why` explains the reasons. `teach` runs one or both and explains the result plainly.
 - `arena` gives every worker the same brief and merges the best parts. `swarm` splits work into slices or a race and returns one report.
 - `interrogate` attacks the diff. `blast-radius` looks for breakage outside the diff.
-- `recall` rebuilds context across recent chats, or catches the person up on this chat. Continuing one specific branch another agent left is the session pickup playbook.
+- `recall` rebuilds context across recent chats. `ketchup` catches the person up on this chat, and `ketchup-video` does it as a short video. Continuing one specific branch another agent left is the session pickup playbook.
 - `figure-it-out` designs one rigorous run that no playbook fits. The orchestrate playbook runs a program that spans days and many prs. The autonomous run playbook drives one task to a checkable end.
 - `sharpen` returns a better prompt and does not do the task. `arkan-help` returns a prompt for the right skill and does not do the task either.
 
