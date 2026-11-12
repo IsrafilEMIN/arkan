@@ -1,6 +1,7 @@
 ---
 name: reflect
 description: Spawn three parallel review subagents over the active transcript, surface learnings, and route each to a concrete edit on an existing skill. Use when the user says reflect.
+disable-model-invocation: true
 ---
 
 # Reflect
@@ -11,44 +12,50 @@ Invoke when the user says "reflect" or "/reflect". Skip when the conversation is
 
 ## 1. Locate the active transcript
 
-Before fanning out, find this conversation's transcript: `recall` has the table of where each harness keeps them. Read only the active workspace's folder; never glob across other projects. That crosses workspace boundaries and reads private chats from unrelated projects. List the newest transcript files, read the first JSONL line of each, and take the file whose `message.content[0].text` contains the conversation's opening user prompt. If none matches, or the folder is unreadable (a sandbox may deny it), pass a tight digest of the session instead.
+Before fanning out, find this conversation's transcript in the `agent-transcripts/` directory the system prompt names. Do not glob across `~/.cursor/projects/*/`. That crosses workspace boundaries and reads private chats from unrelated projects.
+
+```bash
+ls -t <agent-transcripts>/*.jsonl <agent-transcripts>/*/*.jsonl <agent-transcripts>/*/subagents/*.jsonl 2>/dev/null | head -10
+```
+
+That covers the legacy flat (`<id>.jsonl`), current nested (`<id>/<id>.jsonl`), and subagent (`<parent>/subagents/<child>.jsonl`) layouts. For each candidate, read the first JSONL line. Take the file whose `message.content[0].text` contains the conversation's opening user prompt. If none matches, pass a tight digest of the session instead.
 
 ## 2. Spawn three reviewers in parallel
 
-One message, three subagent calls, in a mode that keeps MCP access: reviewers look up the tickets, chat threads, and observability traces the transcript references.
+One message, three `Task` calls, `subagent_type: generalPurpose`, agent mode (`readonly: false`). Reviewers need MCP access to look up the tickets, chat threads, and observability traces the transcript references, and readonly strips MCPs.
 
-Match each model to the job, per the Subagents section of the `arkan-mode` skill: judgment, divergent and the synthesizer on your strongest model, tooling on a fast model, a different family where possible. If the harness refuses a model, use the closest one it accepts and say so. Where the harness lets you pick a reasoning level and a fast or standard speed, pick them for the job.
+Each reviewer and the synthesizer name a role line in the `pstack-models.mdc` rule and a default. Set `model` to that line's value, or to the default if the rule or the line is missing. Leave `model` unset when the value is `auto` or `inherit-parent`. If the Task tool rejects a slug, use the default and say so. If it rejects the default, use the closest valid slug of the same family from its error message. Pick each subagent's reasoning level and fast or standard speed for the job, per the Subagents section of the **arkan-mode** skill.
 
-| Lens | Model, where the harness lets you pick | Prompt template |
-|---|---|---|
-| Judgment | your strongest model | [`references/judgment-reviewer.md`](references/judgment-reviewer.md) |
-| Tooling | a fast model, a different family where possible | [`references/tooling-reviewer.md`](references/tooling-reviewer.md) |
-| Divergent | your strongest model | [`references/divergent-reviewer.md`](references/divergent-reviewer.md) |
+| Lens | Role line | Default `model` | Prompt template |
+|---|---|---|---|
+| Judgment | `reflect judgment, divergent, synthesizer` | `claude-opus-5-5-xhigh` | `references/judgment-reviewer.md` |
+| Tooling | `reflect tooling` | `grok-4.7-xhigh-fast` | `references/tooling-reviewer.md` |
+| Divergent | `reflect judgment, divergent, synthesizer` | `claude-opus-5-5-xhigh` | `references/divergent-reviewer.md` |
 
-Pass each template verbatim, substituting the transcript path or digest where marked. Reviewers return findings in their reply.
+Pass each template verbatim, substituting the transcript path or digest where marked. Reviewers return findings in the `Task` response body.
 
 ## 3. Synthesize
 
-One more subagent call, on the same model as judgment and divergent, in a mode that keeps MCP access: it spot-verifies citations through MCP. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
+One `Task` call, `subagent_type: generalPurpose`, `model` from the `reflect judgment, divergent, synthesizer` line (default `claude-opus-5-5-xhigh`), agent mode (`readonly: false`). It spot-verifies citations through MCP, and readonly strips MCPs. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
 
 ## 4. Structural enforcement check
 
-Move any Accepted item that a lint rule, script, metadata flag, or runtime check would enforce more reliably to Backlog, per **encode lessons in structure** (`principle-encode-lessons-in-structure`).
+Move any Accepted item that a lint rule, script, metadata flag, or runtime check would enforce more reliably to Backlog. See the **encode-lessons-in-structure** principle skill.
 
 ## 5. Apply
 
-Present the synthesizer's full Accepted / Rejected / Backlog output and wait for explicit approval before applying any Accepted edit. The user picks the subset and may redirect routings. Skill changes affect every future agent. Do not auto-apply.
+Present the synthesizer's full Accepted / Rejected / Backlog output and wait for explicit approval before applying any Accepted edit. The user picks the subset and may redirect routings. Skill changes affect every future agent in the org. Do not auto-apply.
 
 File each Backlog item to your team's devex or backlog tracker without waiting. Only the Accepted list waits for approval.
 
-Skill edits stay proposals: show the person which skill file each edit lands in, apply the edit only after they approve it, and never edit a skill without approval. Never open a PR or push.
+Never edit a skill under `plugins/cache/`. Before approval, show its destination, `.cursor/skills/<skill>/` or `~/.cursor/skills/<skill>/`. After approval, copy the skill folder there and edit the copy. Never open a PR or push.
 
 Follow each approved row's Routing exactly:
 
 - Trivial existing-skill edit (a one-line bullet, a tightened sentence, a stale fact corrected): the parent does it directly.
-- Substantive existing-skill edit (a new section, a new pattern table, more than ~10 lines): draft it, test it, and iterate before applying.
-- `tune description: <skill path>` (the skill exists but didn't trigger when it should have): rework the description until a fresh agent picks the skill up on the prompts that should have fired it.
-- `new skill: <kebab-name>`: create the skill, following the shape of the existing skills. Do not invent the shape ad hoc.
+- Substantive existing-skill edit (a new section, a new pattern table, more than ~10 lines): hand to Cursor's built-in `create-skill` skill and run its draft / test / iterate loop.
+- `tune description: <skill path>` (the skill exists but didn't trigger when it should have): hand to `create-skill` and run its description-optimization loop.
+- `new skill via create-skill: <kebab-name>`: hand creation to `create-skill`. Do not invent the shape ad hoc.
 
 If your environment ships a SKILL.md validator, run it on every touched skill before declaring done.
 

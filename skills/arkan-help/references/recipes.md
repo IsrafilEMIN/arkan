@@ -1,10 +1,11 @@
 # Prompts worth copying
 
-Swap in the real paths, skills and done checks. Informal wording works.
+Swap in the real paths, skills, and done checks. Informal wording works.
 
 ## Understand
 
 - `/arkan-mode read <thread>. restate the underlying issue in your own words, in plain english.`
+- `/in-your-own-words <long or messy ask>`
 - `/sharpen <the prompt you're about to send>`
 - `/arkan-mode investigate why <symptom>. give me what we know, what data you used, and your best hypotheses. don't change any code yet.`
 - `use /how to understand <subsystem>. then use /why to find out why it broke recently.`
@@ -27,22 +28,24 @@ Swap in the real paths, skills and done checks. Informal wording works.
 - `/arkan-mode we need <feature>. /architect it first, and answer open questions with prototypes. let me review before proceeding.`
 - `/arkan-mode write a tutorial for how i would use <new package> first. then /teach me why it beats the current one.`
 - `ask /arena for a second opinion on this thread and our approach.`
-- `/arkan-mode turn this design into a plan. small verifiable prs, each with its own verification steps.`
-- `/arkan-mode plan the migration of <library> to <target>. small verifiable prs. the result must match the original exactly, bugs included.`
+- `/arkan-mode turn this design into a plan. small verifiable PRs, each with its own verification steps.`
+- `/arkan-mode plan the migration of <library> to <target>. small verifiable PRs. the result must match the original exactly, bugs included.`
 
 ## Review and ship
 
 - `/interrogate the whole branch, but skeptically. don't change anything yet. no nitpicks unless it's a real bug or regression.` Read the Dropped list too.
-- `/create-formal-verification-skill prove <property> holds in <module>, even when <steps> interleave or retry.` After merges or refactors in that code, run `/maintain-formal-verification-skill`.
+- `/create-formal-verification-skill prove <property> holds in <module>, even when <steps> interleave or retry.` After merges or refactors in that code: `/maintain-formal-verification-skill`.
 - `/swarm check every package under <dir> against its check script. one worker per package. one report.`
 - `/arkan-mode open the pr. small ordered commits, evidence in the description.`
 - `/arkan-mode babysit this pr. get it green.` For status only: `/arkan-mode check on pr <number>. anything outstanding?`
-- `/arkan-mode land this pr.`
+- `/arkan-mode land the stack.`
 
 ## Away and back
 
-- `/arkan-mode im going to bed. <goal> in a fresh worktree off <base>. done means <checks>. keep a decision log. don't ask me before committing. run until done. if you're truly stuck after a few hours, stop and write up why.`
-- `/show-me-your-work catch me up on what you did last night.` Read its attention section first.
-- `/ketchup` catches you up on this chat since your last message and lists every call that waits on you. `/ketchup-video` shows it as a short video.
+- `/arkan-mode im going to bed. <goal> in a fresh worktree off <base>. done means <checks>. keep a decision log. don't ask me before committing. /loop until done. if you're truly stuck after a few hours, stop and write up why.`
+- `/show-me-your-work catch me up on what you did last night.` Read its Attention section first.
+- `/ketchup` catches you up on this chat since your last message and lists every call that waits on you.
+- `/arkan-mode full autopilot on this queue. each item is independent.`
+- `/arkan-mode autopilot these changes, but don't merge. i'll land them.`
 - `/reflect capture what we learned so the next run doesn't repeat it.` Approve only edits that change a future decision.
 - `/bro` restates the last reply in plain words.

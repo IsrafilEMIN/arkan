@@ -15,14 +15,6 @@ Judge each test against two imagined edits:
 
 Keep a test that catches the first edit and survives the second. Rewrite or delete the rest. To write a test that does both, drive the code through its users' interface with a concrete input. Derive the expected value from the requirement, not from a run of the code. Assert what the contract promises, no less and no more.
 
-These shapes fail the first edit:
-
-- A loose assertion: `toBeDefined`, `toBeTruthy`, `not.toThrow`, `toBeGreaterThan(0)`.
-- Only "was it called": `toHaveBeenCalled` with no check of what it received.
-- An expected value computed the same way the code computes it: `expect(add(a, b)).toBe(a + b)`.
-- A test that restates a constant, a default or a prompt string.
-- Assertions on data the test built itself, with no call to the code under test.
-
 The contract decides, not the shape of the assertion. When "an empty cart never charges" is the promise, an assertion that the payment client got no call is behavior. Pair it with a case where the charge happens, so that the test shows it can see a call. The payload that a mocked external service receives is behavior, because that service observes it. A call to an internal helper is implementation, because no user can see it. An empty list is the exact answer when no record matches, and a hollow check when the test only needs some result. An exact error message pins wording that no caller reads. The error type that callers branch on is the contract.
 
 A test can pin an invariant instead of a call, such as a key that must exist in two tables or a compile-time type check. The invariant is the behavior.

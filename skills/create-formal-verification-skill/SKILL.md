@@ -1,24 +1,12 @@
 ---
 name: create-formal-verification-skill
-description: "Formally verify the code where a bug costs the most and tests reach the least, in any language, with whichever verification tool fits (TLA+ model checking, a proof assistant, an SMT-backed verifier). Picks the target, verifies one property, and generates a project-local skill so the next agent can recheck it on every change. Use for /create-formal-verification-skill, \"model-check this race\", \"prove this invariant\", or when concurrency, retries, state machines, parsers, or unsafe code need more than tests."
+description: "Generate a project-local skill that formally verifies the code where a bug costs the most and tests reach the least, in any language, with whichever verification tool fits. Use for /create-formal-verification-skill, \"model-check this race\", \"prove this invariant\", or when concurrency, retries, state machines, parsers, or unsafe code need more than tests."
 disable-model-invocation: true
 ---
 
 # Create a formal verification skill
 
-The formal sibling of `create-verification-skill`: that one proves the app runs, this one proves a property holds in every case in scope. arkan-mode's **prove it works** (`principle-prove-it-works`) applies to both.
-
 A test checks the cases that someone thought to write. Formal verification checks every case in a stated scope: every order of steps in a model, every input up to a bound, or every input. This skill finds the part of the repo where that matters most, verifies one property of it, and leaves a project-local skill that lets the next agent check a change against that property. Write that skill for an agent who reads it cold, mid-change, and has never seen your work. The user must be able to trust the result and act on it without learning the verification language.
-
-A person starts this skill; an agent never starts it on its own.
-
-## Where it lives
-
-`.agents/skills/formal-verify-<area>/` in the repo, with `.claude/skills/formal-verify-<area>` as a symlink to it, so every harness finds it. Keep the model, harness and property files beside the code they describe (for example `verification/<area>/`), and give the skill one command that runs them. Add that command to the repo's ci only if the run is short; otherwise the skill names when to run it.
-
-If the sandbox refuses the write (some sandboxes deny writes under a project's `.agents/` and `.claude/`), write the skill to `${TMPDIR:-/tmp}/<repo>-formal-verify-<area>-draft/`, outside the repo, and give the person the exact `mv` and `ln -s` commands to run in a plain terminal. Installing the tool usually needs the network or `sudo`: give the person the install command with a pinned version, and say so rather than working around the sandbox.
-
-A finding (a property the current code breaks) is reported with its counterexample in the code's own terms, and kept separate from the verification's pull request.
 
 ## Choose the target from the code
 
@@ -44,7 +32,7 @@ Pick the tool that answers the question at the lowest cost: a model checker, a p
 
 Write a project-local skill with frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to tell whether a change touches the verified code, run the check, tell a real bug from a modeling error, and update the verification when a change is intended. Put the coverage record and the sync commit in the skill, and tell the next agent to move the sync commit forward only after it confirms that the verification describes the code at the new commit. Use this repo's real commands, paths, and nouns, and leave no placeholders.
 
-If the check is a TLA+ model, tell the next agent to read every result with the arkan [`statechart`](../statechart/SKILL.md) skill. A person starts that skill, so the next agent asks the person to start it on the result. It shows each invariant violation the checker finds as its shortest path in plain words. When the check passes, `statechart` draws a chart of how the system moves between states. Refer to `statechart` by name. Its commands, options, and file paths change between releases and machines, so copy none of them into the generated skill or its scripts.
+If the check is a TLA+ model, tell the next agent to read every result with the pstack [`/statechart`](../statechart/SKILL.md) skill. It shows each invariant violation the checker finds as its shortest path in plain words. When the check passes, `/statechart` draws a chart of how the system moves between states. Refer to `/statechart` by name. Its commands, options, and file paths change between releases and machines, so copy none of them into the generated skill or its scripts.
 
 ## Prove it before you hand off
 
@@ -52,6 +40,4 @@ Follow the generated skill once, as the next agent would, on a scratch change th
 
 ## Hand off
 
-Ship the skill and the verification files through the repo's normal flow: a branch, a pull request per the `opening-a-pr` playbook, merged by the person. Report each finding as above.
-
-Tell the user what you verified, which tool you used and why, the bounds, what the check found in plain words, how to run it, and what it does not cover. Suggest a second target only if you found a close one. Point the user at `maintain-formal-verification-skill` for changes that did not recheck the verification.
+Tell the user what you verified, which tool you used and why, the bounds, what the check found in plain words, how to run it, and what it does not cover. Suggest a second target only if you found a close one. Point the user at `/maintain-formal-verification-skill` for bringing the verification back in line after changes that did not recheck it.

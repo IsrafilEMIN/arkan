@@ -1,6 +1,6 @@
 # Investigator Prompt Template
 
-Fill in the placeholders. Append this investigator's playbook from `source-playbook.md`: `sources/code-archaeology.md` for source control or a local tracker, or the connector search steps for any other category. Always append that file's "Read the evidence" rules. If the target code looks defensive (null checks, retry logic, timeout handling, rate limiting, feature flags, egress guards, OOM handlers), also append `sources/incident-postmortem.md` so the investigator runs incident-flavored queries inside its own source.
+Fill in the placeholders. Append the one category playbook `sources/<source>.md` for this investigator's evidence category (index: `source-playbook.md`). If the target code looks defensive (null checks, retry logic, timeout handling, rate limiting, feature flags, egress guards, OOM handlers), also append `sources/incident-postmortem.md` so the investigator runs incident-flavored queries inside its own source.
 
 ---
 
