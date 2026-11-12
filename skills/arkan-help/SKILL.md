@@ -34,8 +34,8 @@ Infer the need from the message and the chat. A named situation, such as "which 
 
 Check the repo state that changes the answer, and mention it only when it does:
 
-- No `verify-*` skill in the repo means agents have no scripted way to drive the app. Mention `verification` (create) when the question is about proving a change works.
-- No `formal-verify-*` skill in the repo means no property is checked past what tests reach. Mention `formal-verification` when the question is about a race, an invariant or another case tests rarely hit, and its maintain mode when the code it covers changed since it last passed.
+- No `verify-*` skill in the repo means agents have no scripted way to drive the app. Mention `create-verification-skill` when the question is about proving a change works.
+- No `formal-verify-*` skill in the repo means no property is checked past what tests reach. Mention `create-formal-verification-skill` when the question is about a race, an invariant or another case tests rarely hit, and `maintain-formal-verification-skill` when the code it covers changed since it last passed.
 
 ## Get set up
 

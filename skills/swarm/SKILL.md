@@ -5,7 +5,7 @@ description: "Fan out N parallel workers, drain them, and return one report. Use
 
 # Swarm
 
-Where `arena` makes N versions of one artifact and merges them, swarm splits work across N workers and returns one report. Several attempts at the same brief are `arena`'s job: a race (best of N, or candidates grafted into one) is `arena`, not swarm. `verification`'s maintain source wave is a swarm.
+Where `arena` makes N versions of one artifact and merges them, swarm splits work across N workers and returns one report. Several attempts at the same brief are `arena`'s job: a race (best of N, or candidates grafted into one) is `arena`, not swarm. `maintain-verification-skill`'s source wave is a swarm.
 
 ## Start
 
