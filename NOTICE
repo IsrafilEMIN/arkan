@@ -2,7 +2,7 @@
 
 arkan copies and changes text from the projects below. each one uses the MIT license, which asks that its copyright notice and license text stay with every copy. the full text of each license follows.
 
-- **pstack** by Lauren Tan, from `cursor/plugins`, folder `pstack/`, at commit `c742dd6`. license read from <https://github.com/cursor/plugins/blob/182f2ce/pstack/LICENSE> on 2026-10-18; the same license and copyright notice ship at `c742dd6`. in arkan: every folder in `skills/` except `good-css` and `simplest-path`, as copies with three names changed (`poteto-mode` to `arkan-mode`, `poteto-help` to `arkan-help`, `poteto-agent` to `arkan-agent`); and `agents/arkan-agent.md` and `agents/comment-sicko.md`, as copies with those names changed and omp frontmatter.
+- **pstack** by Lauren Tan, from `cursor/plugins`, folder `pstack/`, at commit `c742dd6`. license read from <https://github.com/cursor/plugins/blob/182f2ce/pstack/LICENSE> on 2026-10-18; the same license and copyright notice ship at `c742dd6`. in arkan: every folder in `skills/` except `good-css` and `simplest-path`, `docs/guide/` and `docs/harness/`, as copies with three names changed (`poteto-mode` to `arkan-mode`, `poteto-help` to `arkan-help`, `poteto-agent` to `arkan-agent`); and `agents/arkan-agent.md` and `agents/comment-sicko.md`, as copies with those names changed and omp frontmatter.
 - **good-css** by Vojta Holik, from `vojtaholik/good-css` at commit `92d436b`, folder `skills/good-css/`. in arkan: `skills/good-css/`. license read from <https://github.com/vojtaholik/good-css/blob/92d436b/LICENSE>.
 
 ---
