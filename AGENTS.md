@@ -2,13 +2,14 @@
 
 ## Purpose
 
-This repo is one bundle of agent skills named "arkan". It holds skills, plus `NOTICE` and `docs/resources/`, which record where the skills come from.
+This repo is one bundle of agent skills named "arkan". It is a copy of pstack with three names changed, plus two skills of its own. `NOTICE` and `docs/resources/` record where the skills come from.
 
 ## Layout
 
 - `skills/<name>/SKILL.md` is one skill. Extra files of a skill stay inside its folder and are linked from its `SKILL.md`.
 - `agents/<name>.md` is one subagent, in omp's agent frontmatter. A skill names the agent it spawns.
 - `.claude-plugin/` makes the repo a plugin for omp and claude code: `marketplace.json` is the catalog and `plugin.json` is the manifest.
+- `docs/guide/` and `docs/harness/` are pstack's guide and its claude code adapter.
 - `NOTICE` lists each project arkan copies from, the skills that come from it, and its copyright notice and license text.
 - `docs/resources/<yyyy-mm-dd>-<slug>.md` is one file per article: its link, its core claim, the parts arkan owns with their status, and the parts it leaves to others. It does not copy the article text.
 

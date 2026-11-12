@@ -1,14 +1,12 @@
 ---
 name: statechart
-description: "Check a TLA+ model of a system that moves between states, such as a product flow, a protocol, or a service, and draw it as a Mermaid statechart. The report gives the shortest path to each state that breaks a rule, so a bug shows as a path through states."
+description: "Check a TLA+ model of a system that moves between states, such as a product flow, a protocol, or a service, and draw it as a Mermaid statechart. The report gives the shortest path to each state that breaks a rule. Use for /statechart, or to show a bug as a path through states."
 disable-model-invocation: true
 ---
 
 # Statechart
 
 The chart shows how a system moves between states, in the words of the person who reads it. That person, the reader, decides whether the behavior is right.
-
-A person starts this skill; an agent never starts it on its own.
 
 ## Run
 
@@ -18,9 +16,9 @@ Work in a scratch folder outside the repo. Write a TLA+ spec and its config. The
 <skill dir>/scripts/statechart SPEC.tla [--config FILE] [--view FILE] [--out DIR]
 ```
 
-The launcher `scripts/statechart` runs `scripts/statechart.ts`, TypeScript with no build step and no npm packages. It uses the first runtime it finds that runs TypeScript directly: Node 22.18 to 22.x or Node 23.6 or later, then Bun 1.1.5 or later, then Deno 2.0 or later. With none of these it exits with code 127.
+`scripts/statechart.ts` is TypeScript, so run it with a runtime that can execute TypeScript.
 
-The first run installs TLC (`tla2tools.jar` 1.7.4) and Java (Temurin 25) with mise and needs the network. If the sandbox blocks the install, give the person the command to run in a plain terminal: `mise install` with the two tools pinned as `JAVA_TOOL` and `TLC_TOOL` in `scripts/run.ts`. Do not work around the sandbox. To use a TLC and Java that are already installed, set `TLA2TOOLS` to the path of `tla2tools.jar` and `JAVA` to a Java 11 or later binary.
+The first run installs TLC and Java with mise and needs the network.
 
 ## Write the spec
 
@@ -75,7 +73,7 @@ Aim for about 20 arrows or fewer, because a busier chart is hard to read. First 
 
 Show `chart.mmd` to the user as a `mermaid` code block. The chart has a budget of 500 states, counted by TLC on the config as written. Above that, the chart draws only the paths to the rules that break, and when no rule breaks, the command writes no `chart.mmd`. It still checks each rule, and the report gives the state count and each bug path. To see the whole graph, make the model smaller.
 
-Render charts with Pele. When the user asks for an image, or a chart is too large to read as text, follow [references/render.md](references/render.md). Do not use a different renderer unless the user asks for it.
+Render charts with Pele. When the user asks for an image, or a chart is too large to read as text, follow `references/render.md`. Do not use a different renderer unless the user asks for it.
 
 ## Hand off
 

@@ -1,24 +1,24 @@
 ---
 name: no-comments
-description: "Spawn a comment-hating reviewer over a diff, delete the comments it convicts, fix the code it flags, and offer to encode the constraints a comment claims. Use for /no-comments or \"strip the comments from this\"."
+description: "Spawn Comment Sicko, fix accepted findings, and offer encodings for claimed constraints."
 disable-model-invocation: true
 ---
 
 # No comments
 
-arkan-mode's rule is that a comment stays only for a "why" the code cannot show. This skill enforces it on a diff: a fresh reviewer (Comment Sicko) hunts comments, you judge its report, and you fix what it convicts. Defer to its fresh view; overrule it only on the grounds in step 2.
+Spawn Comment Sicko. Act on accepted findings.
 
-A person starts this skill: it edits code.
+Defer to Comment Sicko's fresh perspective.
 
 ## Scope
 
-The files or diff the person names. Otherwise the current diff against the base branch (default `main`), including the working tree.
+Use the caller's files or diff. Otherwise use the current diff against the base branch, default `main`, including the working tree.
 
 ## Steps
 
-1. **Spawn the reviewer.** One `comment-sicko` subagent in a fresh context, with the scope as its brief. Where the harness cannot spawn an agent by name, give a fresh subagent [`agents/comment-sicko.md`](../../agents/comment-sicko.md) as its whole prompt, plus the scope. Do not restate its rules. It deletes comments in scope and reports; it writes no application code.
-2. **Judge its report and its diff.** Reject application-code edits, edits outside the scope, deletions its own exceptions protect, `MUST KILL` reasons that misstate the code, and flags that treat intentional code we keep as guilty. Reshape flags on surprises in our own code stay actionable; do not restore those comments. A keep survives only with proof it is about something we cannot change. Audit lint and type-check suppressions in scope that it missed: suppressions guarding correctness or safety stay actionable `MUST KILL`s. Restore a deletion only with its exact exception and scoped proof. Before you accept a thin `IMPORTANT` or `do not remove` kill or keep, run `how` or `why` on its symbol. An ambiguous kill stays killed; a refuted or still-ambiguous keep is deleted. Revert and re-run one rejected report with the failure named. Reject a second, report it open, and stop.
-3. **Fix the trivial flags** directly: delete a dead path, drop a parameter, use the real api. If any fix needs a new shape, run `architect` once for the accepted set and the code around it, and stop at the sketch; step 4 implements.
-4. **Fix root causes in scope.** Make the smallest root-cause fix, and remove every named workaround. If the root cause is out of scope, land the smallest in-scope fix and report the rest open. **fix root causes** (`principle-fix-root-causes`) and **redesign from first principles** (`principle-redesign-from-first-principles`) guide intent only: neither lets you widen the scope or fix instances outside it. Never bolt on symptom guards. Run the repo's tests after the fixes.
-5. **Constraint comments** ("do not remove", "do not change wording", "talk to X before changing"): leave keeps about things we cannot change. For the rest, offer the cheapest in-scope encoding (a type, a runtime check, a test, a ci lint), per **encode lessons in structure** (`principle-encode-lessons-in-structure`), and wait for the person's yes. In an unattended run, encode only what the person approved up front. If approved, encode, then delete the comment. Otherwise delete it, report the constraint open, and sketch the out-of-scope work.
-6. **Report** the deletion count, restored comments, re-runs, the architect sketch, fixes, encoding offers, encodings made, constraints left unenforced, and other open work. Ship through the normal pull request flow.
+1. Spawn `Task` with `subagent_type: "comment-sicko"`. Pass the scope. Pick each subagent's reasoning level and fast or standard speed for the job, per the Subagents section of the **arkan-mode** skill. Do not restate its rules.
+2. Inspect its report and diff. Reject application-code edits, scope escapes, exception-protected deletions, misstated `MUST KILL` reasons, and flags that treat kept intentional code as guilty. Reshape flags on our-code surprises stay actionable. Do not restore those comments. A keep survives only with proof it is about something we cannot change. Audit missed scoped lint and TypeScript suppressions. Correctness or safety suppressions stay actionable `MUST KILL`s. Restore deletions only with exact exceptions and scoped proof. Before accepting thin `IMPORTANT` or `do not remove` kills or keeps, run `/how` or `/why` on their symbol. If a kill is ambiguous, do not restore. If a keep is refuted or still ambiguous, delete it. Revert and rerun one rejected report with the failure named. Reject a second, report it open, and fail `/no-comments`.
+3. Fix trivial accepted flags directly by deleting a dead path, dropping a parameter, or using the real API. If any fix needs a shape, run `/architect` once for the accepted set and surrounding code. Stop at the sketch. Architect shapes. Step 4 implements.
+4. Implement the smallest root-cause fix in scope. Remove every named workaround. If the root cause is out of scope, land the smallest in-scope fix and report the rest open. The **principle-fix-root-causes** and **principle-redesign-from-first-principles** skills guide intent only. Neither authorizes widening the fence nor fixing instances outside it. Never bolt on symptom guards.
+5. Constraint comments say `do not remove`, `do not change wording`, or `talk to X before changing`. Leave keeps about things we cannot change. Offer the cheapest in-scope type, runtime, test, or CI lint. Wait for interactive approval. Unattended and eval require caller pre-approval. If approved, encode then delete. Otherwise delete, report the constraint open, and sketch out-of-scope work.
+6. Report the deletion count, restored comments, reruns, architect sketch, fixes, encoding offers, encodings, unenforced constraints, and other open work.

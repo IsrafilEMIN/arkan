@@ -1,13 +1,12 @@
 ---
 name: unslop
-description: "Cut AI tells from any writing: filler, AI vocabulary, hedging, mannered phrasing, formatting tells. Use for /unslop, \"unslop this\", \"make it sound less like AI\", or before any prose ships (replies, docs, tickets, pull request bodies, commit messages)."
+description: Cut AI tells from any writing.
+disable-model-invocation: true
 ---
 
 # Unslop
 
-Edit text to remove AI patterns. Scan for the patterns below, then rewrite. Keep the meaning and match the intended tone.
-
-It applies to every prose surface an agent writes: replies, docs, tickets, pull request bodies and commit messages (arkan-mode's "the reply" points here). A person's own style rules (for example all lowercase) win over this list where they conflict.
+Edit text to remove AI patterns. Scan for the patterns below, then rewrite. Preserve meaning and match the intended tone.
 
 ## Patterns to detect and fix
 

@@ -1,6 +1,6 @@
 # arkan
 
-arkan is one bundle of agent skills for engineering work. a person hands it one task; `arkan-mode` drives that task to a checked change.
+arkan is pstack under the name arkan: its skills, playbooks, agents and guide, copied from [pstack](https://github.com/cursor/plugins/tree/c742dd6/pstack) at commit `c742dd6`. only three names differ: `arkan-mode`, `arkan-help` and `arkan-agent`. the [guide](docs/guide/README.md) shows how to use it.
 
 ## install
 
@@ -23,20 +23,14 @@ to update in omp, run `/marketplace update arkan`, then `/marketplace upgrade ar
 
 for any other harness, link or copy each folder in [`skills/`](skills/) into the folder it reads skills from.
 
-## the flow in one view
+## what differs from pstack
 
-```
-task
- │
- 0  arkan-mode ────────── picks a playbook, applies the principles
- 1  build ─────────────── the bug-fix playbook when something is broken, `tdd` when a test is cheap
- 2  prove ─────────────── tests, build, lint, and the repo's verify skill
- 3  pr ────────────────── the opening-a-pr and babysit playbooks
- 4  review ────────────── reviewer sessions run `interrogate` on the pr head and record a verdict
- 5  merge ─────────────── the shipping playbook, once the broker's merge rule passes
-```
+- the names `poteto-mode`, `poteto-help` and `poteto-agent` are `arkan-mode`, `arkan-help` and `arkan-agent`, in file names and in text.
+- the two files in [`agents/`](agents/) keep pstack's prompt and use omp's frontmatter: no `is_background`, and `arkan-agent` loads `arkan-mode` through `autoloadSkills`.
+- arkan adds two skills, `good-css` and `simplest-path`, and the plugin files in `.claude-plugin/`.
+- arkan leaves out pstack's `assets/`, `automations/` and its own `README.md`.
 
-a person hands over the task. the agent works alone from there and comes back to the person for approval and for any action that cannot be undone.
+the text still names cursor tools, paths and model slugs. [`docs/harness/claude-code.md`](docs/harness/claude-code.md) maps them for claude code; no such map exists for omp yet.
 
 ## sources
 

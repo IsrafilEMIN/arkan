@@ -1,6 +1,7 @@
 ---
 name: technical-writing
 description: "Layered technical-writing standard: Diátaxis structure, Google developer style sentences, STE instruction rules, Global English syntax. Use for /technical-writing or when writing or reviewing docs, RFCs, readmes, PR descriptions, or commit messages."
+disable-model-invocation: true
 ---
 
 # Technical writing
@@ -57,7 +58,7 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 - Sound like a knowledgeable friend. No buzzwords, no figurative language, no "please" in instructions, and never "simply", "easy", or "quickly" in a procedure. If it were simple, the reader would not be here.
 - Don't pre-announce ("we will soon support...") and don't start consecutive sentences with the same phrase.
 - Link with words that say where the link goes: the page title or a short description. Never "click here". Prefer a sentence of context on the page over a link off it.
-- Headings carry the point, not just the topic ("Pick the mode first", not "Modes"). A task heading is a bare verb phrase ("Create an instance"). A concept heading is a noun phrase. One h1 per page, no skipped levels.
+- Headings carry the point, not just the topic ("Pick the mode first", not "Modes"). Sentence case. A task heading is a bare verb phrase ("Create an instance"). A concept heading is a noun phrase. One h1 per page, no skipped levels.
 - Numbered lists for sequences, bullets for everything else. Introduce a list with a complete sentence. Keep items parallel.
 - Code goes in code font. UI elements go in bold. Use serial commas. Drop "etc." and say up front that a list is partial.
 
@@ -90,9 +91,9 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 ## Voice and repo specifics
 
 - Apply the **unslop** skill to every doc this skill touches. That skill owns the slop-pattern catalog: AI vocabulary, filler, hedging, formatting tells.
-- PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body follows the arkan-mode `opening-a-pr` playbook's template and is a briefing a reviewer can read in under a minute. Do not paste swarm logs, SHA lists, or metric tables. Link them.
+- PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body is a briefing that a reviewer can read in under a minute. Do not paste swarm logs, SHA lists, or metric tables. Link them.
 - Product UI strings are not documentation. Use your product's copy guidelines for those.
-- Format code snippets the way the repo does. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.
+- Indent code snippets with tabs. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.
 
 ## Worked example
 
