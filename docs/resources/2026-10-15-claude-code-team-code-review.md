@@ -14,14 +14,14 @@ arkan owns the parts that an agent does inside any repo: review before the pr, t
 
 | item | status | where |
 |---|---|---|
-| verify the work, then review the diff in a fresh context before the pr | changed 2026-11-11: the author verifies before the pr; the fresh-context review runs on the pr head, in the reviewer sessions | `arkan-mode/SKILL.md`, `arkan-mode/references/broker.md`, `interrogate` |
+| verify the work, then review the diff in a fresh context before the pr | changed 2026-11-11: arkan became an exact copy of pstack, so the broker's reviewer-session rule is removed; pstack's own rule is `interrogate` before you ship | `arkan-mode/SKILL.md`, `interrogate` |
 | several finders, then a separate pass that tries to disprove each finding | removed 2026-11-11: skill removed in the pstack-only cleanup | - |
 | tag each finding `important`, `nit` or `pre-existing` | removed 2026-11-11: skill removed in the pstack-only cleanup | - |
-| round cap of 3, diff-only re-review, no repeated findings, fix the class of bug | removed 2026-11-11: skill removed in the pstack-only cleanup; the broker's attempt cap stays | `arkan-mode/references/broker.md` |
+| round cap of 3, diff-only re-review, no repeated findings, fix the class of bug | removed 2026-11-11: skill removed in the pstack-only cleanup; the broker's attempt cap went with `references/broker.md` in the exact copy of pstack | - |
 | `REVIEW.md`: what failure looks like, skipped paths, `file:line` evidence, a nit cap, a count first | removed 2026-11-11: skill removed in the pstack-only cleanup; earlier, the reviewer reads `CODING_STANDARDS.md` | - |
 | a repeated finding moves into a lint rule, a check or a standard | done before | `arkan-mode/SKILL.md`, `principle-encode-lessons-in-structure`, `correct` |
 | measure noise from what people did with each comment | removed 2026-11-11: skill removed in the pstack-only cleanup | - |
-| an approval covers one commit; a bot approval is not a person's | done | a broker review record covers one head (`arkan-mode/references/broker.md`) |
+| an approval covers one commit; a bot approval is not a person's | removed 2026-11-11: the broker review record went with `references/broker.md` in the exact copy of pstack | - |
 | revert or fix forward, then ask which layer should have caught the miss | removed 2026-11-11: skill removed in the pstack-only cleanup | - |
 | an explainer for one part of the code instead of reading trivial diffs | done before | `how`, `teach` |
 | grade each change `auto` or `manual` from the diff, not the author | removed 2026-11-11: skill removed in the pstack-only cleanup | - |
