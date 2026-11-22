@@ -64,4 +64,4 @@ When the change is checked, push it with `git push -u origin HEAD`, then follow 
 
 Do not remove worktrees as part of the change. On an underground host, the session-start sweep removes a worktree and its branch after 3 idle days when origin holds all of its work, and keeps the ones with an open PR.
 
-When the user asks you to remove one, remove it only when `git status --short` in it is empty and its PR merged: `git worktree remove <path>`, then `git branch -D <branch>`. For uncommitted or unpushed work, show it and ask first. Never run `omp wt clear --all`, because it removes the worktrees of other sessions too.
+When the user asks you to remove one, remove it only when `git status --short` in it is empty and its PR merged: `git worktree remove <path>`. For uncommitted or unpushed work, show it and ask first. Never run `omp wt clear --all`, because it removes the worktrees of other sessions too.
