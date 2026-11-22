@@ -1,0 +1,14 @@
+{
+  "name": "ctl-a",
+  "base_url": "http://127.0.0.1:8080",
+  "model": "mlx-community/Qwen3-30B-A3B-4bit",
+  "launch": ["bash", "-c", "python3 -c 'import os,sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' mlx_lm.server --model mlx-community/Qwen3-30B-A3B-4bit --host 127.0.0.1 --port 8080 > server.log 2>&1 < /dev/null &"],
+  "stop": ["bash", "-c", "p=$(lsof -nP -iTCP:8080 -sTCP:LISTEN -t) || exit 0; kill $p; for i in $(seq 60); do kill -0 $p 2>/dev/null || exit 0; sleep 1; done; kill -9 $p"],
+  "health_timeout_s": 900,
+  "concurrency": 4,
+  "prefill_lengths": [4096, 32768],
+  "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},
+  "temperature": 0.6,
+  "memory": {"cap_gib": 46, "probe": ["bash", "scripts/mem-macos.sh", "8080"], "interval_s": 3},
+  "require_ac": true
+}

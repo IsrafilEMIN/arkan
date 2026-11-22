@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Theoretical ceilings for decode / prefill / KV from a small JSON of measured hardware and model sizes.
 
-  python3 ceiling.py model.json
+  python3 scripts/ceiling.py model.json
 
 Example model.json (Ornith-1.5-35B-A3B EXL3 4bpw on an Arc B390 iGPU; sizes in GB from the checkpoint):
 {

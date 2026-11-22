@@ -55,6 +55,7 @@ Detailed references, read when needed:
   - `THEORY.md`: the ceilings.
   - `ledger.jsonl`: one line per run, from the harness.
   - `configs/`: one JSON per run.
+  - `scripts/`: a copy of this skill's `scripts/`. Run the harness from the working directory, so configs reach the memory probe as `scripts/mem.sh`.
   - `best-config.json`.
 
 ## 1. Ceilings first
@@ -89,9 +90,9 @@ Report progress as a percentage of the practical ceiling. If the user's target i
    - Restore any profile you changed when you finish, and tell the user.
 4. **Run one GPU job at a time.** Serialize them with a lock (`scripts/queue.sh`).
    - Never use `pkill -f`/`pgrep -f` patterns that can match your own shell.
-   - Detach long queues (`setsid nohup … &`) so they survive agent restarts.
+   - Detach long queues (`setsid nohup … &`) so they survive agent restarts. macOS has no `setsid`, and its `nohup` fails without a console session: use the `python3` `os.setsid()` form in `scripts/queue.sh`.
 5. **Enforce the memory cap with a watchdog** that kills the run.
-   - On unified memory, GPU allocations do not show in cgroup counters or MemAvailable. Measure driver residency (e.g. `drm-resident-*` in `/proc/<pid>/fdinfo`, `nvidia-smi`, or `ioreg`/`vm_stat` on Apple) plus process anonymous memory.
+   - On unified memory, GPU allocations do not show in cgroup counters or MemAvailable. Measure driver residency (e.g. `drm-resident-*` in `/proc/<pid>/fdinfo`, or `nvidia-smi`) plus process anonymous memory. On Apple silicon, `scripts/mem-macos.sh <port>` reads the server's footprint, Metal buffers included.
 6. **Stability gates.** A config is only "best" after it passes:
    - a long-context retrieval run, with needles in a ~50% then ~100% context document, found exactly;
    - a soak with concurrent full-length requests, if the KV pool is sized for N users;

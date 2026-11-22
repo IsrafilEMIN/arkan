@@ -2,8 +2,8 @@
 """Engine-agnostic hill-climb benchmark for any OpenAI-compatible server (vLLM, SGLang, llama.cpp server,
 TabbyAPI, MLX-LM server, LM Studio, Ollama's /v1 ...). Standard library only.
 
-  python3 bench.py run configs/NAME.json [--long N] [--skip-cN] [--reps 6]
-  python3 bench.py show [ledger.jsonl]
+  python3 scripts/bench.py run configs/NAME.json [--long N] [--skip-cN] [--reps 6]
+  python3 scripts/bench.py show [ledger.jsonl]
 
 Config (JSON):
   {
@@ -17,14 +17,16 @@ Config (JSON):
     "prefill_lengths": [4096, 32768],              # approximate prompt tokens for cold prefill
     "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},  # merged into every request
     "temperature": 0.6,
-    "memory": {"cap_gib": 46, "probe": ["bash", "mem.sh", "srv"], "interval_s": 3},  # probe prints bytes
+    "memory": {"cap_gib": 46, "probe": ["bash", "scripts/mem.sh", "srv"], "interval_s": 3},  # probe prints bytes
     "require_ac": true                             # refuse to run on battery (Linux / macOS)
   }
 
 Measurements (all token counts come from the server's usage stats, never from streamed chunks):
   startup_s, ttft_short_ms, c1_decode (median of --reps), c1_all, cN_aggregate (wall clock), cN_per_stream,
   prefill_<L> (prompt_tokens / TTFT on a unique cold prompt), long-context needle retrieval (--long),
-  mem_peak_gib, flags (LOOP, REQ_FAIL, ON_BATTERY, MEM_CAP). Results are appended to ledger.jsonl.
+  mem_peak_gib, flags (LOOP, REQ_FAIL, ON_BATTERY, MEM_CAP, MEM_PROBE_FAIL). Results are appended to ledger.jsonl.
+MEM_PROBE_FAIL: the memory probe failed (non-zero exit or no byte count) after the server became healthy, so the
+cap was not enforced; failures during startup are ignored, since a native server binds its port only after loading.
 The server is left running after a run (the next run's launch stops it first); stop it yourself when done.
 """
 import json, os, random, statistics, string, subprocess, sys, threading, time, urllib.request
@@ -133,15 +135,24 @@ def on_ac():
 class MemWatch(threading.Thread):
     def __init__(self, mcfg, on_trip):
         super().__init__(daemon=True)
-        self.mcfg, self.on_trip, self.peak, self.tripped, self.stop = mcfg, on_trip, 0, False, threading.Event()
+        self.mcfg, self.on_trip, self.peak, self.tripped, self.probe_failed = mcfg, on_trip, 0, False, False
+        self.server_up, self.stop = False, threading.Event()
 
     def run(self):
         cap = self.mcfg.get("cap_gib", 1e9) * 2**30
         while not self.stop.wait(self.mcfg.get("interval_s", 3)):
             try:
-                b = int(subprocess.run(self.mcfg["probe"], capture_output=True, text=True, timeout=30).stdout.strip() or 0)
-            except Exception:
+                p = subprocess.run(self.mcfg["probe"], capture_output=True, text=True, timeout=30)
+                rc, out, err = p.returncode, p.stdout.strip(), p.stderr.strip()
+            except Exception as e:
+                rc, out, err = None, "", repr(e)
+            if rc != 0 or not out.isdigit():  # a failed probe must not read as 0 bytes, or the cap never trips
+                if self.server_up and not self.probe_failed:
+                    self.probe_failed = True
+                    log(f"MEMORY PROBE FAILED (rc={rc}, stdout={out[:80]!r}, stderr={err[:300]!r}); "
+                        "the memory cap is not enforced while it fails")
                 continue
+            b = int(out)
             self.peak = max(self.peak, b)
             if b > cap and not self.tripped:
                 self.tripped = True
@@ -174,10 +185,13 @@ def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
             time.sleep(1)
         res["startup_s"] = round(time.monotonic() - t0, 1)
         log("healthy after", res["startup_s"], "s")
+        if watch:
+            watch.server_up = True
     else:
         if not srv.healthy():
             sys.exit("server not reachable and no launch command given")
         if watch:
+            watch.server_up = True
             watch.start()
     try:
         srv.chat("Say hello.", 16)  # warm-up (not measured)
@@ -232,6 +246,8 @@ def finish(res, flags, watch):
         res["mem_peak_gib"] = round(watch.peak / 2**30, 2)
         if watch.tripped:
             flags.append("MEM_CAP"); res["ok"] = False
+        if watch.probe_failed:
+            flags.append("MEM_PROBE_FAIL")
     if not on_ac():
         flags.append("ON_BATTERY"); res["ok"] = False
     res["flags"] = sorted(set(flags))
