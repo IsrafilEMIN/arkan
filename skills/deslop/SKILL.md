@@ -11,9 +11,10 @@ Check the diff against trunk and remove AI-generated slop introduced in the bran
 trunk=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || { git remote set-head origin -a >/dev/null && git symbolic-ref --short refs/remotes/origin/HEAD; })
 git diff "$trunk"...HEAD
 git diff HEAD
+git ls-files --others --exclude-standard
 ```
 
-The first diff shows committed work, the second shows uncommitted work. Skip generated files, lockfiles and vendored code.
+The first diff shows committed work, the second shows uncommitted changes to tracked files, and the last command lists new files that git does not track yet. Read each new file whole. Skip generated files, lockfiles and vendored code.
 
 ## Focus Areas
 
