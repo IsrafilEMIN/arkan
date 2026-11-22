@@ -1,5 +1,5 @@
 ---
-name: inference-optimisation
+name: optimize-inference
 description: >
   Hill-climb the serving speed of a local LLM on any hardware (NVIDIA, AMD, Intel,
   Apple, unified-memory laptops, multi-GPU) and any quantization (GGUF, EXL2/EXL3,
@@ -14,7 +14,7 @@ description: >
   speculative decoding, KV cache, TTFT, startup time, theoretical maximum.
 ---
 
-# Inference optimisation (hill-climbing a model server)
+# Optimize inference (hill-climbing a model server)
 
 You improve how fast a model server runs on one machine, with evidence.
 The loop is:
