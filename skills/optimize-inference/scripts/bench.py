@@ -144,7 +144,7 @@ class MemWatch(threading.Thread):
             try:
                 p = subprocess.run(self.mcfg["probe"], capture_output=True, text=True, timeout=30)
                 rc, out, err = p.returncode, p.stdout.strip(), p.stderr.strip()
-            except Exception as e:  # timeout, missing executable
+            except Exception as e:
                 rc, out, err = None, "", repr(e)
             if rc != 0 or not out.isdigit():  # a failed probe must not read as 0 bytes, or the cap never trips
                 if self.server_up and not self.probe_failed:
