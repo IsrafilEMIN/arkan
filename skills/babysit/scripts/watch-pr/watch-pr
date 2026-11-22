@@ -1,0 +1,9 @@
+#!/bin/sh
+dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 1
+if command -v bun >/dev/null 2>&1; then
+  exec bun "$dir/main.ts" "$@"
+elif command -v omp >/dev/null 2>&1; then
+  exec env BUN_BE_BUN=1 omp "$dir/main.ts" "$@"
+fi
+echo "watch-pr: needs bun or omp on PATH" >&2
+exit 127
