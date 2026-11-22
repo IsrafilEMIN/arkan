@@ -1,9 +1,9 @@
 ---
-name: musk-algorithm
-description: "Cut a design, codebase, pipeline or process down with Musk's five steps: question requirements, delete, simplify, speed up, automate. Use for /skill:musk-algorithm, \"run the algorithm\", \"simplify this\", \"this is too heavy\", or before you optimize or automate a slow or complex system."
+name: simplify
+description: "Cut a design, codebase, pipeline or process down with Musk's five steps: question requirements, delete, simplify, speed up, automate. Use for /skill:simplify, \"run the algorithm\", \"simplify this\", \"this is too heavy\", or before you optimize or automate a slow or complex system."
 ---
 
-# Musk's algorithm
+# Simplify
 
 Do the five steps in order on one target: a feature, a module, a CI pipeline, a deploy process, a team workflow. Do not start a step before the step before it is done. The usual mistake is to do the steps in reverse: to automate, speed up and optimize a part that should not exist.
 
