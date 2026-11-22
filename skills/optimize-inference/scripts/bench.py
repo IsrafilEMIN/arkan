@@ -2,8 +2,8 @@
 """Engine-agnostic hill-climb benchmark for any OpenAI-compatible server (vLLM, SGLang, llama.cpp server,
 TabbyAPI, MLX-LM server, LM Studio, Ollama's /v1 ...). Standard library only.
 
-  python3 bench.py run configs/NAME.json [--long N] [--skip-cN] [--reps 6]
-  python3 bench.py show [ledger.jsonl]
+  python3 scripts/bench.py run configs/NAME.json [--long N] [--skip-cN] [--reps 6]
+  python3 scripts/bench.py show [ledger.jsonl]
 
 Config (JSON):
   {
@@ -17,7 +17,7 @@ Config (JSON):
     "prefill_lengths": [4096, 32768],              # approximate prompt tokens for cold prefill
     "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},  # merged into every request
     "temperature": 0.6,
-    "memory": {"cap_gib": 46, "probe": ["bash", "mem.sh", "srv"], "interval_s": 3},  # probe prints bytes
+    "memory": {"cap_gib": 46, "probe": ["bash", "scripts/mem.sh", "srv"], "interval_s": 3},  # probe prints bytes
     "require_ac": true                             # refuse to run on battery (Linux / macOS)
   }
 

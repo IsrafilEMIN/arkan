@@ -55,6 +55,7 @@ Detailed references, read when needed:
   - `THEORY.md`: the ceilings.
   - `ledger.jsonl`: one line per run, from the harness.
   - `configs/`: one JSON per run.
+  - `scripts/`: a copy of this skill's `scripts/`. Run the harness from the working directory, so configs reach the memory probe as `scripts/mem.sh`.
   - `best-config.json`.
 
 ## 1. Ceilings first
