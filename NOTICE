@@ -3,6 +3,7 @@
 arkan copies and changes text from the project below. it uses the MIT license, which asks that its copyright notice and license text stay with every copy. the full text of the license follows.
 
 - **pstack** by Lauren Tan, from `cursor/plugins`, folder `pstack/`, at commit `c742dd6`. license read from <https://github.com/cursor/plugins/blob/182f2ce/pstack/LICENSE> on 2026-10-18; the same license and copyright notice ship at `c742dd6`. in arkan: `skills/create-verification-skill/` and `skills/maintain-verification-skill/`, as copies changed for omp (command names, harness tools, cleanup, the `verify-reader` subagent).
+- **pstack** by Lauren Tan, from `cursor/plugins`, folder `pstack/`, at commit `0b46ec3`. license read from <https://github.com/cursor/plugins/blob/0b46ec3/pstack/LICENSE> on 2026-11-21; it is the same license and copyright notice as above. in arkan: `skills/opening-a-pr/`, from `skills/poteto-mode/playbooks/opening-a-pr.md` with the push and rebase rules of `autopilot-full.md` and the stack rules of `autopilot-stack.md`, changed for omp (no `/deslop`, no Origin CLI, no babysit, fetch before each push); and the first rule of `skills/wt-playbook/` (a worktree off trunk with no unrelated work), from the same `opening-a-pr.md`.
 
 ---
 
