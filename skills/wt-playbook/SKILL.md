@@ -28,7 +28,7 @@ Otherwise make a new one in step 2.
 ## 2. Make a worktree
 
 ```bash
-trunk=$(git symbolic-ref --short refs/remotes/origin/HEAD)   # for example origin/main
+trunk=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || { git remote set-head origin -a >/dev/null && git symbolic-ref --short refs/remotes/origin/HEAD; })
 git fetch origin
 ts=$(date +%Y%m%d-%H%M%S)
 repo=$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")")
@@ -36,6 +36,7 @@ wt="$HOME/.omp/wt/wt-$ts-$repo"
 omp wt add -b "wt/$ts" "$wt" "$trunk"
 ```
 
+- **Trunk:** origin's default branch, for example `origin/main`. A repo made with `git init` and `git remote add` has no `origin/HEAD`, so the first line sets it with `git remote set-head origin -a`.
 - **Branch name:** `wt/<yyyymmdd-hhmmss>`, the same as omp's `/wt`. Agents cannot run `/wt`, because only the user can run slash commands.
 - **Path:** under `~/.omp/wt/`, so `omp wt list` shows it.
 - `omp wt add` makes a copy-on-write clone and carries ignored caches such as `node_modules`. It does not carry Python virtual environments or CMake build directories; make them again in the worktree.

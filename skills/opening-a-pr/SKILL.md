@@ -5,7 +5,7 @@ description: "Turn the checked work on a worktree branch into small commits, fet
 
 # Opening a PR
 
-Use at the end of every change that ships. Start from the worktree and branch that the `wt-playbook` skill made (`../wt-playbook/SKILL.md`). Run every command below with the worktree as `cwd`, and set `trunk=$(git symbolic-ref --short refs/remotes/origin/HEAD)`.
+Use at the end of every change that ships. Start from the worktree and branch that the `wt-playbook` skill made (`../wt-playbook/SKILL.md`). Run every command below with the worktree as `cwd`, and set `trunk` with the first line of that skill's step 2.
 
 1. **Check the worktree.** Work from a git worktree off trunk, and keep unrelated work out of it. `git status --short` shows only this change's files, and `git log --oneline "$trunk"..HEAD` shows only this change's commits.
 2. **Shape the commits.** Rebase into small, landable commits. Then read the full diff (`git diff "$trunk"...HEAD`) and remove debug output, dead code, and changes the task did not ask for.
