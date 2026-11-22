@@ -23,13 +23,13 @@ Question the requirements from smart or senior people most: people question them
 
 For each part, step, file, flag, config option, dependency, check or meeting, ask: "what breaks if this goes?" When nothing that a kept requirement needs breaks, delete it. Delete more than feels safe. A part that "might be needed later" goes: you can add it back.
 
-Then add back what the deletion broke, and only that. Count it:
+After the deletions, find what broke: run the tests, build and checks that cover the target, and for each kept requirement, show that it still works. A deletion broke something only when a check fails or a kept requirement stops working. Add back that part, and only that part. Count it:
 
 ```
 add-back rate = parts added back / parts deleted
 ```
 
-When the rate is under 10%, you did not delete enough: go through step 2 again. Report the rate.
+The rate is a signal, not a target. A rate under 10% usually means that you were too careful: do step 2 again on the parts you kept. Stop when a pass finds no part that you can delete while each kept requirement still works. Do not delete a working part only to get the rate up. Report the rate.
 
 Ask the user before a deletion they did not request: user code, data, branches, jobs or another person's process.
 
@@ -47,7 +47,7 @@ Automate last, and only the steps that are left, are stable and run often. Autom
 
 ## Report
 
-Give one table per step:
+Give a table with one row for each step:
 
 | step | output |
 | --- | --- |
