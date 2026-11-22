@@ -45,10 +45,10 @@ Repeat:
    - Layers: delete the wrapper, adapter or pass-through and see where its logic goes. When the logic disappears or moves into one caller, the layer goes. When it would be copied into many callers, it stays. An abstraction with one implementation and no second use goes.
    - Old APIs: move all callers off them and delete them in the same candidate. Do not leave a shim.
    - Simplifications: merge parts that do the same thing, remove indirection, make state as local as possible, and pick the plain design.
-2. **Make that one change.**
+2. **Make that one change** in the target's own worktree. Before you start, `git status --short` must be empty. When it is not, stop: the changes are not yours to discard. Record the paths that the candidate changes, adds and deletes.
 3. **Run the gate and measure the metrics.**
 4. **Keep the candidate** when the gate passes, no metric gets worse, and the code is not harder to read: a new reader finds where a value comes from and what can change it at least as fast as before. Dense one-liners and clever tricks that cut lines fail this test. Commit a kept candidate on its own.
-5. **Otherwise discard the change** with `git restore` on its files. A rejected deletion is an add-back.
+5. **Otherwise discard the change.** Discard only the paths that this candidate touched: `git restore -- <paths>` for changed and deleted files, and remove the files that the candidate added. Never restore or clean the whole tree. A rejected deletion is an add-back.
 6. **Append the candidate to `ledger.jsonl` and `PLAN.md`,** with the reason for the verdict.
 
 Ask the user before a candidate deletes something they did not request: user code, data, branches, jobs or another person's process. Collect these candidates and ask in one round.
