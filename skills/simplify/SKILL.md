@@ -30,7 +30,7 @@ List every requirement the target meets or claims to meet. For each one, write:
 
 Question the requirements from smart or senior people most: people question them least. "Drop" is a valid verdict for a requirement from the user too. Ask the user all the questions that only the user can answer in one round. Give each question your recommended answer, worded so that "yes" accepts it.
 
-Then freeze the gate. For each kept requirement, name the check that proves it: a test, the build, or a characterization test that you write now when nothing covers it. A type check or a lint run alone does not prove behavior. Run the gate twice on the baseline. When a check gives different results, it is flaky: record it, and ask the user before you remove it from the gate. Write the gate command in `PLAN.md`.
+Then freeze the gate. For each kept requirement, name the check that proves it: a test, the build, or a characterization test that you write now when nothing covers it. A type check or a lint run alone does not prove behavior. Run the gate twice on the baseline. When a check gives different results, it is flaky: record it, and ask the user before you remove it from the gate. Commit the new characterization tests on their own before the first candidate, so the tree is clean and the tests are part of the frozen gate. Write the gate command in `PLAN.md`.
 
 A candidate must not change the gate. One exception: a candidate can delete a test that checks only internals that the same candidate deletes. Record which check still proves the requirement.
 
