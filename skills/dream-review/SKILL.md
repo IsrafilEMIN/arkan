@@ -5,7 +5,7 @@ description: Review and apply the nightly dream report. Use when the user says "
 
 # Dream review
 
-The nightly dream job (underground `agent-dream`) reads the day's sessions and the new mnemopi memories. It saves durable memories with `retain`, invalidates bad ones with `memory_edit`, and writes a report to `~/.omp/agent/dreams/<date>.md`. It never edits AGENTS.md, skills or config. It only proposes changes. This skill turns accepted proposals into a patch for the user's agent-config repo.
+The nightly dream job (underground `agent-dream`) reads the day's sessions and the new mnemopi memories. It saves durable memories with `retain`, invalidates bad ones with `memory_edit`, and writes a report to `~/.omp/agent/dreams/<date>.md`. It never edits AGENTS.md, skills or config. It only proposes changes. This skill turns accepted proposals into commands and patches for the user's agent-config repo.
 
 ## Show the report
 
@@ -15,13 +15,23 @@ The nightly dream job (underground `agent-dream`) reads the day's sessions and t
 
 ## Apply accepted proposals
 
-The agent has no access to the agent-config repo. `~/.omp/agent` is a deployed copy of its HEAD, so a patch made against that copy applies to the repo.
+The agent has no access to the agent-config repo, and each `ug-agent` launch restores `~/.omp/agent` from it. Never edit the deployed files under `~/.omp/agent` to apply a proposal: the next launch loses the change. `~/.omp/agent` is a copy of the repo's HEAD, so build the change against that copy and give the user what to run.
 
 1. Make a scratch git repo in `~/scratch/dream-<date>`. Copy each target file there from `~/.omp/agent/<path>`, keeping the relative path, and commit that as the base.
-2. Apply each accepted change exactly as the report writes it. If it no longer applies because the deployed copy changed, say so and skip it.
-3. Write `git diff` to `~/.omp/agent/dreams/<date>-accepted.patch` and show the patch in the reply.
-4. Set each proposal's `Status:` in the report to `accepted` or `rejected`. Later dreams do not propose rejected ones again.
-5. Tell the user to run `git apply <patch>` in their agent-config clone on the host, commit, and start `ug-agent` again so the change deploys.
+2. Apply each accepted change in the scratch repo exactly as the report writes it. If it no longer applies because the deployed copy changed, say so and skip it.
+3. For `AGENTS.md` and `RULES.md`, give the user one code block to paste in the agent-config repo root. For each changed file it rewrites the whole file, then shows the diff:
+
+   ```sh
+   cat > AGENTS.md <<'EOF'
+   <full new file content from the scratch repo>
+   EOF
+   git diff -- AGENTS.md
+   ```
+
+   Always write the full file. Never give sed or perl edits keyed to line numbers or matched lines. If the file has a line that is only `EOF`, use a different delimiter. Wrap the block in a code fence longer than any backtick run in the file content (four backticks when the file has ``` fences), or the rendered block ends early and the heredoc is cut off.
+4. For other targets (skills, config), write `git diff` to `~/.omp/agent/dreams/<date>-accepted.patch`, show the patch, and tell the user to run `git apply <patch>` in their agent-config clone.
+5. Set each proposal's `Status:` in the report to `accepted` or `rejected`. Later dreams do not propose rejected ones again.
+6. Tell the user to commit and push in agent-config, then start `ug-agent` again so the change deploys.
 
 ## Undo
 
