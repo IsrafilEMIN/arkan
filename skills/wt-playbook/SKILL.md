@@ -45,7 +45,7 @@ omp wt add -b "wt/$ts" "$wt" "$trunk"
 - **Path:** in omp's worktree base, so `omp wt list` shows it. The base is `OMP_WORKTREE_DIR`, else the `worktree.base` setting, else `~/.omp/wt`; like omp, the snippet skips a relative value. The directory name ends with the repo name; `/wt` ends it with a 7-hex hash of the repo path instead. `omp wt list` shows both forms.
 - When the `worktree.clone` setting is on, `omp wt add` makes a copy-on-write clone and carries ignored caches such as `node_modules`; it makes a plain checkout when the setting is off or the filesystem cannot clone. A clone does not carry Python virtual environments or CMake build directories; make them again in the worktree.
 - Without `omp` on `PATH`, use `git worktree add -b "wt/$ts" "$wt" "$trunk"`.
-- The new branch has no upstream. The first push in `opening-a-pr` sets it, so a plain `git push` can never go to trunk.
+- The new branch has no upstream. The first push in step 4 sets it, so a plain `git push` can never go to trunk.
 
 Tell the user the worktree path and the branch.
 
@@ -58,7 +58,7 @@ Tell the user the worktree path and the branch.
 
 ## 4. Hand off
 
-When the change is checked, follow the `opening-a-pr` skill (`../opening-a-pr/SKILL.md`). It fetches, pushes the branch, and opens the PR.
+When the change is checked, push it with `git push -u origin HEAD`, then follow the `opening-a-pr` skill (`../opening-a-pr/SKILL.md`) to open the PR.
 
 ## 5. Cleanup
 
