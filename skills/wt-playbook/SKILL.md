@@ -32,14 +32,18 @@ trunk=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || { git r
 git fetch origin
 ts=$(date +%Y%m%d-%H%M%S)
 repo=$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")")
-wt="$HOME/.omp/wt/wt-$ts-$repo"
+base=$HOME/.omp/wt
+for b in "$(omp config get worktree.base --json 2>/dev/null | jq -r '.value // empty')" "${OMP_WORKTREE_DIR-}"; do
+  b=${b/#\~/$HOME}; case $b in /*) base=$b ;; esac
+done
+wt="$base/wt-$ts-$repo"
 omp wt add -b "wt/$ts" "$wt" "$trunk"
 ```
 
 - **Trunk:** origin's default branch, for example `origin/main`. A repo made with `git init` and `git remote add` has no `origin/HEAD`, so the first line sets it with `git remote set-head origin -a`.
 - **Branch name:** `wt/<yyyymmdd-hhmmss>`, the same as omp's `/wt`. Agents cannot run `/wt`, because only the user can run slash commands.
-- **Path:** under `~/.omp/wt/`, so `omp wt list` shows it.
-- `omp wt add` makes a copy-on-write clone and carries ignored caches such as `node_modules`. It does not carry Python virtual environments or CMake build directories; make them again in the worktree.
+- **Path:** in omp's worktree base, so `omp wt list` shows it. The base is `OMP_WORKTREE_DIR`, else the `worktree.base` setting, else `~/.omp/wt`; like omp, the snippet skips a relative value. The directory name ends with the repo name; `/wt` ends it with a 7-hex hash of the repo path instead. `omp wt list` shows both forms.
+- When the `worktree.clone` setting is on, `omp wt add` makes a copy-on-write clone and carries ignored caches such as `node_modules`; it makes a plain checkout when the setting is off or the filesystem cannot clone. A clone does not carry Python virtual environments or CMake build directories; make them again in the worktree.
 - Without `omp` on `PATH`, use `git worktree add -b "wt/$ts" "$wt" "$trunk"`.
 - The new branch has no upstream. The first push in `opening-a-pr` sets it, so a plain `git push` can never go to trunk.
 
