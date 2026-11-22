@@ -42,7 +42,7 @@ Run its own instructions end to end once: confirm the skill registers (`read ski
 
 ## 5. Offer to ship it
 
-The generated skill exists only in this checkout until it is committed. Offer to commit it and open a PR; do not push without the user's approval. On approval, run `git fetch` before you push, and give the PR as a link.
+The generated skill exists only in this checkout until it is committed. Offer to ship it as a PR. On approval, follow the shipping section of AGENTS.md.
 
 ## 6. Offer the maintenance loop
 

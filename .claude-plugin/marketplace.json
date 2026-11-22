@@ -11,7 +11,7 @@
 			"name": "arkan",
 			"description": "agent skills that drive one task to a checked change",
 			"source": "./",
-			"version": "0.1.4",
+			"version": "0.1.5",
 			"category": "development",
 			"homepage": "https://github.com/IsrafilEMIN/arkan"
 		}

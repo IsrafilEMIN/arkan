@@ -16,6 +16,6 @@ Use at the end of every change that ships. Start from the worktree and branch th
 7. **Open it ready.** Write the body to a file in `$TMPDIR`, then run `gh pr create --base <trunk branch> --head <branch> --title "<title>" --body-file <file>` without `--draft`.
 8. **Stack only when the PR builds on another open PR.** Use `--base <parent branch>`, and rebase onto the parent branch, not trunk. When the parent gets a new head, rebase onto it and push with the lease from step 4. When the parent merges, run `gh pr edit <pr> --base <trunk branch>`, rebase onto trunk, and push with the lease.
 
-Opening a PR does not merge it, and does not give permission to merge it. For PR status after it opens (conflicts, review threads, CI), follow the `babysit` skill (`../babysit/SKILL.md`). It reports a conflict and does the rebase of step 3 only after the user approves it.
+Opening a PR does not merge it, and does not give permission to merge it. For PR status after it opens (conflicts, review threads, CI), follow the `babysit` skill (`../babysit/SKILL.md`). Babysit reports conflicts; rebase per step 3.
 
 **Reply:** the PR as a link, its title, what you verified, and what you did not verify.
