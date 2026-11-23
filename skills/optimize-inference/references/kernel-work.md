@@ -28,7 +28,7 @@ Most of this file is design rules from common GPU-kernel practice. Unlike `lever
 6. **Run the correctness ladder** (below) at every M you serve.
 7. **Microbenchmark** against the previous version (rules below). Record achieved bandwidth or FLOPs next to the floor.
 8. **Build it into the engine and prove it runs** in serving (`SKILL.md` rule 12).
-9. **Run the end-to-end A/B with controls** (`queue.sh ctl cand ctl`, then `bench.py verdict`). This is the only step that accepts. A microbenchmark win alone is not a win.
+9. **Run the end-to-end A/B with controls** (`scripts/queue.sh ctl cand ctl`, then `scripts/bench.py verdict`). This is the only step that accepts. A microbenchmark win alone is not a win.
 10. **Log it** in `PLAN.md`, including the rejects and why they failed.
 
 Stop work on one kernel when either is true:

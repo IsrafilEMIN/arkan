@@ -64,7 +64,7 @@ Most "wins" and "regressions" in inference tuning are measurement errors. In eve
   - the metrics to watch;
   - the accept and reject rule.
 - If you change the rule after seeing numbers, the result is no longer evidence. Write a new card and run again.
-- `bench.py verdict` applies the standing rule: beat both controls, nothing watched worse than both controls by more than 3%, and a repeat for drift or for a surprising win. It also prints a bootstrap 95% CI for c1 as information. An interval that includes 1.0 means the win could be noise, even if the medians beat both controls.
+- `scripts/bench.py verdict` applies the standing rule: beat both controls, nothing watched worse than both controls by more than 3%, and a repeat for drift or for a surprising win. It also prints a bootstrap 95% CI for c1 as information. An interval that includes 1.0 means the win could be noise, even if the medians beat both controls.
 
 ## Prove the change ran
 
@@ -78,7 +78,7 @@ Most "wins" and "regressions" in inference tuning are measurement errors. In eve
   - a dispatch counter;
   - a log line that only the new path prints.
 - If the path did not run, a "win" measured noise and a "no change" measured the fallback. Either way the experiment says nothing about the change.
-- Set `"proof"` in the run config. `bench.py` runs it after timing, keeps the output tail and flags `NO_PROOF` if it fails.
+- Set `"proof"` in the run config. `scripts/bench.py` runs it after timing, keeps the output tail and flags `NO_PROOF` if it fails.
 
 ## Accuracy evidence
 

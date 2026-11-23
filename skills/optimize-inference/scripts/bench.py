@@ -250,7 +250,7 @@ def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
                 flags.append("NEEDLE_MISS")
             log("long", res["long"])
 
-        if cfg.get("proof"):  # rule 12: evidence that the changed path ran, taken while the server is still up
+        if cfg.get("proof"):
             try:
                 p = subprocess.run(cfg["proof"], capture_output=True, text=True, timeout=cfg.get("proof_timeout_s", 300))
                 res["proof"] = {"rc": p.returncode, "out": (p.stdout + p.stderr)[-600:]}
@@ -313,7 +313,7 @@ def bootstrap_ratio(cand, ctl, iters=2000, seed=0):
     return r[int(0.025 * iters)], r[int(0.975 * iters) - 1]
 
 
-SINGLE_SAMPLE = {"ttft_short_ms", "startup_s"}  # one sample per run: too noisy for a 3% check unless asked for
+SINGLE_SAMPLE = {"ttft_short_ms", "startup_s"}
 
 
 def verdict(ctl_a, cand, ctl_b, metric="c1_decode", tol=0.03, drift=0.05, surprise=0.10, path="ledger.jsonl",
@@ -363,7 +363,7 @@ def verdict(ctl_a, cand, ctl_b, metric="c1_decode", tol=0.03, drift=0.05, surpri
         if not a[k] or not b[k]:
             continue
         lk = k in LOWER_IS_BETTER
-        worst = max(gain(c[k], a[k], lk), gain(c[k], b[k], lk))  # candidate vs the better-for-it control
+        worst = max(gain(c[k], a[k], lk), gain(c[k], b[k], lk))
         if worst < -tol:
             reasons.append(f"{k} worse than both controls by at least {-worst:.1%} (> {tol:.0%})")
     if not c.get("proof"):

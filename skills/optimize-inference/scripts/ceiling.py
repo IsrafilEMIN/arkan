@@ -37,13 +37,13 @@ def union(m, rows):
 
 
 def decode_step(m, drafts, ctx=0, n=1):
-    rows = (drafts + 1) * n  # routed token rows in one verify step
+    rows = (drafts + 1) * n
     loops = m.get("loops", 1)
     lx, ld = m.get("looped_experts_gb", 0), m.get("looped_dense_gb", 0)
     experts = (m.get("experts_gb", 0) - lx) * union(m, rows) + lx * union(m, rows * loops)
     dense = m["dense_gb"] + (loops - 1) * ld
     kv = n * m.get("kv_bytes_per_token", 0) * ctx / 1e9 * (drafts + 1 if m.get("kv_per_verify_row") else 1)
-    draft = drafts * (m.get("draft_layer_gb", 0) + m.get("draft_head_gb", m["lm_head_gb"]))  # batched over n
+    draft = drafts * (m.get("draft_layer_gb", 0) + m.get("draft_head_gb", m["lm_head_gb"]))
     total = dense + m["lm_head_gb"] + experts + kv + draft
     tp, rep = m.get("tp", 1), min(m.get("replicated_gb", 0), total)
     per_card = (total - rep) / tp + rep

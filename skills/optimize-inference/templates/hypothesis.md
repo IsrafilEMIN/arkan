@@ -31,7 +31,7 @@ Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKIL
 
 ## Result (fill in after)
 - Runs: <ctl-a, cand, ctl-b, plus repeats>
-- `bench.py verdict` output: <ACCEPT / REJECT / REPEAT, with its reasons>
+- `scripts/bench.py verdict` output: <ACCEPT / REJECT / REPEAT, with its reasons>
 - Proof: <what it showed>
 - Decision and reason: <one line, copied to PLAN.md>
 ```
