@@ -53,3 +53,50 @@ Most "wins" and "regressions" in inference tuning are measurement errors. In eve
 - Profile prefill by stage (GEMM, attention, MoE, linear attention, norms/Hadamards) before picking the next lever.
 - Debug builds that remove work (e.g. skipping dequantization) change code generation, so they are not valid lower bounds.
 - Read the ISA or assembly when a kernel is "at the limit". Register-region moves, spills and serialized tails hide there.
+- **The sum of kernel durations, the GPU busy time and the wall time are three different numbers.** Read `profiling.md` before you turn a kernel's share of the sum into an expected speedup.
+- ncu locks clocks to base by default and replays kernels. Compare its times only with other ncu times.
+
+## Decide before you measure
+
+- Fill in the hypothesis card (`templates/hypothesis.md`) before the run. It records:
+  - the one change;
+  - the expected effect;
+  - the metrics to watch;
+  - the accept and reject rule.
+- If you change the rule after seeing numbers, the result is no longer evidence. Write a new card and run again.
+- `scripts/bench.py verdict` applies the standing rule: beat both controls, nothing watched worse than both controls by more than 3%, and a repeat for drift or for a surprising win. It also prints a bootstrap 95% CI for c1 as information. An interval that includes 1.0 means the win could be noise, even if the medians beat both controls.
+
+## Prove the change ran
+
+- A kernel existing, a flag set or a microbenchmark win does not show that serving used the new path. Fallbacks are common:
+  - a shape the new kernel does not support;
+  - a dtype guard;
+  - an architecture check;
+  - a graph captured before the change.
+- After timing, record evidence from the real serving path for every phase and every GPU rank the change claims. It can be:
+  - a short trace that shows the new kernel's name;
+  - a dispatch counter;
+  - a log line that only the new path prints.
+- If the path did not run, a "win" measured noise and a "no change" measured the fallback. Either way the experiment says nothing about the change.
+- Set `"proof"` in the run config. `scripts/bench.py` runs it after timing, keeps the output tail and flags `NO_PROOF` if it fails.
+
+## Accuracy evidence
+
+- Set operator tolerances from the dtype and the operator before looking at the candidate's errors (`kernel-work.md`, correctness ladder).
+- At model level, freeze all of these:
+  - the dataset version and split;
+  - the prompt template;
+  - the parser;
+  - max output tokens;
+  - the seed.
+
+  Compare matched question IDs and report which ones changed from correct to wrong and from wrong to correct. Never drop failed or truncated cases to improve a score.
+- A small difference that is not significant does not show that the builds are equivalent. To claim equivalence, set a margin first and use enough samples.
+- Keep four kinds of evidence separate in reports: operator correctness, dispatch coverage, task accuracy and speed.
+
+## Metric definitions
+
+- **Per-GPU throughput:** total output tokens per second ÷ physical GPUs. Do not divide again by the tensor-parallel size.
+- **Acceptance length:** say whether it counts accepted drafts only, or also the target's own bonus token. Also say whether it is real or simulated, and how it was averaged.
+- **Tokens per step is not latency per token.** At 1,200 tok/s with 5.5 tokens per step, a step takes about 4.6 ms (5.5 ÷ 1,200), not 0.83 ms (1 ÷ 1,200).
+- **Simulated acceptance** (a fixed accepted length forced by a test switch) isolates step cost. It never measures speculative quality. Restart without the switch before any accuracy run.

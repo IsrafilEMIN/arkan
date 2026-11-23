@@ -8,10 +8,13 @@ description: >
   and with full-context stability. Computes the theoretical ceiling first, runs
   noise-controlled A/B experiments, keeps a ledger, and qualifies the winner before
   publishing it. Use when asked to optimise, tune, speed up, benchmark or hill-climb
-  a model server (vLLM, SGLang, llama.cpp, ExLlama/TabbyAPI, MLX, TensorRT-LLM...),
-  to find the maximum possible tok/s on a machine, or to publish a tuned recipe.
+  a model server (vLLM, SGLang, llama.cpp, ExLlama/TabbyAPI, MLX, TensorRT-LLM,
+  or a custom engine), to find the maximum possible tok/s on a machine, or to
+  publish a tuned recipe. Also covers the kernel-level loop once config levers
+  plateau: per-kernel roofline, one-variable kernel changes, proof the new code ran.
   Triggers: hill climb, tok/s, decode speed, prefill speed, MTP, EAGLE, draft model,
-  speculative decoding, KV cache, TTFT, startup time, theoretical maximum.
+  speculative decoding, KV cache, TTFT, startup time, theoretical maximum,
+  kernel tuning, roofline, nsys, ncu, tensor parallel.
 ---
 
 # Optimize inference (hill-climbing a model server)
@@ -33,7 +36,10 @@ Detailed references, read when needed:
 - `references/levers.md`: levers by area, ordered by typical payoff, with measured evidence.
 - `references/gotchas.md`: engine- and hardware-specific traps.
 - `references/publishing.md`: qualification gates, pinning, poster and report.
-- `scripts/`: an engine-agnostic harness. It has a bench, ceiling calculator, memory watchdog, serialized queue and ledger.
+- `references/kernel-work.md`: lever 7 in detail. Per-kernel roofline, decode vs prefill kernel rules, split-K and split-KV, correctness ladder, the kernel inner loop.
+- `references/profiling.md`: reading a timeline (kernel sum vs busy time vs wall time), nsys and ncu recipes that work on any engine, multi-GPU joins.
+- `templates/hypothesis.md`: the card you fill in before every experiment.
+- `scripts/`: an engine-agnostic harness. It has a bench, ceiling calculator, memory watchdog, serialized queue and ledger. `scripts/bench.py verdict` applies the accept rule from section 2 to the ledger.
 
 ## 0. Before touching anything
 
@@ -56,6 +62,8 @@ Detailed references, read when needed:
   - `ledger.jsonl`: one line per run, from the harness.
   - `configs/`: one JSON per run.
   - `scripts/`: a copy of this skill's `scripts/`. Run the harness from the working directory, so configs reach the memory probe as `scripts/mem.sh`.
+  - `hypotheses/`: one card per experiment, from `templates/hypothesis.md`, written before the run.
+  - `verdicts.jsonl`: one line per accept/reject decision, from `scripts/bench.py verdict`.
   - `best-config.json`.
 
 ## 1. Ceilings first
@@ -73,6 +81,9 @@ Compute the theoretical maximum for each metric before optimising (`scripts/ceil
 - **TTFT floor:** one forward pass plus tokenize and schedule.
 - **Startup floor:** weight read from disk or page cache plus allocation, assuming JIT and graph caches persist.
 - **KV:** bytes per token per layer × the layers that actually have KV (hybrid models have few). That gives how many full-length sequences fit under the memory cap.
+- **Tensor parallel (several GPUs on one model):** each card reads its shard plus every replicated tensor. Divide by that card's measured bandwidth. Then add the communication floor: all-reduces per step × the measured latency of one all-reduce at decode size. At decode the payload is small, so latency, not link bandwidth, sets this floor.
+- **Looped layers (a block of layers run more than once per token):** count the block's weight bytes once per pass. Weights of a few GB do not stay in cache between passes. For a looped MoE block, the experts touched are the union over all passes. Count attention and KV for every pass that has them.
+- **Per kernel, once you reach lever 7:** place each dominant kernel on the roofline. Compare its arithmetic intensity (FLOPs ÷ bytes) with the measured machine balance (peak FLOPs ÷ bandwidth). A kernel below the balance is memory bound; judge it by achieved bandwidth, not by compute use. See `references/kernel-work.md`.
 
 Report progress as a percentage of the practical ceiling. If the user's target is above the ceiling, say so early, with the arithmetic.
 
@@ -101,14 +112,26 @@ Report progress as a percentage of the practical ceiling. If the user's target i
 8. **Verify outputs, not just speed.** Flag degenerate or looping output, failed requests and an idle GPU. A suspiciously fast result is usually broken output.
 9. **Log everything in `PLAN.md`,** including failures and why they failed. Negative results are the most reusable output.
 10. **Secrets:** never ask twice for a credential the user already saved. Never print it, and never copy it or its path into anything published.
+11. **Decide the rule before the run.** Fill in a hypothesis card (`templates/hypothesis.md`) before each experiment:
+    - the one change, and what you deliberately left the same;
+    - the metric you expect to move, by how much, and why (link the ceiling gap or profile line);
+    - the metrics to watch for regressions;
+    - "accept if" and "reject if", written down now.
+    Never change the rule after seeing the numbers. A result the card did not predict is a reason to look closer, not a win.
+12. **Prove the change ran.** A config flag, a new kernel or a default-on option does not prove that the server used it. After timing, record evidence from the real serving path in every phase the change claims: prefill, decode, verify, and every GPU rank. Use a short trace, a dispatch counter or a log line that only the new path prints. Without it, a "win" or a "no change" may measure the fallback. Set `"proof"` in the config to have `scripts/bench.py` record it.
+13. **Resume from the record, not from memory.** After an agent restart, context reset or long pause, read `PLAN.md`, `verdicts.jsonl` and the ledger first. If an experiment has runs but no verdict, it is unfinished: rerun it. Never reconstruct a result you cannot find.
 
 ## 3. The loop
 
 ```
-baseline → profile → pick the lever with the largest (ceiling gap × likelihood) → config → A/B with controls
-   ↑                                                                                         ↓
-   └──────── update best-config + PLAN.md + ledger ←──── accept / reject with reason ←───────┘
+baseline → profile → pick the lever with the largest (ceiling gap × likelihood) → hypothesis card → config
+   ↑                                                                                                 ↓
+   │                                                              A/B with controls (queue.sh ctl cand ctl)
+   │                                                                                                 ↓
+   └── update best-config + PLAN.md + ledger ←── bench.py verdict + proof it ran ←── accept / reject ─┘
 ```
+
+`scripts/bench.py verdict ctl-a cand ctl-b` applies rule 2 to the ledger. It accepts only if the candidate beats both controls on the target metric and nothing else is worse by more than 3%. It asks for a repeat when the controls drifted apart or the win is surprisingly large. Your judgement still decides; the tool keeps the rule from bending.
 
 ### Lever order
 
@@ -132,13 +155,23 @@ Cheapest first; see `references/levers.md` for evidence.
    - Use int8/fp8 prefill GEMMs as a labelled quality trade.
    - Avoid padding cliffs in grouped MoE GEMMs.
 6. **Kernel thread and tile sizes:** defaults are often tuned for a bigger card.
-7. **Kernel work:** profile, read the ISA, fix the dominant kernel. Do this only after config levers plateau.
+7. **Kernel work:** profile, read the ISA, fix the dominant kernel. Do this only after config levers plateau. Follow the inner loop in `references/kernel-work.md`:
+   - Pick the kernel by *exposed* time on the timeline, not by its share of summed kernel time (`references/profiling.md`).
+   - Compute its own floor: bytes ÷ bandwidth if memory bound, FLOPs ÷ practical peak if compute bound. The gap to the floor is what this kernel can still give.
+   - One variable per version. Keep every old version; never overwrite one.
+   - Correctness first, at every row count M you serve. Then an interleaved microbenchmark. Then proof it ran. Then the end-to-end A/B, which is the only test that accepts.
 
 ### When a lever fails
 
 - **If kernel-count reductions (fusion) give nothing** under graphs, the time is inside the main kernels. Stop fusing.
 - **If higher acceptance doesn't give higher tok/s,** the draft costs too much. Measure per-step time.
 - **If a weird result appears,** suspect the measurement first: tokens counted per streamed chunk, prompt length not measured with the real tokenizer, cache hits, thermal state, or the battery.
+- **If a kernel wins in a microbenchmark but not end to end,** check three things in order:
+  - Did the new kernel run in serving (rule 12)?
+  - Did the time just move to the next join? On a timeline, the consumer now waits longer.
+  - Did the microbenchmark see warm caches that serving never sees? Rotate weights or flush between iterations.
+- **If summed kernel time exceeds step time,** kernels overlap. A kernel's share of the sum is not time you can remove.
+- **If one GPU in a tensor-parallel group is faster,** its spare time shows up as waiting inside the collective. The slowest rank sets the step. Profile every rank.
 
 ### Plateau
 
@@ -158,10 +191,20 @@ See `references/publishing.md`.
 - Run the acceptance gates on the clean build: load, chat, reasoning, tools round-trip, a long-context needle, and speed.
 - Then A/B the clean build against your best image to prove they match.
 - Report which numbers come from which harness. Gate numbers (e.g. thinking on, first 30 s) and hill-climb numbers (thinking off, medians) are not comparable.
+- Keep four kinds of evidence apart, because none of them stands in for another:
+  - operator correctness (the kernel test);
+  - dispatch coverage (proof the path ran, rule 12);
+  - task accuracy;
+  - speed.
+- A small accuracy difference that is not significant does not prove the two builds are equivalent. To claim equivalence, set a margin before the run and use enough samples.
 
 ## 5. Reporting to the user
 
 - **Start with a table:** metric, baseline, now, ceiling, how it was measured (median of N, cold or warm, which harness).
 - **Then:** what got the gains, why it stops here, the known limitations, and the system state you changed (power profile, running servers, uncommitted code, branches that must not be deleted).
 - **Say plainly** what was not verified.
+- **Define every throughput number:**
+  - per-GPU throughput is total ÷ physical GPUs, never divided again by the tensor-parallel size;
+  - say whether an acceptance length counts only accepted drafts or also the target's bonus token;
+  - tokens per step is not latency per token.
 - **When asked to free the GPU:** drain, stop the server, confirm no processes and an idle clock, and end any loop.

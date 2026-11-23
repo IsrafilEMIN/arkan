@@ -50,7 +50,9 @@ A tuned config is only useful if someone else can rebuild it and get the same re
   - memory samples;
   - the vision response;
   - the check and test logs;
-  - the experiment log (`PLAN.md`, `THEORY.md`, ledger).
+  - the experiment log (`PLAN.md`, `THEORY.md`, ledger);
+  - the hypothesis cards and `verdicts.jsonl`;
+  - the proof that each accepted change ran in serving (trace excerpt, counter or log line).
 - **Grep the bundle** for secrets, credential-file paths, tokens, personal emails and home-directory usernames before pushing.
 - **State in the README** which numbers come from the gates and which from the hill-climb harness, and how each was measured.
 

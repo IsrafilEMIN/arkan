@@ -74,6 +74,8 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
 
 ## Kernel work (after config levers plateau)
 
+The procedure is in `kernel-work.md`: the inner loop, per-kernel roofline, decode and prefill design rules, and the correctness ladder. Its design rules are priors, not measurements. The measured evidence stays here.
+
 - Write a bit-exact or tight-tolerance test against the old kernel at every row count M you serve.
   - A "−4%" kernel once produced wrong outputs that a two-path test missed.
   - A 4-level lossless check: weights bit-identical → each layer vs fp64 → graph vs eager → model KL.
