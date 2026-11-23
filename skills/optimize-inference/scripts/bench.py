@@ -4,6 +4,8 @@ TabbyAPI, MLX-LM server, LM Studio, Ollama's /v1 ...). Standard library only.
 
   python3 scripts/bench.py run configs/NAME.json [--long N] [--skip-cN] [--reps 6]
   python3 scripts/bench.py show [ledger.jsonl]
+  python3 scripts/bench.py verdict CTL_A CAND CTL_B [--metric c1_decode] [--tol 0.03] [--drift 0.05] [--surprise 0.10]
+                                   [--watch m1,m2,...] [--ledger ledger.jsonl]
 
 Config (JSON):
   {
@@ -18,16 +20,27 @@ Config (JSON):
     "extra_body": {"chat_template_kwargs": {"enable_thinking": false}},  # merged into every request
     "temperature": 0.6,
     "memory": {"cap_gib": 46, "probe": ["bash", "scripts/mem.sh", "srv"], "interval_s": 3},  # probe prints bytes
-    "require_ac": true                             # refuse to run on battery (Linux / macOS)
-  }
+    "require_ac": true,                            # refuse to run on battery (Linux / macOS)
+    "proof": ["bash", "proof.sh"],                 # optional; run after timing, while the server is still up.
+    "proof_timeout_s": 300                         # Must exit 0 only if the changed code path really ran
+  }                                                # (trace, dispatch counter, log line). Output tail is kept.
 
 Measurements (all token counts come from the server's usage stats, never from streamed chunks):
   startup_s, ttft_short_ms, c1_decode (median of --reps), c1_all, cN_aggregate (wall clock), cN_per_stream,
   prefill_<L> (prompt_tokens / TTFT on a unique cold prompt), long-context needle retrieval (--long),
-  mem_peak_gib, flags (LOOP, REQ_FAIL, ON_BATTERY, MEM_CAP, MEM_PROBE_FAIL). Results are appended to ledger.jsonl.
+  mem_peak_gib, proof, flags (LOOP, REQ_FAIL, ON_BATTERY, MEM_CAP, MEM_PROBE_FAIL, NEEDLE_MISS, NO_PROOF).
+  Results are appended to ledger.jsonl.
 MEM_PROBE_FAIL: the memory probe failed (non-zero exit or no byte count) after the server became healthy, so the
 cap was not enforced; failures during startup are ignored, since a native server binds its port only after loading.
 The server is left running after a run (the next run's launch stops it first); stop it yourself when done.
+
+verdict applies the accept rule to the latest ledger rows with those three names (control, candidate, control):
+  ACCEPT  the candidate beats BOTH controls on --metric, and no watched metric is worse than both controls by more
+          than --tol; all three runs are ok with no flags. Watched by default: c1_decode, cN_aggregate, prefill_<L>,
+          mem_peak_gib. ttft_short_ms and startup_s are single samples, so they are watched only if listed in --watch.
+  REPEAT  it would be accepted, but the controls differ by more than --drift, or the win is above --surprise.
+  REJECT  anything else. Reasons are printed. The decision is appended to verdicts.jsonl next to the ledger.
+  For c1_decode it also prints a bootstrap 95% CI of median(candidate) / median(both controls): information only.
 """
 import json, os, random, statistics, string, subprocess, sys, threading, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -233,7 +246,19 @@ def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
                            "prefill": round(r["prompt_tokens"] / r["ttft"], 1) if r["prompt_tokens"] else None,
                            "decode": r["decode"] and round(r["decode"], 2),
                            "retrieval": f"{sum(c in r['text'] for c in codes)}/{len(codes)}"}
+            if sum(c in r["text"] for c in codes) < len(codes):
+                flags.append("NEEDLE_MISS")
             log("long", res["long"])
+
+        if cfg.get("proof"):  # rule 12: evidence that the changed path ran, taken while the server is still up
+            try:
+                p = subprocess.run(cfg["proof"], capture_output=True, text=True, timeout=cfg.get("proof_timeout_s", 300))
+                res["proof"] = {"rc": p.returncode, "out": (p.stdout + p.stderr)[-600:]}
+            except (OSError, subprocess.TimeoutExpired) as e:
+                res["proof"] = {"rc": None, "out": repr(e)[-600:]}
+            if res["proof"]["rc"] != 0:
+                flags.append("NO_PROOF")
+            log("proof rc", res["proof"]["rc"])
         res["ok"] = True
     except Exception as e:
         res.update(ok=False, error=repr(e)); flags.append("REQ_FAIL")
@@ -267,12 +292,106 @@ def show(path="ledger.jsonl"):
         print(d["name"][:24].ljust(24) + "".join(str(d.get(k, "-"))[:13].rjust(14) for k in keys) + "  " + ",".join(d.get("flags", [])))
 
 
+LOWER_IS_BETTER = {"ttft_short_ms", "startup_s", "mem_peak_gib"}
+
+
+def metric_keys(d):
+    def numeric(v):
+        return isinstance(v, (int, float)) and not isinstance(v, bool)
+    return {k for k, v in d.items() if numeric(v) and (k == "c1_decode" or k.endswith("_aggregate") or k in LOWER_IS_BETTER
+                                                       or (k.startswith("prefill_") and k[8:].isdigit()))}
+
+
+def gain(x, ref, lower):
+    return (ref - x) / ref if lower else (x - ref) / ref
+
+
+def bootstrap_ratio(cand, ctl, iters=2000, seed=0):
+    rng = random.Random(seed)
+    r = sorted(statistics.median(rng.choices(cand, k=len(cand))) / statistics.median(rng.choices(ctl, k=len(ctl)))
+               for _ in range(iters))
+    return r[int(0.025 * iters)], r[int(0.975 * iters) - 1]
+
+
+SINGLE_SAMPLE = {"ttft_short_ms", "startup_s"}  # one sample per run: too noisy for a 3% check unless asked for
+
+
+def verdict(ctl_a, cand, ctl_b, metric="c1_decode", tol=0.03, drift=0.05, surprise=0.10, path="ledger.jsonl",
+            watch=None):
+    if ctl_a == ctl_b or cand in (ctl_a, ctl_b):
+        sys.exit("the three runs need distinct names: copy the control config to a second name (e.g. ctl-a, ctl-b)")
+    latest = {}
+    for line in open(path):
+        if line.strip():
+            d = json.loads(line)
+            latest[d["name"]] = d
+    missing = [x for x in (ctl_a, cand, ctl_b) if x not in latest]
+    if missing:
+        sys.exit(f"not in {path}: {', '.join(missing)}")
+    a, c, b = latest[ctl_a], latest[cand], latest[ctl_b]
+    lower = metric in LOWER_IS_BETTER
+    out = {"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "ctl_a": ctl_a, "cand": cand, "ctl_b": ctl_b, "metric": metric,
+           "tol": tol, "drift": drift, "surprise": surprise}
+    reasons, repeat, notes = [], [], []
+    for d in (a, c, b):
+        if not d.get("ok") or d.get("flags"):
+            reasons.append(f"{d['name']}: ok={d.get('ok')} flags={','.join(d.get('flags', [])) or '-'}")
+    vals = [d.get(metric) for d in (a, c, b)]
+    if any(v is None or v == 0 for v in vals):
+        reasons.append(f"{metric} missing or zero in " + ", ".join(d["name"] for d, v in zip((a, c, b), vals) if not v))
+    else:
+        av, cv, bv = vals
+        ga, gb = gain(cv, av, lower), gain(cv, bv, lower)
+        spread = abs(av - bv) / min(av, bv)
+        out.update(values=[av, cv, bv], vs_ctl_a_pct=round(ga * 100, 2), vs_ctl_b_pct=round(gb * 100, 2),
+                   control_spread_pct=round(spread * 100, 2))
+        if ga <= 0 or gb <= 0:
+            reasons.append(f"does not beat both controls on {metric}: {ga:+.1%} vs {ctl_a}, {gb:+.1%} vs {ctl_b}")
+        if spread > drift:
+            repeat.append(f"controls differ by {spread:.1%} (> {drift:.0%}): drift; rerun the control-candidate-control triple")
+        if min(ga, gb) > surprise:
+            repeat.append(f"win of {min(ga, gb):+.1%} is above {surprise:.0%}: repeat it before accepting")
+        if metric == "c1_decode" and all(d.get("c1_all") for d in (a, c, b)):
+            lo, hi = bootstrap_ratio(c["c1_all"], a["c1_all"] + b["c1_all"])
+            out["c1_ratio_ci95"] = [round(lo, 4), round(hi, 4)]
+            if lo <= 1.0:
+                notes.append(f"bootstrap 95% CI of the c1 ratio is {lo:.3f}-{hi:.3f}; it includes no gain")
+    shared = metric_keys(a) & metric_keys(c) & metric_keys(b)
+    checked = sorted((set(watch) & shared if watch else shared - SINGLE_SAMPLE) - {metric})
+    out["watched"] = checked
+    for k in checked:
+        if not a[k] or not b[k]:
+            continue
+        lk = k in LOWER_IS_BETTER
+        worst = max(gain(c[k], a[k], lk), gain(c[k], b[k], lk))  # candidate vs the better-for-it control
+        if worst < -tol:
+            reasons.append(f"{k} worse than both controls by at least {-worst:.1%} (> {tol:.0%})")
+    if not c.get("proof"):
+        notes.append("candidate has no proof recorded; rule 12 asks for evidence that the changed path ran")
+    out.update(decision="REJECT" if reasons else ("REPEAT" if repeat else "ACCEPT"), reasons=reasons + repeat, notes=notes)
+    vpath = os.path.join(os.path.dirname(os.path.abspath(path)), "verdicts.jsonl")
+    with open(vpath, "a") as f:
+        f.write(json.dumps(out) + "\n")
+    print(f"{out['decision']}: {cand} vs {ctl_a} / {ctl_b} on {metric}")
+    for r in out["reasons"]:
+        print("  -", r)
+    for n in notes:
+        print("  note:", n)
+    return out
+
+
 if __name__ == "__main__":
     a = sys.argv[1:]
-    if not a or a[0] not in ("run", "show"):
+    if not a or a[0] not in ("run", "show", "verdict"):
         sys.exit(__doc__)
+    opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d
     if a[0] == "show":
         show(*(a[1:2]))
+    elif a[0] == "verdict":
+        if len(a) < 4:
+            sys.exit(__doc__)
+        verdict(a[1], a[2], a[3], metric=opt("--metric", "c1_decode"), tol=float(opt("--tol", 0.03)),
+                drift=float(opt("--drift", 0.05)), surprise=float(opt("--surprise", 0.10)),
+                path=opt("--ledger", "ledger.jsonl"), watch=opt("--watch") and opt("--watch").split(","))
     else:
-        opt = lambda k, d=None: a[a.index(k) + 1] if k in a else d
         run(a[1], long_ctx=int(opt("--long")) if opt("--long") else None, skip_cn="--skip-cN" in a, reps=int(opt("--reps", 6)))
