@@ -5,16 +5,17 @@ description: >
   Apple, unified-memory laptops, multi-GPU) and any quantization (GGUF, EXL2/EXL3,
   AWQ/GPTQ, FP8, MLX, BF16): single-user and concurrent decode tok/s, speculative
   decoding, prefill tok/s, KV cache size, startup time and TTFT, under a memory cap
-  and with full-context stability. Computes the theoretical ceiling first, runs
-  noise-controlled A/B experiments, keeps a ledger, and qualifies the winner before
-  publishing it. Use when asked to optimise, tune, speed up, benchmark or hill-climb
+  and with full-context stability. Computes the theoretical ceiling first, zooms
+  out to find the one cause behind several symptoms, runs noise-controlled A/B
+  experiments, keeps a ledger, and qualifies the winner before publishing it.
+  Use when asked to optimise, tune, speed up, benchmark or hill-climb
   a model server (vLLM, SGLang, llama.cpp, ExLlama/TabbyAPI, MLX, TensorRT-LLM,
   or a custom engine), to find the maximum possible tok/s on a machine, or to
   publish a tuned recipe. Also covers the kernel-level loop once config levers
   plateau: per-kernel roofline, one-variable kernel changes, proof the new code ran.
   Triggers: hill climb, tok/s, decode speed, prefill speed, MTP, EAGLE, draft model,
   speculative decoding, KV cache, TTFT, startup time, theoretical maximum,
-  kernel tuning, roofline, nsys, ncu, tensor parallel.
+  kernel tuning, roofline, nsys, ncu, tensor parallel, root cause, bottleneck.
 ---
 
 # Optimize inference (hill-climbing a model server)
@@ -24,15 +25,17 @@ The loop is:
 
 1. Measure the baseline.
 2. Calculate the ceiling.
-3. Change one thing.
-4. Measure it against controls.
-5. Keep it or reject it, and write down why.
-6. Repeat until the remaining gap needs work out of scope, then qualify and publish.
+3. Zoom out: find the biggest bottleneck and the one cause behind the symptoms.
+4. Change one thing, at that cause.
+5. Measure it against controls.
+6. Keep it or reject it, and write down why.
+7. Zoom out again after each accepted change. Repeat until the remaining gap needs work out of scope, then qualify and publish.
 
 Detailed references, read when needed:
 
 - `references/ceilings.md`: how to compute theoretical maxima. It includes a worked example.
 - `references/methodology.md`: measurement pitfalls and statistics.
+- `references/diagnosis.md`: zooming out. Time budget, symptom list, competing theories, discriminating probes, known symptom clusters, whole-system score.
 - `references/levers.md`: levers by area, ordered by typical payoff, with measured evidence.
 - `references/gotchas.md`: engine- and hardware-specific traps.
 - `references/publishing.md`: qualification gates, pinning, poster and report.
@@ -58,7 +61,7 @@ Detailed references, read when needed:
 - **Read any existing experiment log for this machine and model.** Never rerun a rejected experiment without a new reason.
 - **Create the working directory:**
   - `PLAN.md`: a timestamped log of every experiment, with numbers, verdict and reason.
-  - `THEORY.md`: the ceilings.
+  - `THEORY.md`: the ceilings, the time budget and the current diagnosis.
   - `ledger.jsonl`: one line per run, from the harness.
   - `configs/`: one JSON per run.
   - `scripts/`: a copy of this skill's `scripts/`. Run the harness from the working directory, so configs reach the memory probe as `scripts/mem.sh`.
@@ -124,7 +127,7 @@ Report progress as a percentage of the practical ceiling. If the user's target i
 ## 3. The loop
 
 ```
-baseline → profile → pick the lever with the largest (ceiling gap × likelihood) → hypothesis card → config
+baseline → profile → zoom out: diagnose the bottleneck → lever for its cause → hypothesis card → config
    ↑                                                                                                 ↓
    │                                                              A/B with controls (queue.sh ctl cand ctl)
    │                                                                                                 ↓
@@ -133,9 +136,22 @@ baseline → profile → pick the lever with the largest (ceiling gap × likelih
 
 `scripts/bench.py verdict ctl-a cand ctl-b` applies rule 2 to the ledger. It accepts only if the candidate beats both controls on the target metric and nothing else is worse by more than 3%. It asks for a repeat when the controls drifted apart or the win is surprisingly large. Your judgement still decides; the tool keeps the rule from bending.
 
+### Zoom out
+
+Zoom out before the first lever, after every accepted change, after two rejects in a row or one result the card did not predict, and before you declare a plateau. Stop tweaking and do this (`references/diagnosis.md`):
+
+1. **Build the time budget:** each part of the step, its exposed time, its floor. The largest gap is the bottleneck; a part near its floor is done.
+2. **List the symptoms:** ceiling gaps, rejects inside noise, surprises, harness flags, control drift, gate failures.
+3. **Form at least two competing theories.** For each, write the symptoms it explains, the ones it does not, and a prediction the others do not make.
+4. **Run a discriminating probe,** not a tweak. It changes nothing you keep; it only separates the theories.
+5. **Fix at the cause** with one change. Name the theory and the symptoms it should remove on the hypothesis card.
+6. **Score the whole system:** speed, quality (looping, greedy equivalence, matched-ID accuracy) and reliability (failed requests, sample spread, memory peak, needles). The regression watch list in rule 2 covers all three, not only speed.
+
+Record each zoom-out as a dated `## Diagnosis` section in `THEORY.md`. Keep refuted theories with the reason.
+
 ### Lever order
 
-Cheapest first; see `references/levers.md` for evidence.
+This is the default order, cheapest first, for when the diagnosis does not point at a cause. A diagnosed cause goes first. See `references/levers.md` for evidence.
 
 1. **Persistent JIT, compile and graph caches** (startup −50–70%). Also use eager safetensors loading instead of mmap where it is slow.
 2. **Decode graphs** (CUDA/XPU graphs): often 2× c1 on their own.
@@ -175,10 +191,11 @@ Cheapest first; see `references/levers.md` for evidence.
 
 ### Plateau
 
-Declare a plateau when three consecutive levers land inside noise. Write a STATUS section in `PLAN.md` with:
+Before you declare a plateau, zoom out once. Three levers inside noise often treated symptoms of one cause that is not on this list. Declare a plateau when three consecutive levers land inside noise and the zoom-out finds no new cause. Write a STATUS section in `PLAN.md` with:
 
 - best numbers vs baseline vs ceiling;
 - what limits further gains, with evidence;
+- the latest diagnosis from `THEORY.md`: the budget, and the theories with their status;
 - a ranked list of the remaining levers and their estimated cost.
 
 Then keep the loop alive at a slower cadence if the user said "don't stop", or hand back.
