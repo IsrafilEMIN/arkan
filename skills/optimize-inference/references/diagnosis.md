@@ -42,7 +42,8 @@ Collect them from `PLAN.md`, `verdicts.jsonl` and the harness flags:
 - gaps to the ceiling, per metric;
 - rejects inside noise;
 - surprises: results the card did not predict;
-- flags: looping output, `NO_PROOF`, idle GPU, KV-bound admission, `MEM_PROBE_FAIL`;
+- harness flags: `LOOP`, `REQ_FAIL`, `NEEDLE_MISS`, `NO_PROOF`, `MEM_CAP`, `MEM_PROBE_FAIL`, `ON_BATTERY`;
+- checks you do yourself (`methodology.md`, output sanity): idle GPU, prefill inside the decode window, KV-bound admission;
 - drift between the two controls of one A/B;
 - stability gate failures (needles, soak, greedy equivalence).
 
@@ -97,6 +98,8 @@ After each accepted change, check all three again:
 - **Speed:** every metric in section 0 of `SKILL.md`, not only the target.
 - **Quality:** looping flags; greedy equivalence for lossless claims; matched-ID accuracy for lossy trades (`methodology.md`, accuracy evidence).
 - **Reliability:** failed requests, spread across samples, memory peak against the cap, needle results.
+
+`bench.py verdict` does part of this. It compares the speed metrics and `mem_peak_gib` with both controls, and rejects any run with a flag (`LOOP`, `REQ_FAIL`, `NEEDLE_MISS`, `NO_PROOF`, `MEM_CAP`, `MEM_PROBE_FAIL`, `ON_BATTERY`). It does not check greedy equivalence, accuracy or sample spread. Run those yourself and write the result on the hypothesis card. ACCEPT from the tool does not mean quality was checked.
 
 A speed win that costs quality or reliability is a rejection, unless the user allowed that trade in section 0.
 

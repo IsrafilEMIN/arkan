@@ -145,7 +145,7 @@ Zoom out before the first lever, after every accepted change, after two rejects 
 3. **Form at least two competing theories.** For each, write the symptoms it explains, the ones it does not, and a prediction the others do not make.
 4. **Run a discriminating probe,** not a tweak. It changes nothing you keep; it only separates the theories.
 5. **Fix at the cause** with one change. Name the theory and the symptoms it should remove on the hypothesis card.
-6. **Score the whole system:** speed, quality (looping, greedy equivalence, matched-ID accuracy) and reliability (failed requests, sample spread, memory peak, needles). The regression watch list in rule 2 covers all three, not only speed.
+6. **Score the whole system:** speed, quality (looping, greedy equivalence, matched-ID accuracy) and reliability (failed requests, sample spread, memory peak, needles). `bench.py verdict` compares only the speed metrics and `mem_peak_gib` with the controls, and rejects any run with a flag (`LOOP`, `REQ_FAIL`, `NEEDLE_MISS`, `NO_PROOF`, `MEM_CAP`, `MEM_PROBE_FAIL`, `ON_BATTERY`). Greedy equivalence, accuracy and sample spread are your checks: ACCEPT does not mean quality was checked.
 
 Record each zoom-out as a dated `## Diagnosis` section in `THEORY.md`. Keep refuted theories with the reason.
 
