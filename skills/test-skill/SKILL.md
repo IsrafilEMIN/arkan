@@ -163,6 +163,6 @@ trash "$L"; echo "exit=$?"; ls "$L" 2>&1
 - Grading only the final text: it hides blocked calls and checks that ran a change in the same call.
 - Calling the trigger reliable after one pass: report it as n of N runs.
 - Leaving the lab behind after a block or a failed run.
-- Turning planted comments into string literals after the `write` tool rejected them: the fixture no longer tests the real case. Write them with `printf | tee`.
+- Turning planted comments in a lab fixture into string literals after the `write` tool rejected them: the fixture no longer tests the real case. Only for fixture files inside the lab, write them with `printf | tee`.
 
 On an underground host: `cat > file`, `echo > file`, `grep` and `rm` in bash are blocked; the snippets above avoid them. Without omp, use your harness's headless mode with JSON output and change the event names in the grader to match its log.

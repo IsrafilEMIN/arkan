@@ -17,10 +17,10 @@ Find the work agents waste on this setup, measure it, and fix the costliest item
 
 ## 1. Measure the waste
 
-The scripts sit in `scripts/` next to this SKILL.md. The header of the `read` that loaded this skill shows its path. Run with python 3, stdlib only, read-only:
+The scripts sit in `scripts/` next to this SKILL.md. The header of the `read` that loaded this skill shows its path. Run with python 3, stdlib only, read-only. Add `--project <cwd text>` to narrow the window to one project:
 
 ```bash
-python3 <skill-dir>/scripts/waste.py --days 3            # add --project <cwd text> to narrow
+python3 <skill-dir>/scripts/waste.py --days 3
 ```
 
 It prints six sections: failed or blocked calls grouped by message (calls, sessions, how often the next call failed too, an example input), missing commands, bash sequences that repeat across sessions, bash commands by session count, possible user corrections, and advisor notes. Three days runs in a few seconds; 30 days takes about 1.5 minutes. Use its counts as they are. Do not write your own counter to check them; drill into a row instead.
@@ -33,12 +33,12 @@ python3 <skill-dir>/scripts/drill.py 'underground guard' --days 3 --limit 10
 
 `drill.py` takes a regex over error results (`--all` adds non-error results) and prints the call, the result and the next call, then counts the next call by tool.
 
-For titles, recaps and the user's own prompts, use eval's `archive` (all methods are async):
+For titles, recaps and the user's own prompts, use eval's `archive`. All methods are async. `sessions` gives id, file, project, title and recap; `search` matches user and assistant text only, not tool calls; `session` gives prompts, recap and file:
 
 ```python
-s = await archive.sessions(project="*", limit=50)       # id, file, project, title, recap
-hits = await archive.search("none of these are useful", project="*")  # user + assistant text only, not tool calls
-one = await archive.session(s[0]["id"])                 # prompts, recap, file
+s = await archive.sessions(project="*", limit=50)
+hits = await archive.search("none of these are useful", project="*")
+one = await archive.session(s[0]["id"])
 ```
 
 Without `archive`, the files are `~/.omp/agent/sessions/<project-slug>/<time>_<id>.jsonl`. Subagent runs sit in a folder with the parent's name and are named after the agent (`Main.jsonl`, `Scout.jsonl`). They are real work by the same agents: count them, never drop them as test runs. Each row is JSON: `type` `session` (has `cwd`), `message` (`message.role` is `user`, `assistant` with `toolCall` items, or `toolResult` with `toolName`, `isError`, `content[].text`), and `custom_message` with `customType` `advisor`.
