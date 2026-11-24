@@ -11,7 +11,8 @@ import time
 p = argparse.ArgumentParser(
     description="Measure agent waste in omp session logs. Read-only, stdlib only. "
     "Prints markdown: failed and blocked calls by message, missing commands, bash sequences "
-    "repeated across sessions, user corrections and advisor notes. Output can hold private data."
+    "repeated across sessions, user corrections, advisor notes, and how the next thinking "
+    "reacted to failed calls. Output can hold private data."
 )
 p.add_argument("--days", type=float, default=7)
 p.add_argument("--project", default="", help="substring of the session cwd")
@@ -30,6 +31,38 @@ NOT_FOUND = re.compile(r"(?:command not found: ?([\w.-]+)|([\w.-]+): command not
 GLUE = {"echo", "printf", "grep", "rg", "head", "tail", "cat", "ls", "cd", "wc", "sed", "awk", "sort", "uniq",
         "cut", "tr", "xargs", "jq", "true", "false", "sleep", "test", "pwd", "date", "basename", "dirname", "exit"}
 CORRECTION = re.compile(r"\b(no|nope|don'?t|stop|wrong|not what|i said|i told|instead|why did you|again|useless|dude|revert|undo)\b", re.I)
+KINDS = [("underground guard", "guard block"), ("blocked by tool policy", "tool-policy block")]
+REACTIONS = [
+    ("use trash", r"\btrash\b"),
+    ("ask the owner", r"\b(ask|tell|give)\b.{0,25}\b(user|owner|parent|main agent)\b|exact command"
+     r"|(won'?t|not|never) (try to )?(work|get|go) around"),
+    ("unsure it ran", r"(not sure|unsure|unclear|don'?t know|no idea)\b.{0,50}\b(ran|run|executed|happened|created|succeeded)"
+     r"|\bnothing (ran|happened)\b|never ran"),
+    ("retry narrower", r"narrow|one (file )?at a time|per file|each file|individual|without -[rf]\b|git r[m]\b"
+     r"|update-ref|\bREM\b|u[n]link|r[m]dir|r[m]tree"),
+    ("leave files behind", r"\bleave (it|them|the|this|that|those)\b|left (in place|behind)|(isn'?t|not) a concern|harmless"
+     r"|skip(ping)? (the )?clean|no need to clean|fine to leave|(in|under) \$?TMPDIR"),
+    ("give up verification", r"verif\w* (is |are )?left|leave (the )?verif|(can'?t|cannot|unable to) (verify|test|run (the )?tests)"
+     r"|main agent (will|to|can|should) (verify|run|test)|skip(ping)? (the )?(verif|tests)"),
+    ("hunt for the binary", r"common locations|\bnvm\b|homebrew|\bmise\b|which (node|bun)|(find|locate|search for) (node|bun)"),
+    ("switch tool or form", r"\b(use|using|switch to)\b.{0,20}\b(read|grep|glob|write|edit|find) tool|tool instead"
+     r"|instead of (cat|grep|head|tail|rg|find|echo)|\b(awk|sed -n|python3?)\b"),
+]
+REACTIONS = [(n, re.compile(rx, re.I)) for n, rx in REACTIONS]
+AGAIN = re.compile(r"\b(again|another)\b", re.I)
+
+
+def kind_of(body):
+    for needle, name in KINDS:
+        if needle in body:
+            return name
+    return "command not found" if NOT_FOUND.search(body) else "other error"
+
+
+def reaction(think):
+    if not think.strip():
+        return "no thinking"
+    return next((n for n, rx in REACTIONS if rx.search(think)), "other (back to the task)")
 
 
 def norm(text):
@@ -83,11 +116,13 @@ head_sessions = collections.defaultdict(set)
 tri_sessions = collections.defaultdict(set)
 corrections = {}
 advice = []
+react = collections.defaultdict(collections.Counter)
+react_again = collections.Counter()
 calls_total = errors_total = 0
 
 for f in files:
     top_level = not re.match(r"\d{4}-\d\d-\d\dT", os.path.basename(os.path.dirname(f)))
-    calls, pending, seq, user_turns = {}, None, [], 0
+    calls, pending, seq, user_turns, waiting = {}, None, [], 0, []
     for line in open(f, errors="ignore"):
         try:
             r = json.loads(line)
@@ -104,6 +139,12 @@ for f in files:
         m = r["message"]
         role = m.get("role")
         if role == "assistant":
+            think = " ".join(c.get("thinking", "") for c in m.get("content") or []
+                             if isinstance(c, dict) and c.get("type") == "thinking")
+            for k in waiting:
+                react[k][reaction(think)] += 1
+                react_again[k] += bool(AGAIN.search(think))
+            waiting = []
             for c in m.get("content") or []:
                 if isinstance(c, dict) and c.get("type") == "toolCall":
                     calls_total += 1
@@ -134,6 +175,7 @@ for f in files:
                 arg = args.get("command") or args.get("code") or args.get("path") or json.dumps(args)[:200]
                 err_example.setdefault(key, " ".join(str(arg).split())[:120])
                 pending = key
+                waiting.append(kind_of(body))
         elif role == "user" and top_level:
             user_turns += 1
             msg = re.sub(r"<([\w-]+)[^>]*>.*?</\1>", "", text_of(m.get("content")), flags=re.S).strip()
@@ -167,3 +209,8 @@ for c in list(corrections)[-T:]:
 print(f"\n## 6. Advisor notes ({len(advice)}; recurring ones point at repeated mistakes)\n")
 for c in advice[-T:]:
     print(f"- {c}")
+print("\n## 7. Reaction in the next thinking after a failed or blocked call\n")
+print("Rough regex classes, first match wins. They show which belief to look for; read the thinking with drill.py.\n")
+print("| kind | failed calls | reactions | next thinking says again/another |\n|---|---|---|---|")
+for k, c in sorted(react.items(), key=lambda kv: -sum(kv[1].values())):
+    print(f"| {k} | {sum(c.values())} | {', '.join(f'{n} {v}' for n, v in c.most_common())} | {react_again[k]} |")
