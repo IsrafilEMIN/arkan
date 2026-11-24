@@ -39,7 +39,7 @@ Make the smallest input on which the skill has one right answer that you know:
 
 Build git fixtures with a bare origin and a clone as `../scratch-proof/SKILL.md` shows.
 
-Source files that must hold code comments (TODOs, FIXMEs, disabled code): write them in bash with `printf '...' | tee "$L/fixture/src/a.py" >/dev/null`. On an underground host the `write` tool's no-comments guard rejects new comments, and rewriting them as strings changes what you test.
+Fixture source files that must hold planted code comments (TODOs, FIXMEs, disabled code): write them in bash with `printf '...' | tee "$L/fixture/src/a.py" >/dev/null`. On an underground host the `write` tool's no-comments guard rejects new comments, and rewriting them as strings changes what you test. This applies only to fixture files under `$L`, never to a real repo or to the skill under test.
 
 ## 3. Write RUBRIC.md (before run 1)
 
