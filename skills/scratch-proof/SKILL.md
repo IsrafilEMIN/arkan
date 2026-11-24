@@ -9,14 +9,17 @@ Answer "does X behave like Y" by running X once in a throwaway place, not by rea
 
 ## Hard rules
 
-Most wasted calls in past sessions came from these. Follow them from the first call.
+Most wasted calls in past sessions came from these, and from the wrong beliefs each rule contradicts. Follow them from the first call.
 
 1. Make the scratch dir with `d=$(mktemp -d)`. Never type a `/tmp/...` path, never write into the user's repo, never use a fixed name.
 2. Work only inside `"$d"`. Do not change the repo you were asked about; copy or clone it into `"$d"` when you need its content.
-3. Clean up with `trash "$d"`. Never `rm`, `rm -rf`, `unlink`, `rmdir`, `find -delete`, `rsync --delete`, the edit tool's file delete, or Python/JS delete calls.
-4. Do not put delete commands in a `trap`, a here-doc, a string or an eval cell either. The guard matches text, so `trap 'rm -rf "$d"' EXIT` or the text `rm -rf` inside a Python string blocks the whole call.
-5. In bash, do not start any command (also after `;`, `&&` or `|`) with `cat`, `head`, `tail`, `less`, `grep`, `rg`, `find -name/-type`, `sed -i`, or `echo`/`printf`/`cat` redirected into a file. One such command blocks the whole call. See "Instead of" below.
-6. One check per command, and print its exit code: `cmd; echo "exit=$?"`.
+3. Clean up with `trash "$d"`, in its own call at the end. Never chain it after real work (`setup; check; trash`), and never `rm`, `rm -rf`, `unlink`, `rmdir`, `find -delete`, `rsync --delete`, the edit tool's file delete, or Python/JS delete calls. Delete words also block inside a `trap`, a here-doc, a string or an eval cell: the guard matches text.
+4. Leftover temp files are not harmless, even under `$TMPDIR`. Trash the dir every time, also after a failed or blocked check.
+5. A delete was blocked? Run `trash <path>` at once. "Use a narrower command" does not mean a smaller delete: no per-file `rm`, no `git rm`, no `git update-ref -d`, no edit-tool delete. No `trash` on the host? Ask the owner.
+6. A blocked call ran nothing. The whole call is refused before it starts, so the setup in it never ran either. Do not guess the state: rerun the call without the blocked part.
+7. In bash, do not start any command (also after `;`, `&&` or `|`) with `cat`, `head`, `tail`, `less`, `grep`, `rg`, `find -name/-type`, `sed -i`, or `echo`/`printf`/`cat` redirected into a file. One such command blocks the whole call. After an interceptor block, re-plan the whole call with the tools in "Instead of"; do not just retry. The usual cause is a trailing `| grep`, `| tail` or `| head` that trims output.
+8. `node` or `bun` not found? Use `BUN_BE_BUN=1 omp` (check it with `command -v omp`). Do not search nvm, homebrew or mise for node, and never skip the check or leave it to someone else.
+9. One check per command, and print its exit code: `cmd; echo "exit=$?"`.
 
 ## 1. Make the scratch dir
 
@@ -59,7 +62,7 @@ ls -R "$d/fx"; echo "exit=$?"
 
 ### TypeScript or JavaScript check
 
-`node` and `bun` are often not on `PATH` on omp hosts. omp ships bun:
+`node` and `bun` are often not on `PATH` on omp hosts. omp ships bun, so use it at once (`command -v omp` shows it is there):
 
 ```bash
 BUN_BE_BUN=1 omp "$d/probe.ts"; echo "exit=$?"
@@ -101,7 +104,7 @@ The guard blocks these in every repo, scratch repos too: `git reset --hard`, `gi
 trash "$d"; echo "exit=$?"; [ -e "$d" ] && echo "dir still there" || echo "dir gone"
 ```
 
-It must print `exit=0` and `dir gone`. Trash it in the same turn you finish; never leave the dir for later. On a host without `trash`, ask the user before you delete anything.
+Run this as its own call after the last check. It must print `exit=0` and `dir gone`. Trash it in the same turn you finish; never leave the dir for later. On a host without `trash`, ask the user before you delete anything.
 
 ## Instead of
 
@@ -134,12 +137,11 @@ Before you send, check the draft: `setup:`, `proof:`, `control:` and `cleanup:` 
 
 ## Common mistakes
 
-- `rm -rf "$d"` or `trap 'rm -rf …' EXIT` at the end of a long setup command: the guard blocks the whole call, so the setup never runs either.
-- A here-doc `cat > file <<EOF` or `printf … > file` to write a fixture: blocked; use `write` or `| tee`.
-- `… | grep x` or `… | head` to trim output: blocked; trim with `awk` or `sed -n`.
+- `rm -rf "$d"` or a `trap` at the end of a long setup command: the guard blocks the whole call, so the setup and the checks never run either.
+- After a blocked delete, trying `rm` per file, `git rm` or the edit tool's delete: use `trash` instead.
+- After a block, leaving the scratch dir behind as "only temp files". Always end with `trash "$d"`.
+- `… | grep x` or `… | head` to trim output, again and again: re-plan with `awk`, `sed -n` or the tools.
 - `git reset --hard` or `git checkout -- .` to retry inside the scratch repo: blocked; make a new clone.
-- After a block, the agent left the scratch dir behind. Always end with `trash "$d"`.
-- Writing to a fixed `/tmp/foo` path: it collides with other agents and stays on disk.
-- Answering from memory after the setup failed. If the proof did not run, say "not proven" and give the error.
+- Answering from memory after the setup failed or was blocked. If the proof did not run, say "not proven" and give the error.
 
 On an underground host: the bash interceptor and the underground guard both run, and both match text, not intent. Without these guards (another host), the same steps still work; only the "blocked" notes do not apply.
