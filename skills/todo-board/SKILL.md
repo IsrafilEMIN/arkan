@@ -12,7 +12,7 @@ One `TODO.md` per repo, at the repo root (`git rev-parse --show-toplevel`). Tern
 ```markdown
 # <repo name>
 
-## Ready for Dev
+## Todo
 
 - [ ] Card title #tag due:2026-12-01
   A note line, indented two spaces.
@@ -20,13 +20,7 @@ One `TODO.md` per repo, at the repo root (`git rev-parse --show-toplevel`). Tern
   - [x] Done subtask
 - [ ] Another card
 
-## Dev
-
-## Ready for Test
-
-## Test
-
-## Blocked
+## In Progress
 
 ## Done
 
@@ -41,8 +35,8 @@ One `TODO.md` per repo, at the repo root (`git rev-parse --show-toplevel`). Tern
 
 ## Create
 
-1. If `TODO.md` exists at the root, do not replace it. Read it and add to it. If its lanes differ from the six below, ask the user before you change them.
-2. Otherwise write the file above with the lanes `Ready for Dev`, `Dev`, `Ready for Test`, `Test`, `Blocked` and `Done`, in that order, and one card per task the user named, or per task you plan. Leave the example cards out.
+1. If `TODO.md` exists at the root, do not replace it. Read it and add to it. If its lanes differ from the three below, ask the user before you change them.
+2. Otherwise write the file above with the lanes `Todo`, `In Progress` and `Done`, in that order, and one card per task the user named, or per task you plan. Leave the example cards out.
 3. Do not commit, stage or gitignore it unless the user asks.
 
 ## Update
@@ -53,12 +47,9 @@ One `TODO.md` per repo, at the repo root (`git rev-parse --show-toplevel`). Tern
 
 | Lane | A card goes here when |
 | --- | --- |
-| `Ready for Dev` | it is planned and nothing blocks it |
-| `Dev` | you start to implement it |
-| `Ready for Test` | the implementation is complete and committed |
-| `Test` | you start to run its checks |
-| `Blocked` | it cannot go on until someone or something else acts |
+| `Todo` | it is planned and you have not started it |
+| `In Progress` | you start to work on it |
 | `Done` | its checks pass; set `[x]` |
 
-- When a check fails in `Test`, move the card back to `Dev` and add a note that gives the failure.
-- When you move a card to `Blocked`, add a note that gives the blocker and the lane it came from. When the blocker is gone, move it back to that lane.
+- When a check fails, keep the card in `In Progress` and add a note that gives the failure.
+- When a card cannot go on until someone or something else acts, keep it in its lane and add a note that gives the blocker. Remove the note when the blocker is gone.
