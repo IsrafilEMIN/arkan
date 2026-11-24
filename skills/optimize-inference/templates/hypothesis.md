@@ -14,10 +14,12 @@ Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKIL
 - Gap it targets: <metric, now vs ceiling, from THEORY.md>
 - Evidence: <profile line, roofline numbers, or earlier result in PLAN.md>
 - Why this change should close part of the gap: <one or two sentences>
+- Theory it tests: <cause from the THEORY.md diagnosis, or "none: default lever order">
+- Symptoms it should remove: <e.g. host gaps between decode kernels, idle GPU flag>
 
 ## Prediction
 - Target metric: <e.g. c1_decode>, expected <+x% or a range>
-- Watch for regressions: <other metrics, e.g. prefill_32768, mem_peak_gib, accuracy>
+- Watch for regressions: <other metrics, e.g. prefill_32768, mem_peak_gib, accuracy; reliability: failed requests, sample spread, looping flag>
 - Lossless? <yes: greedy-equivalence check planned | no: labelled lossy trade, which quality gate>
 
 ## Proof it ran
@@ -33,6 +35,7 @@ Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKIL
 - Runs: <ctl-a, cand, ctl-b, plus repeats>
 - `scripts/bench.py verdict` output: <ACCEPT / REJECT / REPEAT, with its reasons>
 - Proof: <what it showed>
+- What it says about the theory: <confirmed / weakened / refuted; which symptoms stayed>
 - Decision and reason: <one line, copied to PLAN.md>
 ```
 
