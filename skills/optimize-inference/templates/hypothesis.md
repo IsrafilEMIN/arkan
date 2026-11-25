@@ -24,7 +24,7 @@ Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKIL
 
 ## Load plan
 - Server states: <e.g. ctl = configs/best.json, cand = configs/splitk4.json; same `launch`? yes: `--reuse` | no: reload>
-- Tests per state, fixed order: <built-in timing, `--long N,N`, `tests` entries (greedy equivalence, accuracy, profile), proof>
+- Tests per state, fixed order: <built-in timing, `--long N,N`, `tests` entries (greedy equivalence, accuracy), proof; profiling is a separate load after the A/B>
 - Load order and count: <e.g. ctl → cand → ctl = 3 loads>
 
 ## Proof it ran

@@ -34,7 +34,7 @@ Measurements (all token counts come from the server's usage stats, never from st
   Results are appended to ledger.jsonl.
 MEM_PROBE_FAIL: the memory probe failed (non-zero exit or no byte count) after the server became healthy, so the
 cap was not enforced; failures during startup are ignored, since a native server binds its port only after loading.
-tests: extra checks (greedy equivalence, accuracy evals, profiling) run while the server is up, in order, after the
+tests: extra checks (greedy equivalence, accuracy evals) run while the server is up, in order, after the
 timing and --long runs and before proof. Each gets env BENCH_BASE_URL, BENCH_MODEL, BENCH_RUN. Non-zero exit or
 timeout flags TEST_FAIL. Put every test in one config, so each server state loads once.
 The server is left running after a run (the next run's launch stops it first); stop it yourself when done.
