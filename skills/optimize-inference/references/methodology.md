@@ -19,10 +19,28 @@ Most "wins" and "regressions" in inference tuning are measurement errors. In eve
   - background CPU load (a laptop RTX 4080 went 107 → 75 tok/s under light CPU load);
   - prompt content, because acceptance depends on text type.
 - Take ≥6 decode samples and use the median. Use a fixed, seeded prompt panel; random prompts moved acceptance from 2.4 to 3.7 and made c1 comparisons pure noise.
-- **Interleave runs:** control, candidate, control. Compare a candidate only with its neighbours. Drift over an hour can exceed the effect you are measuring: the same config measured 53.8 and then 49.5 an hour apart.
+- **Interleave runs:** control, candidate, control. Compare a candidate only with its neighbours. Drift over an hour can exceed the effect you are measuring: the same config measured 53.8 and then 49.5 an hour apart. When a switch needs a reload, interleave whole server states, not single tests (next section).
 - **When comparing engines,** run them on the same card on the same day, back to back. Accept "B is faster" only if a bootstrap 95% CI of median(B)/median(A) is above 1.0.
 - Discard cold first runs and the first boot after a JIT cache miss (36 vs 90 tok/s on one vLLM boot).
 - Microbenchmarks need interleaved min-of-N timing; clock ramp-up made one kernel look 2.5× slower than it was.
+
+## Order runs by server state
+
+- **A load is the costly, noisy step:** weight load, JIT and graph capture, allocator state. Count loads: one per state in the run order, not one per test. Example: 4 tests × ON/OFF with control, candidate, control is 3 loads, not 12.
+- **List every test for the experiment before the first run:**
+  - built-in timing;
+  - needles at ~50% and ~100% context (`--long N,N`, one load);
+  - greedy equivalence;
+  - accuracy evals;
+  - proof (`"proof"`).
+- Put the extra tests in the config's `tests` list, so they run in the same load. A failed test flags `TEST_FAIL`. Keep the same order in every state: position in the load changes thermals and cache state.
+- **Bracket at state level:** control (all tests) → candidate (all tests) → control (all tests). `bench.py verdict` reads the three runs as usual.
+- **Several candidates share controls:** control, A, control, B, control. That is 5 loads for 2 candidates, not 6, and each candidate has a control on both sides.
+- A trailing control can be the next experiment's leading control only if the control config did not change and the gap is short (drift: see Noise).
+- **Profile in its own load,** after the A/B. nsys and ncu wrap the server launch and slow it (ncu serializes kernels and locks clocks), so a profiled load never gives timing and is never part of a bracket.
+- **An option that is a request field needs no reload:** `extra_body`, per-request sampling or draft settings. Use two configs with the same `launch` and run with `BENCH_FLAGS="--reuse"`. The harness reuses the server only if `.bench-server.json` records the same `launch` and `base_url`. A launch flag or env var needs a reload.
+- Reused runs have no `startup_s`, and their memory peak covers only that run. Measure startup and peak memory on fresh loads.
+- Never split one state's tests across loads to save time. Never compare a test from one load with the same test from a load on another day.
 
 ## Speculative decoding specifics
 

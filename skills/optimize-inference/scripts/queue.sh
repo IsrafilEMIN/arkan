@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Serialized GPU queue: runs bench.py on each config in order, one GPU job at a time across all callers.
 #   bash scripts/queue.sh ctl-a cand ctl-b            # interleave controls around each candidate
-#   BENCH_FLAGS="--long 131072" bash scripts/queue.sh cand
+#   BENCH_FLAGS="--long 65536,131072" bash scripts/queue.sh cand   # both needle lengths in one load
+#   BENCH_FLAGS="--reuse" bash scripts/queue.sh ctl-a cand ctl-b  # same launch (e.g. extra_body toggle): no reload
 # Detach long queues so they survive agent/terminal restarts (on macOS, which has no setsid, python3 calls it):
 #   setsid nohup bash scripts/queue.sh ctl-a cand ctl-b > queue.log 2>&1 < /dev/null & disown
 #   python3 -c 'import os,sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' bash scripts/queue.sh ctl-a cand ctl-b > queue.log 2>&1 < /dev/null & disown

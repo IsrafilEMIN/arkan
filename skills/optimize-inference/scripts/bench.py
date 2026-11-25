@@ -2,7 +2,7 @@
 """Engine-agnostic hill-climb benchmark for any OpenAI-compatible server (vLLM, SGLang, llama.cpp server,
 TabbyAPI, MLX-LM server, LM Studio, Ollama's /v1 ...). Standard library only.
 
-  python3 scripts/bench.py run configs/NAME.json [--long N] [--skip-cN] [--reps 6]
+  python3 scripts/bench.py run configs/NAME.json [--long N[,N...]] [--skip-cN] [--reps 6] [--reuse]
   python3 scripts/bench.py show [ledger.jsonl]
   python3 scripts/bench.py verdict CTL_A CAND CTL_B [--metric c1_decode] [--tol 0.03] [--drift 0.05] [--surprise 0.10]
                                    [--watch m1,m2,...] [--ledger ledger.jsonl]
@@ -21,18 +21,26 @@ Config (JSON):
     "temperature": 0.6,
     "memory": {"cap_gib": 46, "probe": ["bash", "scripts/mem.sh", "srv"], "interval_s": 3},  # probe prints bytes
     "require_ac": true,                            # refuse to run on battery (Linux / macOS)
+    "tests": [{"name": "greedy", "cmd": ["python3", "greedy.py"], "timeout_s": 1800}],  # optional; see below
     "proof": ["bash", "proof.sh"],                 # optional; run after timing, while the server is still up.
     "proof_timeout_s": 300                         # Must exit 0 only if the changed code path really ran
   }                                                # (trace, dispatch counter, log line). Output tail is kept.
 
 Measurements (all token counts come from the server's usage stats, never from streamed chunks):
   startup_s, ttft_short_ms, c1_decode (median of --reps), c1_all, cN_aggregate (wall clock), cN_per_stream,
-  prefill_<L> (prompt_tokens / TTFT on a unique cold prompt), long-context needle retrieval (--long),
-  mem_peak_gib, proof, flags (LOOP, REQ_FAIL, ON_BATTERY, MEM_CAP, MEM_PROBE_FAIL, NEEDLE_MISS, NO_PROOF).
+  prefill_<L> (prompt_tokens / TTFT on a unique cold prompt), long-context needle retrieval (--long, one entry per
+  length, e.g. --long 65536,131072 for ~50% and ~100% of the context in one load), tests, mem_peak_gib, proof,
+  flags (LOOP, REQ_FAIL, ON_BATTERY, MEM_CAP, MEM_PROBE_FAIL, NEEDLE_MISS, TEST_FAIL, NO_PROOF).
   Results are appended to ledger.jsonl.
 MEM_PROBE_FAIL: the memory probe failed (non-zero exit or no byte count) after the server became healthy, so the
 cap was not enforced; failures during startup are ignored, since a native server binds its port only after loading.
+tests: extra checks (greedy equivalence, accuracy evals) run while the server is up, in order, after the
+timing and --long runs and before proof. Each gets env BENCH_BASE_URL, BENCH_MODEL, BENCH_RUN. Non-zero exit or
+timeout flags TEST_FAIL. Put every test in one config, so each server state loads once.
 The server is left running after a run (the next run's launch stops it first); stop it yourself when done.
+--reuse: skip stop+launch if the server is healthy and .bench-server.json (written in the working directory after
+each healthy launch) records the same launch and base_url. The run then has reused_server: true, no startup_s, and
+mem_peak_gib covers only this run. Use it for consecutive runs with the same launch (e.g. an extra_body toggle).
 
 verdict applies the accept rule to the latest ledger rows with those three names (control, candidate, control):
   ACCEPT  the candidate beats BOTH controls on --metric, and no watched metric is worse than both controls by more
@@ -173,7 +181,10 @@ class MemWatch(threading.Thread):
                 self.on_trip()
 
 
-def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
+STATE = ".bench-server.json"
+
+
+def run(cfg_path, long_ctx=(), skip_cn=False, reps=6, reuse=False):
     cfg = json.load(open(cfg_path))
     srv, res, flags = Server(cfg), {"name": cfg["name"], "time": time.strftime("%Y-%m-%dT%H:%M:%S")}, []
     if cfg.get("require_ac") and not on_ac():
@@ -184,7 +195,16 @@ def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
             subprocess.run(cfg["stop"], capture_output=True)
 
     watch = MemWatch(cfg["memory"], stop_server) if cfg.get("memory", {}).get("probe") else None
-    if cfg.get("launch"):
+    state = {"launch": cfg.get("launch"), "base_url": srv.base}
+    if cfg.get("launch") and reuse and os.path.exists(STATE) and json.load(open(STATE)) == state and srv.healthy():
+        res["reused_server"] = True
+        log("reusing running server")
+        if watch:
+            watch.server_up = True
+            watch.start()
+    elif cfg.get("launch"):
+        if os.path.exists(STATE):
+            os.remove(STATE)  # a failed launch must never look reusable
         stop_server()
         t0 = time.monotonic()
         subprocess.run(cfg["launch"], check=True, capture_output=True)
@@ -198,6 +218,8 @@ def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
             time.sleep(1)
         res["startup_s"] = round(time.monotonic() - t0, 1)
         log("healthy after", res["startup_s"], "s")
+        with open(STATE, "w") as f:
+            json.dump(state, f)
         if watch:
             watch.server_up = True
     else:
@@ -239,16 +261,29 @@ def run(cfg_path, long_ctx=None, skip_cn=False, reps=6):
             res[f"prefill_{L}_tokens"] = r["prompt_tokens"]
             log(f"prefill ~{L}", res[f"prefill_{L}"], "tok/s over", r["prompt_tokens"], "tokens")
 
-        if long_ctx:
-            prompt, codes = document(long_ctx, seed=7)
+        for L in long_ctx:
+            prompt, codes = document(L, seed=7)
             r = srv.chat(prompt, 256, temperature=0.0)
-            res["long"] = {"prompt_tokens": r["prompt_tokens"], "ttft_s": round(r["ttft"], 1),
-                           "prefill": round(r["prompt_tokens"] / r["ttft"], 1) if r["prompt_tokens"] else None,
-                           "decode": r["decode"] and round(r["decode"], 2),
-                           "retrieval": f"{sum(c in r['text'] for c in codes)}/{len(codes)}"}
-            if sum(c in r["text"] for c in codes) < len(codes):
+            hits = sum(c in r["text"] for c in codes)
+            res.setdefault("long", {})[str(L)] = {
+                "prompt_tokens": r["prompt_tokens"], "ttft_s": round(r["ttft"], 1),
+                "prefill": round(r["prompt_tokens"] / r["ttft"], 1) if r["prompt_tokens"] else None,
+                "decode": r["decode"] and round(r["decode"], 2), "retrieval": f"{hits}/{len(codes)}"}
+            if hits < len(codes):
                 flags.append("NEEDLE_MISS")
-            log("long", res["long"])
+            log(f"long ~{L}", res["long"][str(L)])
+
+        env = dict(os.environ, BENCH_BASE_URL=srv.base, BENCH_MODEL=cfg["model"], BENCH_RUN=cfg["name"])
+        for t in cfg.get("tests", []):
+            try:
+                p = subprocess.run(t["cmd"], capture_output=True, text=True, env=env, timeout=t.get("timeout_s", 1800))
+                out = {"rc": p.returncode, "out": (p.stdout + p.stderr)[-600:]}
+            except (OSError, subprocess.TimeoutExpired) as e:
+                out = {"rc": None, "out": repr(e)[-600:]}
+            res.setdefault("tests", {})[t["name"]] = out
+            if out["rc"] != 0:
+                flags.append("TEST_FAIL")
+            log(f"test {t['name']} rc", out["rc"])
 
         if cfg.get("proof"):
             try:
@@ -394,4 +429,5 @@ if __name__ == "__main__":
                 drift=float(opt("--drift", 0.05)), surprise=float(opt("--surprise", 0.10)),
                 path=opt("--ledger", "ledger.jsonl"), watch=opt("--watch") and opt("--watch").split(","))
     else:
-        run(a[1], long_ctx=int(opt("--long")) if opt("--long") else None, skip_cn="--skip-cN" in a, reps=int(opt("--reps", 6)))
+        run(a[1], long_ctx=[int(x) for x in opt("--long").split(",")] if opt("--long") else (), skip_cn="--skip-cN" in a,
+            reps=int(opt("--reps", 6)), reuse="--reuse" in a)
