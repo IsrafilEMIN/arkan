@@ -42,7 +42,7 @@ Detailed references, read when needed:
 - `references/kernel-work.md`: lever 7 in detail. Per-kernel roofline, decode vs prefill kernel rules, split-K and split-KV, correctness ladder, the kernel inner loop.
 - `references/profiling.md`: reading a timeline (kernel sum vs busy time vs wall time), nsys and ncu recipes that work on any engine, multi-GPU joins.
 - `templates/hypothesis.md`: the card you fill in before every experiment.
-- `scripts/`: an engine-agnostic harness. It has a bench, ceiling calculator, memory watchdog, serialized queue and ledger. `scripts/bench.py verdict` applies the accept rule from section 2 to the ledger.
+- `scripts/`: an engine-agnostic harness. It has a bench, ceiling calculator, memory watchdog, serialized queue and ledger. A config's `tests` list runs extra test commands in the same server load. `scripts/bench.py verdict` applies the accept rule from section 2 to the ledger.
 
 ## 0. Before touching anything
 
@@ -98,6 +98,7 @@ Report progress as a percentage of the practical ceiling. If the user's target i
    - Run controls on both sides of each candidate: control, candidate, control.
    - Accept only if the candidate beats both neighbouring controls on its target metric and regresses nothing by more than ~3%.
    - Repeat any single surprising win.
+   - Bracket by server state, not by test. A load is the costly, noisy step. List every test first, then run all of them on one load per state, in the same order: control → candidate → control. That is one load per state in the run order, not one per test (4 tests, ABA: 3 loads, not 12). See `references/methodology.md`.
 3. **Keep the environment fixed.** Stay on AC power, on a fixed performance profile, with an idle host and no other GPU jobs.
    - Make the harness refuse to run otherwise.
    - Record the state at the end of each run, and void the run if it changed.
@@ -108,7 +109,7 @@ Report progress as a percentage of the practical ceiling. If the user's target i
 5. **Enforce the memory cap with a watchdog** that kills the run.
    - On unified memory, GPU allocations do not show in cgroup counters or MemAvailable. Measure driver residency (e.g. `drm-resident-*` in `/proc/<pid>/fdinfo`, or `nvidia-smi`) plus process anonymous memory. On Apple silicon, `scripts/mem-macos.sh <port>` reads the server's footprint, Metal buffers included.
 6. **Stability gates.** A config is only "best" after it passes:
-   - a long-context retrieval run, with needles in a ~50% then ~100% context document, found exactly;
+   - a long-context retrieval run, with needles in a ~50% then ~100% context document, found exactly. Run both lengths in one load: `--long N,N`;
    - a soak with concurrent full-length requests, if the KV pool is sized for N users;
    - a greedy output equivalence check, if the change claims to be lossless.
 7. **Never force-kill a server mid-batch.** Abort requests, wait for the drain, then stop with a timeout. A forced stop mid-prefill has caused GPU driver faults.
@@ -145,7 +146,7 @@ Zoom out before the first lever, after every accepted change, after two rejects 
 3. **Form at least two competing theories.** For each, write the symptoms it explains, the ones it does not, and a prediction the others do not make.
 4. **Run a discriminating probe,** not a tweak. It changes nothing you keep; it only separates the theories.
 5. **Fix at the cause** with one change. Name the theory and the symptoms it should remove on the hypothesis card.
-6. **Score the whole system:** speed, quality (looping, greedy equivalence, matched-ID accuracy) and reliability (failed requests, sample spread, memory peak, needles). `bench.py verdict` compares only the speed metrics and `mem_peak_gib` with the controls, and rejects any run with a flag (`LOOP`, `REQ_FAIL`, `NEEDLE_MISS`, `NO_PROOF`, `MEM_CAP`, `MEM_PROBE_FAIL`, `ON_BATTERY`). Greedy equivalence, accuracy and sample spread are your checks: ACCEPT does not mean quality was checked.
+6. **Score the whole system:** speed, quality (looping, greedy equivalence, matched-ID accuracy) and reliability (failed requests, sample spread, memory peak, needles). `bench.py verdict` compares only the speed metrics and `mem_peak_gib` with the controls, and rejects any run with a flag (`LOOP`, `REQ_FAIL`, `NEEDLE_MISS`, `TEST_FAIL`, `NO_PROOF`, `MEM_CAP`, `MEM_PROBE_FAIL`, `ON_BATTERY`). Greedy equivalence, accuracy and sample spread are your checks: ACCEPT does not mean quality was checked.
 
 Record each zoom-out as a dated `## Diagnosis` section in `THEORY.md`. Keep refuted theories with the reason.
 

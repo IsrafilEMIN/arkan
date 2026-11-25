@@ -22,6 +22,11 @@ Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKIL
 - Watch for regressions: <other metrics, e.g. prefill_32768, mem_peak_gib, accuracy; reliability: failed requests, sample spread, looping flag>
 - Lossless? <yes: greedy-equivalence check planned | no: labelled lossy trade, which quality gate>
 
+## Load plan
+- Server states: <e.g. ctl = configs/best.json, cand = configs/splitk4.json; same `launch`? yes: `--reuse` | no: reload>
+- Tests per state, fixed order: <built-in timing, `--long N,N`, `tests` entries (greedy equivalence, accuracy, profile), proof>
+- Load order and count: <e.g. ctl → cand → ctl = 3 loads>
+
 ## Proof it ran
 - How we will show the new path ran in serving: <trace, counter, log line>
 - Phases and ranks it must cover: <prefill / decode / verify; rank 0 and rank 1>
