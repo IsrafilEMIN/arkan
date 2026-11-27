@@ -1,8 +1,8 @@
 # Hypothesis card
 
-Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKILL.md` rule 11). Do not edit the decision rule after you see numbers. If you must change it, write a new card with a new run name and say why.
+Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKILL.md` rule 11). To change the decision rule after you see numbers, write a new card with a new run name and say why.
 
-Stages: probe → opt-in build → A/B → stability gate → other gates. The stability gate (`SKILL.md` rule 6) is required to keep a change: its needles and soak run last in the candidate load, or in one gate-only load after ACCEPT. The other gates are only proposed; the user decides whether they run.
+Stages: probe → opt-in build → A/B → stability gate (required; `SKILL.md` rule 6, run mechanics in `references/methodology.md`, loads) → other gates (proposed; `references/publishing.md`, section 4).
 
 ```markdown
 # <run-name>  (<date, time from `date`>)
@@ -22,10 +22,10 @@ Stages: probe → opt-in build → A/B → stability gate → other gates. The s
 
 ## Prediction
 - Target metric: <e.g. c1_decode at d50>, expected <+x% or a range>. Pass the point value to `bench.py verdict --predicted PCT`.
-- Mechanism metric: <what must move if the theory holds, e.g. step_ms, accept_len, bytes per step>. A win without movement there is REJECT/LOOK.
-- Max gain vs bar: <probe upper bound> vs <bar from `bench.py noise`>. Below the bar: bundle, reduce noise, or skip.
+- Mechanism metric: <what must move if the theory holds, e.g. step_ms, accept_len, bytes per step>. No movement: see `references/methodology.md`, decide before you measure.
+- Max gain vs bar: <probe upper bound> vs <bar from `bench.py noise`>. Below the bar: `references/diagnosis.md`, probes.
 - Watch for regressions: <other metrics and depth buckets, mem_peak_gib; reliability: failed requests, looping flag>
-- Constraints still met: <context target, memory cap, quality class>. If one is not, the result is CONDITIONAL.
+- Constraints still met: <context target, memory cap, quality class>. Not met: CONDITIONAL (`references/methodology.md`).
 
 ## Load plan
 - Loads and ETA: <e.g. ctl + cand, 2 loads × 3 passes, ~25 min>
@@ -51,7 +51,7 @@ Stages: probe → opt-in build → A/B → stability gate → other gates. The s
 - Proof: <what it showed>
 - What it says about the theory: <confirmed / weakened / refuted; which symptoms stayed>
 - Decision and reason: <ACCEPT / REJECT / CONDITIONAL / user decision; one line, copied to PLAN.md>
-- Stability gate: <pass / fail: needles C/2, C; soak N or n/a>. A fail rejects with reason "stability gate".
+- Stability gate: <pass / fail: needles C/2, C; soak N or n/a>
 - Other gates proposed: <which, or none>
 ```
 

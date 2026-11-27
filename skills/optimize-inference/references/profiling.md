@@ -7,7 +7,7 @@ The commands below are for NVIDIA tools: nsys for the timeline, ncu for one kern
 ## Timeline first, then one kernel
 
 - **Start with nsys.** It shows what ran, when, on which stream and on which GPU. ncu explains one kernel. Open it only after the timeline has told you which kernel matters.
-- **Profile in its own load,** after the A/B, from a fresh run of the current control (`methodology.md`, loads).
+- **Profile in its own load** (`methodology.md`, loads), from a fresh run of the current control.
 - **Trace only the window you need:** a few warmed steps of one phase. Keep startup, JIT and graph capture out of the capture. Choose one of these:
   - Call `cudaProfilerStart()` and `cudaProfilerStop()` around a few steps in the engine, then run `nsys profile -c cudaProfilerApi …`.
   - Put an NVTX range around the steps, then run `nsys profile -c nvtx -p RANGE_NAME …`.
@@ -65,7 +65,7 @@ A gap that shows only under the profiler can be the profiler's own overhead: gra
 
 ## Stages with NVTX (any engine)
 
-- **Put NVTX ranges around stages in the engine:** attention, MoE, all-reduce, LM head, sampling, and the prefill and decode phases. This gives the "profile by stage" step in `methodology.md` for a custom engine, and the phases for `budget.py`.
+- **Put NVTX ranges around stages in the engine:** attention, MoE, all-reduce, LM head, sampling, and the prefill and decode phases. This gives the "profile by stage" step (`levers.md`, Prefill) for a custom engine, and the phases for `budget.py`.
   - NVTX v3 is header-only: `#include <nvtx3/nvToolsExt.h>`, from the CUDA toolkit's `include/nvtx3`. No library link is needed.
 - **`nsys stats -r nvtx_gpu_proj_sum report.nsys-rep`** projects the ranges onto GPU time. You get GPU time per stage even though launches are asynchronous.
 - **To compare control and candidate,** profile both the same way and run `budget.py diff`.
@@ -81,7 +81,7 @@ A gap that shows only under the profiler can be the profiler's own overhead: gra
   ncu -k regex:NAME --launch-skip S --launch-count C --set full -o out <app>
   ```
 
-  Add `-lineinfo` to the build to map stalls to source lines.
+  Build with `-lineinfo` (`kernel-work.md`, reading the ISA).
 - **ncu locks the GPU clocks to base by default** (`--clock-control base`). Its durations are therefore longer than serving times. Compare ncu numbers only with other ncu numbers. Use `--clock-control none` to see boost behaviour.
 - **ncu replays each kernel several times** to collect counters. Overlap between streams disappears while it runs. Use it to explain a kernel, never to time the step.
 - **ncu hangs on kernels that spin-wait on another GPU.** It serializes kernels, so the peer kernel that would release the flag never runs alongside. For those kernels use PC sampling (stall reasons sampled while kernels run at normal concurrency, for example through the CUPTI PC sampling API), or profile a single-GPU reproduction of the kernel.

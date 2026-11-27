@@ -14,6 +14,16 @@ runs/<run_id>/        run_id = <name>-<UTC %Y%m%dT%H%M%S>
   tokens.jsonl (opt-in)  logits/ (opt-in, engine hook)   tests/<test-name>/   proof.txt
 ```
 
+| top-level item | content |
+|---|---|
+| `rig.json` | the rig inventory and check levels (`references/rig.md`) |
+| `PLAN.md` | a timestamped log of every experiment, with numbers, verdict and reason; the go/no-go threshold and report format |
+| `THEORY.md` | the ceilings, the quality contract, the time budget and the current diagnosis |
+| `configs/` | one JSON per run |
+| `hypotheses/` | one card per experiment, from `templates/hypothesis.md`, written before the run |
+| `scripts/` | a copy of the skill's `scripts/`. Run the harness from the working directory, so configs reach the memory probe as `scripts/mem.sh` |
+| `best-config.json` | the current best config |
+
 | file | content |
 |---|---|
 | `config.resolved.json` | the config after `base` + deltas, as the run used it |
@@ -42,9 +52,9 @@ runs/<run_id>/        run_id = <name>-<UTC %Y%m%dT%H%M%S>
 - `flags`: LOOP, REQ_FAIL, ON_BATTERY, MEM_CAP, MEM_PROBE_FAIL, NEEDLE_MISS, TEST_FAIL, NO_PROOF, RIG_BLOCK (preflight
   blocked, run not started, `ok=false`), HOST_FLOOR (host-RAM watchdog stopped the run), NO_PROGRESS (no token for
   `no_progress_s`: abort, stop), STATE_CHANGED (power limit or persistence changed: run void), HOST_BUSY (CPU or disk
-  above the idle baseline in the timed window), LOW_N (too few c1 samples or tokens per sample). LOW_N is watch-only;
-  HOST_BUSY in a compared run makes the verdict REPEAT.
-- Verdict flags, in `verdicts.jsonl` only: NOISY (per-pass SD above the bar, watch-only) and ANSWER_DIFF
+  above the idle baseline in the timed window), LOW_N (too few c1 samples or tokens per sample). How `verdict` treats
+  them: `references/methodology.md`, The verdict statistics.
+- Verdict flags, in `verdicts.jsonl` only: NOISY (`references/methodology.md`, The verdict statistics) and ANSWER_DIFF
   (`references/quality.md`).
 - `not_available`: checks, collectors or tests that a platform lacks. They never block; state them in the report.
 - Old schema-1 rows (no `"schema"`) stay readable: their top-level numeric keys are treated as metrics.
@@ -58,12 +68,7 @@ runs/<run_id>/        run_id = <name>-<UTC %Y%m%dT%H%M%S>
  "path":{"batch":int,"chunk":int|null,"cache":"cold|warm|bypass"},"engine":{...raw adapter fields...}}
 ```
 
-Prompt prefixes come from (seed, pass, prompt index): `"[run-seed S pass P prompt I]"`. Control and candidate get the
-same prompts per pass; passes inside one load get different prefixes, so the prefix cache cannot hit. On a reused
-server (`--reuse` or an attached server) the prefixes stay identical only with a rig `cache_bypass` of
-`request_field` or `flush_cmd`, applied to every timed request (`path.cache = "bypass"`). Without one, the pass number
-continues from `.bench-server.json` so no prompt repeats on that server; the verdict is then unpaired and falls back to
-per-pass samples. Warm-cache tests repeat a prompt on purpose, in their own test.
+Prompt prefixes and cache bypass on reused servers: `references/methodology.md`, Counting.
 
 ## Other files
 
@@ -102,6 +107,16 @@ A config's `tests` entries run on the running server and get this environment: `
 `BENCH_RUN`, `BENCH_RUN_ID`, `BENCH_RUN_DIR`, `BENCH_CONFIG` (path of the resolved config), `BENCH_PASS`,
 `BENCH_ENGINE_LOG`, `BENCH_LOG_OFFSET` (byte offset of the engine log at test start; read only lines after it).
 A test writes flat metrics to `$BENCH_RUN_DIR/tests/<name>/metrics.json`.
+
+## Harness scripts
+
+- `bench.py`: `run`, `show`, `verdict`, `noise`, `board`, `resolve`. Drivers (`http`, `cli`), timing adapters, config
+  `base` + deltas, test hooks.
+- `rig.py`: `detect`, `check`, `state`, `noise`. `queue.sh`: serialized queue and `status`. `mem.sh`, `mem-macos.sh`:
+  memory probes.
+- `ceiling.py`: ceilings. `workloads.py`: depth sweep, clients, multi-turn, invariance. `budget.py`: trace to
+  attributed time per part.
+- `quality.py`: l0/l1/l2 checks. `isa_diff.py`: per-function ISA diff of two builds.
 
 ## Your own tools
 

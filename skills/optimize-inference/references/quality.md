@@ -1,7 +1,7 @@
 # Quality
 
-A speed change is only a win if it keeps the quality the user allowed. This file defines the lossless levels, the
-quality contract you write before a round, the metrics, the dump formats and `scripts/quality.py`.
+A speed change is only a win if it keeps the quality the user allowed. This file defines the levels, the quality
+contract, the dump formats and `scripts/quality.py`.
 
 ## Levels
 
@@ -47,12 +47,11 @@ long sessions.
 
 ## Quality contract
 
-Write it in `THEORY.md` before the first run of a round. Each planned change gets a class, its per-change evidence and
-a margin. Per change, collect only the cheap evidence. The stability gate (`SKILL.md` rule 6: needles at C/2 and C, a
-soak if sized for N users, the per-change evidence if the change claims l0 or l1) is always required, for every class.
-The end-of-round column lists what is proposed on top of it; the user decides.
+Write it in `THEORY.md` before the first run of a round. Each planned change gets a class, its per-change evidence (only
+the cheap evidence) and a margin. The stability gate (`SKILL.md` rule 6) is required for every class. The end-of-round
+column is proposed on top of it; the user decides.
 
-| change class | example | per-change evidence | end of round, on top of the stability gate (proposed; user decides) |
+| change class | example | per-change evidence | end of round, on top of the stability gate |
 |---|---|---|---|
 | same bits | layout, schedule, fusion | l0 hash on touched paths | none extra |
 | rounding level | summation order, chunk size, accumulation dtype | routing REPLAYED; per-step full-vocab KL/TV vs floor per depth bucket; dNLL equivalence | needles at every depth bucket, multi-turn, thinking on/off |
@@ -70,10 +69,8 @@ The end-of-round column lists what is proposed on top of it; the user decides.
 
 ## Answer identity and the determinism check
 
-- Prompt prefixes come from (seed, pass, prompt index), not the clock, so control and candidate see the same prompts
-  per pass (`references/logging.md`). On a reused server (`--reuse` or an attached server) they stay identical only
-  with a rig `cache_bypass` of `request_field` or `flush_cmd`; otherwise the prompts differ, the verdict is unpaired,
-  and `ANSWER_DIFF` is not available.
+Prompt pairing on reused servers: `methodology.md`, counting.
+
 - `ANSWER_DIFF`: a verdict flag (in `verdicts.jsonl`, not the ledger) when the candidate claims l0 (config
   `"claims": "l0"`), the control is known deterministic (`--determinism`), and a greedy answer differs from the
   control's on the same prompt AND the same compute path (batch size, chunk, cache state cold/warm/bypass). Other
