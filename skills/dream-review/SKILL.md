@@ -15,7 +15,7 @@ The nightly dream job (underground `agent-dream`) reads the day's sessions and t
 
 ## Apply accepted proposals
 
-The agent has no access to the agent-config repo, and each `ug-agent` launch restores `~/.omp/agent` from it. Never edit the deployed files under `~/.omp/agent` to apply a proposal: the next launch loses the change. `~/.omp/agent` is a copy of the repo's HEAD, so build the change against that copy and give the user what to run.
+The agent has no access to the agent-config repo, and the owner's `sources sync` launch agent restores `~/.omp/agent` from it every 5 minutes. Never edit the deployed files under `~/.omp/agent` to apply a proposal: the next sync loses the change. `~/.omp/agent` is a copy of the repo's HEAD, so build the change against that copy and give the user what to run.
 
 1. Make a scratch git repo in `~/scratch/dream-<date>`. Copy each target file there from `~/.omp/agent/<path>`, keeping the relative path, and commit that as the base.
 2. Apply each accepted change in the scratch repo exactly as the report writes it. If it no longer applies because the deployed copy changed, say so and skip it.
@@ -31,7 +31,7 @@ The agent has no access to the agent-config repo, and each `ug-agent` launch res
    Always write the full file. Never give sed or perl edits keyed to line numbers or matched lines. If the file has a line that is only `EOF`, use a different delimiter. Wrap the block in a code fence longer than any backtick run in the file content (four backticks when the file has ``` fences), or the rendered block ends early and the heredoc is cut off.
 4. For other targets (skills, config), write `git diff` to `~/.omp/agent/dreams/<date>-accepted.patch`, show the patch, and tell the user to run `git apply <patch>` in their agent-config clone.
 5. Set each proposal's `Status:` in the report to `accepted` or `rejected`. Later dreams do not propose rejected ones again.
-6. Tell the user to commit and push in agent-config, then start `ug-agent` again so the change deploys.
+6. Tell the user to commit and push in agent-config. The sources sync deploys it within about 5 minutes, and the next `omp` session loads it.
 
 ## Undo
 
