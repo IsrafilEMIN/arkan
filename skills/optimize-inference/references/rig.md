@@ -1,8 +1,7 @@
 # Rig safety
 
 The rig is often a machine someone depends on. A run must not take it down, and a result must not come from a machine
-that changed under it. This file defines six invariants, how `rig.json` and `scripts/rig.py` check them, and how to
-leave the rig at the end.
+that changed under it.
 
 ## Six invariants
 
@@ -53,19 +52,16 @@ Written during the section-0 inventory by `python3 scripts/rig.py detect`, then 
 }
 ```
 
-- A check level is `block`, `warn` or `off`. `floor_gib: null` means the default max(6, 10% of `ram_gib`).
+- A check level is `block`, `warn` or `off`. `floor_gib: null` means the default floor (invariant 2).
 - `hooks`: ask the user which daemons must stay alive; add one entry per daemon (optional `"timeout_s"`, default 30).
   A hook whose command is missing fails; it is never "not available", because the user asked for that daemon.
 - `checks.host_busy` also takes `"disk_busy_pct"` (default 50) for the sampler's disk-busy flag.
 - `settings.protected`: settings the user said you must not touch. `settings.accepted`: changed settings the user
   accepted into the best config.
 - `cache_bypass`: how the determinism check bypasses the prompt cache (`references/quality.md`).
-- `noise`: the bar parameters (`references/methodology.md`). A verdict is "calibrated" only with at least `min_loads`
-  ok control loads and at least `min_df` within-load degrees of freedom. They are defaults; the rig or user can change
-  them.
-- `microbench`: inputs to the ceilings (`references/ceilings.md`), measured once per rig with short microbenchmarks:
-  bandwidth at the real read sizes, cost of one dependent kernel node, link bandwidth under real concurrent traffic,
-  peak FLOPs at the served power cap and clocks.
+- `noise`: the bar parameters and the "calibrated" minimums (`references/methodology.md`, noise). They are defaults;
+  the rig or user can change them.
+- `microbench`: inputs to the ceilings, measured once per rig (`references/ceilings.md`).
 
 ## scripts/rig.py
 
@@ -119,9 +115,8 @@ Builds and loads run in a capped scope, taken from `rig.json` `scope`, so they c
 - The memory cap watchdog (`scripts/mem.sh`, `scripts/mem-macos.sh`) kills the run at the cap (`MEM_CAP`).
 - Host-RAM floor: kill when host RAM falls below the floor (`HOST_FLOOR`).
 - No progress: no tokens for `watchdog.no_progress_s` seconds -> abort, drain, stop (`NO_PROGRESS`).
-- `HOST_BUSY`: a ledger flag set when CPU load or disk I/O in the timed window rose above the idle baseline. It does
-  not stop the run; a verdict that compares a run carrying it gives REPEAT. (The `host_busy` preflight check before the
-  run is separate and warns by default.)
+- `HOST_BUSY` is a ledger flag, not a stop (`references/logging.md`; verdict effect: `references/methodology.md`). The
+  `host_busy` preflight check is separate and warns by default.
 
 ## Session end
 

@@ -29,7 +29,7 @@ Most of this file is design rules from common GPU-kernel practice. Unlike `lever
 7. **Run the correctness ladder** (below) at every M you serve.
 8. **Microbenchmark** against the previous version (rules below). Record achieved bandwidth or FLOPs next to the floor.
 9. **Build it into the engine behind a default-off switch and prove it runs** in serving (`SKILL.md` rule 12; custom engines below).
-10. **Run the end-to-end A/B:** switch off vs switch on, same binary (`bash scripts/queue.sh ctl cand`, then `python3 scripts/bench.py verdict --ctl ctl --cand cand`; load modes in `methodology.md`). This is the only step that accepts. A microbenchmark win alone is not a win.
+10. **Run the end-to-end A/B:** switch off vs switch on, same binary (`methodology.md`, loads). This is the only step that accepts. A microbenchmark win alone is not a win.
 11. **Log it** in `PLAN.md`, including the rejects and why they failed.
 
 Stop work on one kernel when either is true:
@@ -52,7 +52,7 @@ balance   = measured_peak_flops (for the unit the kernel really uses) / measured
 - **Above the balance, it is compute bound.** Its floor is `flops / practical_peak`.
 - **Decode at M = 1** has an intensity of about 1 FLOP per byte with 16-bit weights. That is about two orders of magnitude below the balance of any recent GPU. No tuning makes it compute bound. Speculative verify at M = k raises intensity about k times. For small k it stays memory bound.
 - **Use the peak of the unit the kernel really runs on.** If the card has no tensor cores for the dtype (bf16 on Volta or Turing, for example), use the FP16 or FP32 peak the code actually uses.
-- **A reference point from this skill's own run:** the B390 verify-graph GEMVs reached about 76 of 115 GB/s, roughly 66% of measured copy bandwidth (`ceilings.md`). Published guidance for decode weight-load kernels aims at 60% of peak bandwidth or more. Below 40% usually means too few blocks or uncoalesced loads.
+- **A reference point from this skill's own run:** the B390 verify-graph GEMVs reached roughly 66% of measured copy bandwidth (`ceilings.md`, worked example). Published guidance for decode weight-load kernels aims at 60% of peak bandwidth or more. Below 40% usually means too few blocks or uncoalesced loads.
 
 ## Co-limit probe
 
@@ -62,7 +62,7 @@ The roofline says which limit *should* bind. A probe says which one does. Build 
 - **compute:** the math removed or reduced, loads kept;
 - **syncs and lookups:** barriers, atomics, page-table or index lookups removed.
 
-The time each variant saves is that limit's share. One dominant limit: attack it. Two limits within ~20% of each other: co-limited, so plan the combined change as one experiment. Probe variants change code generation; they bound the gain, they are never kept (`diagnosis.md`, probes).
+The time each variant saves is that limit's share. One dominant limit: attack it. Two limits within ~20% of each other: co-limited, so plan the combined change as one experiment. Probe variants change code generation; they bound the gain, and they are never kept (`diagnosis.md`, probes).
 
 ## Decode matmul (small M)
 
@@ -79,24 +79,24 @@ The time each variant saves is that limit's share. One dominant limit: attack it
 - **Fuse dequantization into the main loop** for weight-only quantized formats. A separate dequant pass reads the weights twice and erases the gain from quantization.
 - **For storage-only dtypes, convert on load and accumulate in FP32.** These are dtypes the card has no math for, such as bf16 before Ampere. Read the SASS to see the conversion cost. In CUDA 12.8, bf16 → fp32 below sm_90 is a single `mov.b32` (`cuda_bf16.hpp`, `__internal_device_bfloat162float`), so the cost is in the loads, not the conversion.
 - **Do not chase tensor-core use in decode.** Idle tensor cores at M = 1 are a symptom of being memory bound, not a fault.
-- **Graphs remove CPU launch cost, not GPU-side chain cost.** Each kernel in a graph still pays its fill and drain, and a dependent kernel waits for the previous one to finish. In this skill's runs, three fusions under graphs were correct and gave 0% (`levers.md`), because the time was inside the big kernels. Fusion or fewer dependent steps pays where the chain term of the practical ceiling (`ceilings.md`) is a measured gap.
+- **Fusion under graphs** pays only where the chain term is a measured gap (`ceilings.md`, practical ceiling; measured fusion results in `levers.md`).
 - **A one-block or serial-chain kernel on an under-filled grid** needs more blocks (split-K, split along N or the sequence), not fusion into a neighbour.
 
 ## Decode attention
 
 - **Split along the KV sequence** (split-KV, "flash-decoding"), not along queries: M is 1, or k when verifying.
 - **Keep the running max and sum of exponentials for each split in FP32,** and combine the splits with a log-sum-exp (LSE) merge. Adding up normalised partial outputs without the LSE correction gives wrong probabilities, silently.
-- **KV bytes per step** = `n_kv_layers × 2 × n_kv_heads × head_dim × past_len × bytes`. At long context this can exceed the weight bytes. Then more matmul work gains nothing; profile the split first.
+- **KV bytes per step** (formula: `ceilings.md`, KV) can exceed the weight bytes at long context. Then more matmul work gains nothing; profile the split first.
 - **Read KV with vectorised loads,** contiguous along the sequence. With paged KV, check that the page-table lookup keeps loads coalesced.
 - **Order the KV append:**
   - in plain decode, write the new K/V after the reads of the past;
   - in tree verify, make each row see exactly the rows it depends on.
-- **Run verify (M = k) as decode-style attention.** This skill measured it: with verify rows run as decode queries, SGLang on the B70 reached 82.6 tok/s at c1, against 75.7 for vLLM on the same card (`levers.md`).
+- **Run verify (M = k) as decode-style attention** (measured in `levers.md`, speculative decoding).
 
 ## Prefill
 
-- **Try a library first:** use large tiles, tensor cores and FP32 accumulation, from cuBLAS(Lt), CUTLASS, hipBLASLt or oneDNN, before writing your own. This skill measured a hand-written flash attention at 48 TFLOPS against a library's 61 (`levers.md`).
-- **MoE grouped GEMMs** see few rows per expert at a given chunk size. Size the chunk from rows per expert and avoid padding cliffs (`levers.md`).
+- **Try a library first:** use large tiles, tensor cores and FP32 accumulation, from cuBLAS(Lt), CUTLASS, hipBLASLt or oneDNN, before writing your own (measured hand-written vs library flash attention: `levers.md`).
+- **MoE grouped GEMMs** see few rows per expert at a given chunk size: size the chunk from rows per expert and avoid padding cliffs (`levers.md`).
 - **Align the chunk size** with the tile M of the GEMM and attention kernels. A mismatch forces masked partial tiles on every chunk.
 
 ## Tensor-core shapes differ by generation
@@ -116,17 +116,14 @@ These rules apply when the engine source is editable.
 - **New paths go behind default-off switches** (an env var or flag). One build can carry several untested switches; A/B each one against switch-off on the same binary, so the build itself is not part of the comparison.
 - **The default path must not change.** With every switch off, diff the ISA of the old and new build: `python3 scripts/isa_diff.py OLD NEW`. Every existing kernel must be unchanged. Compare against a fresh compile of the same tree; stale objects in a reused build directory give false diffs.
 - **Put new code in its own compile unit,** and know the rebuild time per file. Editing a shared header rebuilds everything and can change existing kernels.
-- **Microbenchmark before the build,** driven by the real dispatch shapes captured from the engine. Check the wave count at the real sizes.
 - **Cold instruction cache:** big unrolled kernels can miss the instruction cache in serving but not in a tight benchmark loop. Run another large kernel between iterations, and check the code size.
 - **Print the clock on every bench row** and compare only rows at equal clocks.
-- **Builds run in the rig's capped scope** (`rig.json` `scope.build`, `rig.md`), never during timed runs.
+- **Builds:** `rig.md`, capped scopes.
 - **Library autotune must copy the engine's handle state:** math mode, workspace, stream and alignment. An autotune with other state picks a different algorithm than serving runs.
 - **FMA contraction can break bit identity.** A refactor that lets the compiler fuse a multiply and an add changes rounding. Compare FFMA counts in the ISA of the old and new kernel.
 - **Add the proof log line first,** before the optimisation, so the first serving run already shows whether the path ran.
 
 ## Correctness ladder
-
-Model-level evidence for each quality class is in `quality.md`. At kernel level:
 
 1. weights bit-identical;
 2. each layer against fp64;
@@ -151,12 +148,12 @@ Add these checks:
 ## Reading the ISA
 
 - **`nvcc -Xptxas -v`** prints registers, spills and shared memory per kernel. A spill in a hot kernel is the first suspect.
-- **`-lineinfo`** lets ncu map stalls to source lines without a debug build. Debug builds change code generation (`methodology.md`).
+- **`-lineinfo`** lets ncu map stalls to source lines without a debug build. Debug builds change code generation.
 - **`cuobjdump -sass`** or **`nvdisasm`** show what the compiler actually emitted. Look for:
   - the load width you meant (128-bit global loads);
   - conversion instructions;
   - predicated or serialized tails;
-  - per-element register moves. This skill measured one on the B70: the LM head went from 4.05 to 1.72 ms after removing them (`levers.md`).
+  - per-element register moves (measured LM-head fix on B70: `levers.md`).
 
 ## Microbenchmark rules
 
@@ -165,4 +162,3 @@ These extend `methodology.md` (interleaved min-of-N, clock ramp-up):
 - **Use the shapes serving uses,** per card, at every M from step 2.
 - **Make caches look like serving.** Rotate through weight buffers larger than the L2, or flush between iterations, so every iteration reads from DRAM. A weight that sits in L2 makes a GEMV look several times faster than it is. Do the same for the instruction cache (custom engines, above).
 - **Run old and new in the same process,** interleaved. Report the min and the median, with the clock printed on every row.
-- **A microbenchmark explains; it does not accept.** Only the end-to-end A/B accepts.

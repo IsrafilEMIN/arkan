@@ -56,7 +56,7 @@ Parts of a decode step:
 - host gaps and launch;
 - idle.
 
-A part already near its floor is done, however big it is. In one 32K prefill, GEMMs were 40% of the time and already at the int8 ceiling, so more GEMM work was pointless (`levers.md`).
+A part already near its floor is done, however big it is (example: `levers.md`, Prefill).
 
 ### Fixed and per-row cost across concurrency
 
@@ -103,7 +103,7 @@ A probe changes nothing you will keep. It only measures a gap or separates theor
 
 | Probe | What it does | Read it as |
 |---|---|---|
-| Ablation | A test-only variant removes one cost: memory bytes (weights cache-resident or zeroed), compute, syncs, lookups. | The step time the part costs. Two limits within ~20% of each other are co-limited: test the combined change as one experiment. |
+| Ablation | A test-only variant removes one cost: memory bytes (weights cache-resident or zeroed), compute, syncs, lookups. | The step time the part costs. For two limits within ~20% of each other, see section 9. |
 | Upper bound | Untraced, in the real engine: skip or stub the part and time the whole step. | The most a fix of that part can give. The next join absorbs part of it, and copy-only time is not idle time. |
 | Gain vs noise | Write the upper bound next to the bar from `methodology.md` on the card. | Below the bar: bundle it with related parts, reduce noise, or skip it. |
 | Trace and replay | For offload or cache designs: record the real access trace from the engine (experts, pages or blocks touched per step at served settings), then replay it against the proposed policy offline. | Hit rate and bytes moved per step before you build anything. |
@@ -128,14 +128,15 @@ Other discriminating probes:
 |---|---|---|---|
 | Fusion gives ~0% under graphs; idle tensor cores at M = 1; decode close to the byte floor | Main GEMV/GEMM is memory bound (`levers.md` fusion line; `kernel-work.md` tensor-core line) | Grow M from 1 to 4; compare achieved bandwidth with measured bandwidth at the real read size | Fewer bytes per weight; speculative decoding |
 | Decode far above bytes ÷ bandwidth; many small dependent kernels; graphs on | Chain latency and work that moves no bytes (`ceilings.md`, practical at the current graph) | Ablate syncs or stub small kernels on a fixed token path | Structural lever: fewer dependent steps, overlap (`levers.md`) |
-| Higher acceptance but lower tok/s | Draft step cost. A 7-token draft accepted 3.26 vs MTP's 2.85, yet ran 11–14% slower (`methodology.md`) | Measure ms per verify step, spec on and off | Prune the draft LM head; shorter draft |
+| Higher acceptance but lower tok/s | Draft step cost (`methodology.md`, speculative decoding specifics) | Measure ms per verify step, spec on and off | Prune the draft LM head; shorter draft |
 | c1 fine, cN stops scaling; KV-bound admission | KV pool or state slots cap concurrency (`levers.md`, hybrid models) | Check how many requests run at once; fit fixed + per-row cost | Size slots and pool; concurrent soak |
 | Short-prompt TTFT high; kernels short; host gaps | Scheduler, tokenizer, chat template or sampler (`levers.md`, TTFT line) | Host gaps vs queue time | Host-side fixes before kernels; sampling on the GPU |
 | Same config drifts 5–10% or more; laptop slower | Power, thermals, background load (`methodology.md`, noise) | Repeat the control on AC, idle host, fixed profile | Fix the environment before any lever |
 | One rank waits inside the collective | Rank imbalance; the slowest rank sets the step (`profiling.md`) | Profile every rank, aligned on the collective | Balance shards; fix the slow rank |
 | Long, variable startup | JIT cache misses or slow mmap loading (`levers.md`, startup lines) | Time a second start; check cache directories | Persistent caches; eager safetensors loading |
 | OOM at some shapes only | Memory outside the framework allocator (`levers.md`) | Track the peak per shape | Route scratchpads through the allocator; pad shapes to buckets |
-| A record speed with a looping flag | Broken output, not speed. A 117 tok/s "record" was a numbered list in a loop (`methodology.md`) | Read the output | None until the output is correct |
+| A record speed with a looping flag | Broken output, not speed (`methodology.md`, output sanity) | Read the output | None until the output is correct |
+| A kernel wins in a microbenchmark but not end to end | The new kernel did not run in serving; the time moved to the next join (the consumer now waits longer); or the microbenchmark saw warm caches that serving never sees | Check in this order: proof it ran (`methodology.md`, prove the change ran); the timeline at the join (`profiling.md`); rotate weights or flush between microbenchmark iterations (`kernel-work.md`) | None until the checks pass |
 
 ## 8. Sum check
 

@@ -15,9 +15,11 @@ Examples:
   BENCH_FLAGS="--long 65536,131072 --soak 4" bash scripts/queue.sh cand   # stability gate, candidate only
   BENCH_FLAGS="--reuse" bash scripts/queue.sh ctl cand ctl cand  # same launch (e.g. extra_body toggle): alternate in one load
   bash scripts/queue.sh ctl-a cand ctl-b                         # triple mode, when between-load noise is large
-Detach long queues so they survive agent/terminal restarts (on macOS, which has no setsid, python3 calls it):
+Detach long queues so they survive agent/terminal restarts. Linux:
   setsid nohup bash scripts/queue.sh ctl cand > queue.log 2>&1 < /dev/null & disown
-  python3 -c '"'"'import os,sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])'"'"' bash scripts/queue.sh ctl cand > queue.log 2>&1 < /dev/null & disown
+macOS has no setsid; python3 forks first, then starts a new session (a bare os.setsid() fails with EPERM in a
+job-control shell, because the background job leads its own process group):
+  python3 -c '"'"'import subprocess,sys; subprocess.Popen(sys.argv[1:], start_new_session=True)'"'"' bash scripts/queue.sh ctl cand > queue.log 2>&1 < /dev/null
 Run from your experiment directory (the one holding configs/, rig.json and ledger.jsonl).'
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)

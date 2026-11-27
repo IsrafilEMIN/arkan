@@ -7,7 +7,7 @@ Most "wins" and "regressions" in inference tuning are measurement errors. In eve
 - **Count tokens with the tokenizer or the server's usage stats, not streamed chunks.** With speculative decoding, engines emit several tokens per SSE chunk; counting chunks under-reported MTP decode. Use `stream_options: {include_usage: true}` or `continuous_usage_stats`, or re-tokenize the output.
 - **Size prompts with the real tokenizer.** Tokens per word differ by model and text: ratios of 1.08 and 3.5 were seen, and "random word" documents at ~3.5 tokens per word turned nominal "32K/128K" cells into 58K/232K. `bench.py` calibrates tokens per word once per run from the server's `prompt_tokens`, then scales documents to it.
 - **Build prompts before the clock starts.** `bench.py` seeds each prompt prefix from (seed, pass, prompt id): `[run-seed S pass P prompt ID]`. Control and candidate get the same prompts in the same pass; passes inside one load get different prefixes, so the prefix cache cannot hit. A warm-cache test repeats a prompt on purpose, as its own test.
-- **Reused servers keep prompts paired only with a cache bypass.** With `--reuse` or an attached server, the prefixes stay identical between ctl and cand only when `rig.json` `cache_bypass` is `request_field` or `flush_cmd`. Without one, the pass numbers continue so no prompt repeats on the same server; `verdict` is then unpaired (per-pass samples) and `ANSWER_DIFF` is not available.
+- **Reused servers keep prompts paired only with a cache bypass.** With `--reuse` or an attached server, the prefixes stay identical between ctl and cand only when `rig.json` `cache_bypass` is `request_field` or `flush_cmd`, applied to every timed request (`path.cache = "bypass"`). Without one, the pass numbers continue from `.bench-server.json` so no prompt repeats on the same server; `verdict` is then unpaired (per-pass samples) and `ANSWER_DIFF` is not available.
 - **Decode tok/s:** completion tokens after the first token ÷ time since the first token.
 - **Prefill tok/s:** prompt tokens ÷ TTFT on a cold prompt. Report cold and warm (cache-hit) separately; never publish a cache-hit prefill as prefill. Check `cached_tokens` in `requests.jsonl`.
 - **Concurrent throughput (cN):** total completion tokens across N streams ÷ wall time from first start to last finish. Per-stream sums overstate it when streams don't overlap. Verify the server actually ran N at once (`max_running`, state slots).
@@ -75,7 +75,7 @@ A load is the costly, noisy step: weight load, JIT and graph capture, allocator 
   - Gate in the candidate load: `verdict` rejects on its own. Write "stability gate" and the flag in `PLAN.md`.
   - Gate-only load after ACCEPT: run it under the candidate's config name, then rerun `verdict`; a flagged gate load makes it REJECT. Never take an ACCEPT from before the gate load as final.
 - **Smoke-start the candidate once before queueing:** launch it, send one short request, read the answer and the proof line, stop it. A candidate that fails to load or falls back should not cost a queue slot.
-- **Default: two loads.** One control load with every test, then one candidate load with every test, each with several passes. Run them with `bash scripts/queue.sh ctl cand` and decide with `python3 scripts/bench.py verdict --ctl ctl --cand cand --predicted PCT`. `verdict` reads every ok load of both configs (`--since ISO` to limit them). If the bar is above the effect you predict, add loads of both configs: from the formula, `bar = max(k × sd_load × sqrt(1/L_ctl + 1/L_cand), floor_pct)`; extra passes only shrink `se_prompt` and the trend check.
+- **Default: two loads.** One control load with every test, then one candidate load with every test, each with several passes. Run them with `bash scripts/queue.sh ctl cand` and decide with `python3 scripts/bench.py verdict --ctl ctl --cand cand --predicted PCT`. `verdict` reads every ok load of both configs (`--since ISO` to limit them). If the bar is above the effect you predict, add loads of both configs (Noise, above); extra passes only shrink `se_prompt` and the trend check.
 - **The noise split picks the mode:**
 
   | `sd_load` vs `sd_within` ÷ sqrt(passes) | Mode |
@@ -89,7 +89,7 @@ A load is the costly, noisy step: weight load, JIT and graph capture, allocator 
   - drift of the newest control load against the others;
   - the first-vs-last pass trend inside each load;
   - the logged clocks and temperatures (`state_start`, `state_end`, sampler phases) and the same-day control history.
-  On REPEAT (drift, trend, `HOST_BUSY`, surprise, `g` over the bar with `lower ≤ 0`, or an inconclusive single candidate load): run one more load pair in reverse order (candidate, then control).
+  On REPEAT (conditions in Decide before you measure): run one more load pair in reverse order (candidate, then control).
 - **Reuse the last control load** only if it is from the same day, the control config is unchanged and its drift check passes.
 - **Profile in its own load,** after the A/B. nsys and ncu wrap the server launch and slow it, so a profiled load never gives timing and never joins a comparison.
 - Never split one config's tests across loads to save time. Never compare a test from one load with the same test from a load on another day.
@@ -116,34 +116,32 @@ A load is the costly, noisy step: weight load, JIT and graph capture, allocator 
 - Judge per-step time (ms per verify step) and accepted length separately. tok/s = a ÷ step_time.
 - Take the accepted length `a` from engine counters, never from the configured draft length.
 - Higher acceptance can be slower: a 7-token draft accepted 3.26 vs MTP's 2.85, yet ran 11–14% slower.
-- Acceptance counters may only update on request completion, so a short window sees a biased sample. Probe whole requests.
+- Acceptance counters may only update on request completion (SGLang does this), so a short window sees a biased sample. Probe whole requests.
 - Acceptance depends on content and temperature. Code and greedy decoding draft far better than sampled prose. Report the panel, temperature and thinking mode with every number.
 - Spec on vs off can diverge because of numerics: different kernels for M = 1 vs M = k rows. Check the verify logits as `quality.md` describes before calling it a bug. A top-2 tie of 0.016 nats is not a bug.
 
 ## Output sanity
 
-- Flag looping output (repeated shingles), failed requests, an idle GPU (<60% busy in the window), prefill inside the decode window, and KV-bound admission. A 117 tok/s "record" was a model emitting a numbered list in a loop.
+- Flag looping output (repeated shingles), failed requests, an idle GPU (<60% busy in the window), prefill inside the decode window, and KV-bound admission. A suspiciously fast result is usually broken output: a 117 tok/s "record" was a model emitting a numbered list in a loop.
 - `ANSWER_DIFF` (a verdict flag) and the determinism check are described in `quality.md`.
 
 ## Memory
 
 - On unified memory (Apple, Intel/AMD iGPU, GB10/Spark-class), GPU allocations bypass cgroup accounting. A MemAvailable delta showed 14 GiB where the real footprint was 29.4 GiB.
-- Sum driver residency (Linux DRM: `drm-resident-*` in `/proc/<pid>/fdinfo`, deduplicated by `drm-client-id`) plus cgroup `anon`. For a native server, `scripts/mem.sh --pid PID` covers the PID and its children.
+- Sum driver residency (Linux DRM: `drm-resident-*` in `/proc/<pid>/fdinfo`, deduplicated by `drm-client-id`) plus cgroup `anon`. For a container use `scripts/mem.sh`; for a native server, `scripts/mem.sh --pid PID` covers the PID and its children. On Apple silicon, use `scripts/mem-macos.sh <port>`.
 - Track the peak with a ~1–5 s sampler, and kill the run at the cap. The host-RAM floor is a separate watchdog (`rig.md`).
 
 ## Profiling
 
 - Profile with graphs off to get a per-kernel breakdown, but remember that graphs change launch overhead. Time the graph replay itself for the real step time.
-- Split prefill and decode, then profile prefill by stage (GEMM, attention, MoE, linear attention, norms/Hadamards) before picking the next lever (`profiling.md`).
-- A test-only build that removes work (skipping dequantization, zeroed weights) is a probe of the upper bound, not a lower bound of the kept code: it changes code generation around it. Time the whole step untraced and never keep it (`diagnosis.md`, probes).
 - Read the ISA or assembly when a kernel is "at the limit". Register-region moves, spills and serialized tails hide there.
-- **The sum of kernel durations, the GPU busy time and the wall time are three different numbers.** Read `profiling.md` before you turn a kernel's share of the sum into an expected speedup.
-- ncu locks clocks to base by default and replays kernels. Compare its times only with other ncu times.
+- **The sum of kernel durations, the GPU busy time and the wall time are three different numbers.** Read `profiling.md` before you turn a kernel's share of the sum into an expected speedup. ncu times compare only with other ncu times (`profiling.md`).
 
 ## Decide before you measure
 
 - Fill in the hypothesis card (`templates/hypothesis.md`) before the run. It records the change, its quality class, the mechanism metric, the expected effect and the upper bound against the bar, the metrics to watch, and the accept and reject rule.
-- If you change the rule after seeing numbers, the result is no longer evidence. Write a new card and run again.
+- Never change the rule after seeing numbers: the result is no longer evidence. If you must, write a new card with a new run name and run again.
+- A result the card did not predict is a reason to look closer, not a win.
 - `scripts/bench.py verdict` applies the standing rule (formulas in Noise, above):
 
   | Decision | Meaning |
@@ -154,6 +152,7 @@ A load is the costly, noisy step: weight load, JIT and graph capture, allocator 
   | REJECT | no gain, a watched metric worse by more than its bar, a run not ok or flagged, or `ANSWER_DIFF` |
 
   CONDITIONAL is set by you on the card, when the win holds but a constraint (context, memory, quality) is not yet shown to be met.
+  Your judgement still decides; the tool keeps the rule from bending.
 - A win without movement in the card's mechanism metric (acceptance, step ms, bytes) is not accepted: look at it as a surprise.
 
 ## Prove the change ran
@@ -181,4 +180,5 @@ A load is the costly, noisy step: weight load, JIT and graph capture, allocator 
 - **Per-GPU throughput:** total output tokens per second ÷ physical GPUs. Do not divide again by the tensor-parallel size.
 - **Acceptance length:** say whether it counts accepted drafts only, or also the target's own bonus token. Also say whether it is real or simulated, and how it was averaged.
 - **Tokens per step is not latency per token.** At 1,200 tok/s with 5.5 tokens per step, a step takes about 4.6 ms (5.5 ÷ 1,200), not 0.83 ms (1 ÷ 1,200).
+- **Say which harness each number comes from.** Gate numbers (e.g. thinking on, first 30 s) and hill-climb numbers (thinking off) are not comparable.
 - **Simulated acceptance** (a fixed accepted length forced by a test switch) isolates step cost. It never measures speculative quality. Restart without the switch before any quality run.

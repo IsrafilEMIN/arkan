@@ -6,11 +6,13 @@ These were found the hard way. Versions matter; re-check on newer releases.
 
 - **A second engine on the same GPU,** or a stray benchmark still running, silently halves results or crashes both. Lock the GPU (`scripts/queue.sh`) and check that the cards are idle before each run (`scripts/rig.py check`, `rig.md`).
 - **Correlate "device lost" crashes with the kernel log before blaming code.** Arc Pro B70 crashes turned out to be PCIe link drops: AER replay timeouts, then link down, 8 times in 3 days. They also spread to other devices on the same root complex.
-- **Forced container stops during a long prefill** caused an Intel xe GPU page fault. Always abort, drain, then stop with a timeout.
+- **Forced container stops during a long prefill** caused an Intel xe GPU page fault (`SKILL.md` rule 7).
 - **Very large images can crash vision encoders.** Cap the longest edge.
 - **Gateway or proxy timeouts** (often 600 s) cut off long-context tests. Test against the engine directly. Retry only on dropped connections, never on timeouts.
-- **Shells and agents:** `pkill -f pattern` can kill the shell that runs it, and `pgrep -f` matches its own command line, so a wait on it never ends. Kill by PID. Wait only on a PID, the lock, or log lines written after an offset you recorded; a grep over old log lines matches a previous run.
-- **Agent restarts** kill child processes. Detach long jobs (`setsid nohup … & disown`) and make them resumable.
+- **Shells and agents:** `pkill -f pattern` can kill the shell that runs it, and `pgrep -f` matches its own command line, so a wait on it never ends. Kill by PID. What to wait on: `rig.md`, Six invariants.
+- **Agent restarts** kill child processes. Detach long jobs and make them resumable:
+  - macOS: use the `python3` `start_new_session=True` form in `scripts/queue.sh`. macOS has no `setsid`, its `nohup` fails without a console session, and a bare `os.setsid()` fails with `EPERM` when the shell made the job its own process-group leader.
+  - Linux: `setsid nohup … & disown`.
 
 ## Multi-GPU
 
@@ -19,21 +21,16 @@ These were found the hard way. Versions matter; re-check on newer releases.
 
 ## Builds and code generation
 
-- **FMA contraction can break bit identity.** A refactor that lets the compiler fuse a multiply and an add changes rounding, while the source math looks the same. Compare FFMA counts in the ISA (`kernel-work.md`, custom engines).
-- **Instruction cache:** big unrolled kernels can miss the instruction cache in serving, after other large kernels ran, but not in a tight benchmark loop. Run another large kernel between iterations and check the code size.
-- **Stale objects in a reused build directory** make an ISA diff report changes that are not there. Compare against a fresh compile of the same tree (`scripts/isa_diff.py`).
+- FMA contraction, a cold instruction cache and stale build objects: `kernel-work.md`, custom engines.
 
 ## vLLM
 
 - Prefix caching may be off by default for hybrid (SSM/GDN) models. Enable it and check `cached_tokens`.
 - On Intel XPU, only `FULL_DECODE_ONLY` graphs worked. Piecewise capture failed with `UR_RESULT_ERROR_OUT_OF_RESOURCES`, and so did dynamic per-batch draft length, which forces piecewise graphs.
-- With MTP, streaming sends several tokens per chunk. Use usage stats for token counts.
-- mmap loading can be very slow; use `--safetensors-load-strategy eager`.
 - On unified memory, `gpu_memory_utilization` is compared against free host RAM, and values near 0.985 are refused.
 
 ## SGLang
 
-- **Speculative-decoding acceptance counters** update only when a request finishes.
 - **Hybrid models need `--max-mamba-cache-size`** large enough for N requests plus speculative state. Otherwise concurrency silently stays at 1. A value of 4 was too small for even one request with speculation.
 - **The XPU backend (0.5.x) had several bugs, patched in a plugin:**
   - verify was greedy-only at any temperature;
@@ -48,24 +45,20 @@ These were found the hard way. Versions matter; re-check on newer releases.
 
 ## llama.cpp / GGML
 
-- Quantized KV (q8_0) can be much slower on models with few KV layers.
-- MTP/draft support can fall below the no-draft baseline on hard prompts.
+- Quantized KV (q8_0) and MTP/draft slowdowns: measured in `levers.md`, Decode.
 - Check work-group sizes in backend kernels: a work-group of 1 in a SYCL copy kernel cost 7.8×.
 
 ## ExLlama / TabbyAPI
 
 - On ROCm, HIP graphs leaked until crash. Disabling them was stable at 115.6 tok/s.
-- A busy host CPU costs GPU decode on laptops: 107 → 75 tok/s.
 
 ## Hardware
 
 - **Intel Xe (Arc), PyTorch XPU:**
   - `torch.topk` segfaulted on wide inputs (above about 2–8K). Use staged top-k or Gumbel-max with `multinomial`.
-  - Split-K partial stores need uncached stores plus a clean fence on Xe3.
   - `UR_RESULT_ERROR_OUT_OF_RESOURCES` means too-large or piecewise graphs.
-- **Intel integrated GPUs and other unified-memory devices:** GPU memory is invisible to cgroups; see `methodology.md`. Battery and power profiles move results 8–10%.
-- **Apple silicon:** bandwidth-poor chips (base M-series) lose with deep speculation. The GPU wired-memory limit (`iogpu.wired_limit_mb`) caps usable memory.
-- **NVIDIA Ampere has no FP8 units;** INT4 (AWQ/GPTQ/EXL) wins when bandwidth-bound.
+- **Intel integrated GPUs and other unified-memory devices:** GPU memory is invisible to cgroups; see `methodology.md`, Memory.
+- **Apple silicon:** the GPU wired-memory limit (`iogpu.wired_limit_mb`) caps usable memory. Speculation on bandwidth-poor chips: `levers.md`, Decode.
 - **Hybrid GDN/SSM state dtype:** fp16 state produced `!!!` garbage on one SGLang XPU build, while another engine stored it in fp16 without issue. Verify output after changing the state dtype.
 
 ## Older NVIDIA cards: Volta (sm_70) and Turing (sm_75)
@@ -88,12 +81,5 @@ Unlike the sections above, these notes come from reading headers, tool output an
 
 ## Profilers
 
-- **ncu locks GPU clocks to base by default** (`--clock-control base`). Its kernel times are slower than serving, so never compare them with nsys or serving times.
-- **ncu replays each kernel** to collect counters. Multi-stream overlap disappears under it.
-- **ncu hangs on kernels that spin-wait on another GPU.** It serializes kernels, so the peer kernel never runs alongside. Use PC sampling or a single-GPU reproduction (`profiling.md`).
-- **nsys tracing a whole long prefill** can hang or run out of device memory: trace buffers and graph-node tracing use VRAM. Trace a short window and leave headroom (`profiling.md`).
-- **A gap that shows only under the profiler** can be profiler overhead. Confirm it with an in-engine timer in an untraced run (`profiling.md`).
-- **A high DRAM throughput percentage is the goal for a memory-bound decode kernel.** Some guides call "DRAM throughput < 50%" healthy. That only holds for compute-bound kernels that reuse data from cache.
-- **`ERR_NVGPUCTRPERM` from ncu** is the NVIDIA driver's admin-only counter setting (`NVreg_RestrictProfilingToAdminUsers`). `perf_event_paranoid` does not fix it. Ask before changing driver options.
-- **`nsys recipe …` needs extra Python packages** that a toolkit install may not have. With nsys 2024.6.2 in CUDA 12.8 it failed with `No module named 'psutil'` and named the install script. `nsys stats -r …` reports work without them. Ask before installing anything.
-- **Several nsys installs** (a distro package and the CUDA toolkit) can differ in version and features. Run `--version` on each and use the one that matches your toolkit.
+- **ncu clock locking, kernel replay, spin-wait hangs, nsys trace memory, profiler-only gaps, DRAM throughput targets and `ERR_NVGPUCTRPERM`:** `profiling.md`. Ask before changing driver options.
+- **`nsys recipe …` needs extra Python packages** that a toolkit install may not have. With nsys 2024.6.2 in CUDA 12.8 it failed with `No module named 'psutil'` (`profiling.md`). `nsys stats -r …` reports work without them.

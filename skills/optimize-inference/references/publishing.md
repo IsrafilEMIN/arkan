@@ -24,10 +24,9 @@ A tuned config is only useful if someone else can rebuild it and get the same re
 
 ## 4. Check the stability gate, propose the rest
 
-- **The stability gate is a precondition, not a proposal.** The best config passed it before it became best (`SKILL.md` rule 6, `methodology.md`): needles at C/2 and C, the soak if the config sizes the KV pool for N users, the lossless evidence if the change claims l0 or l1. If the config changed since, run it again before anything ships.
-- **The other gates are proposed; the user decides** which ones to run and whether the round's result can ship. Base the proposal on the quality contract in `THEORY.md` (`quality.md`): the end-of-round column for each change class that landed in the round, plus the release gates below.
-- **Stacked same-bits changes:** when several accepted changes each claimed l0 (same bits) behind their own switches, run one final l0 check on the final binary: all switches off vs all switches on, on every path the changes touched (`quality.md`, l0). Each change passing alone does not prove the stack is bit-identical.
-- **Rounding-level, discrete-decision and lossy changes** need the end-of-round evidence `quality.md` lists for their class (needles at every depth bucket, multi-turn, long agent sessions, paired tasks).
+- **The stability gate is a precondition, not a proposal** (`SKILL.md` rule 6). The best config passed it before it became best; if the config changed since, run it again before anything ships.
+- **Propose the other gates; the user decides which run and whether the round's result can ship.** Never start those on your own. Base the proposal on the end-of-round column of the quality contract in `THEORY.md` (`quality.md`) for each change class that landed, plus the release gates below.
+- **Stacked same-bits changes:** when several accepted changes each claimed l0 behind their own switches, run one final l0 check on the final binary: all switches off vs all on, on every path the changes touched. Each change passing alone does not prove the stack is bit-identical.
 
 Release gates, on the clean build:
 

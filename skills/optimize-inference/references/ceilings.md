@@ -6,7 +6,7 @@ Measure the hardware; don't trust the spec sheet. Run these short microbenchmark
 |---|---|---|
 | Bandwidth at the real read size | Device copy at the sizes the engine reads per kernel (one layer's weights, one expert, one KV block), not only one large buffer. Small reads reach less. | `bw_gbs_by_read_mib` |
 | Cost per chain node | A chain of dependent tiny kernels, captured in a graph if the engine uses graphs; time per node. | `chain_node_us` |
-| Link bandwidth | The real exchange size between cards, measured under real concurrent traffic: P2P vs host staging (`gotchas.md`, P2P). | `link_gbs` |
+| Link bandwidth | The real exchange size between cards, under real concurrent traffic; P2P and host staging separately (Links, below; `gotchas.md`, P2P). | `link_gbs` |
 | Peak FLOPs at the served cap | A large square FP16/BF16 GEMM (4096³ and 8192³) at the served power cap and clocks; the larger one shows thermal and clock drop. | `peak_tflops_at_cap` |
 
 A platform that cannot run one of them records it as not available; use the spec value and mark that ceiling "estimated".
@@ -25,8 +25,6 @@ structural_budget = practical_step − hard_step
 - **The practical ceiling, at the current graph,** adds the latency of the chain of dependent kernels and the work that moves no bytes. It is not a floor: fusion, fewer dependent steps or overlap can go below it.
 - **The structural budget** is the gap between the two. It is what a structural change can win (`levers.md`, structural lever).
 - **Graphs remove CPU launch cost, not this chain cost.** Each node still pays its fill and drain on the GPU, and a dependent kernel cannot start before the previous one ends. Count the chain term with graphs on.
-
-For prefill, use about 50% of measured peak FLOPs at the served cap as the practical compute peak.
 
 ## Decode (memory bound)
 
@@ -115,10 +113,10 @@ With layers split across cards and one request in flight (c1), only one card wor
 ### Links
 
 ```
-link_time_per_step = exchange_bytes_per_step / link_gbs   # link_gbs measured under real concurrent traffic
+link_time_per_step = exchange_bytes_per_step / link_gbs
 ```
 
-Measure P2P and host staging separately; the faster one on paper can lose under load.
+The faster of P2P and host staging on paper can lose under load.
 
 ## Looped layers
 
@@ -131,7 +129,7 @@ Some models run a block of layers more than once per token (looped or recurrent-
 
 ## One kernel
 
-Once you reach kernel work, ceiling each dominant kernel on its own: its arithmetic intensity against the measured machine balance, then its floor time. See `kernel-work.md`, "Roofline for one kernel". The model ceiling says how far the whole step can go. The kernel floor says which kernel still has room.
+Once you reach kernel work, ceiling each dominant kernel on its own (`kernel-work.md`, "Roofline for one kernel"). The model ceiling says how far the whole step can go. The kernel floor says which kernel still has room.
 
 ## Prefill (compute bound)
 
@@ -140,7 +138,7 @@ flops_per_token ≈ 2 × active_linear_params
                 + 4 × n_full_attn_layers × n_heads × head_dim × position   (causal: average position = L/2)
                 + 4 × n_swa_layers × n_heads × head_dim × min(position, window)
                 + linear-attention / SSM terms
-prefill_ceiling(L) ≈ 0.5 × peak_flops_at_cap / mean_flops_per_token(L)
+prefill_ceiling(L) ≈ 0.5 × peak_flops_at_cap / mean_flops_per_token(L)   # practical peak ≈ 50% of measured peak at the served cap
 ```
 
 Int8/FP8 tensor cores double the peak for the parts that use them. For MoE, small per-expert row counts at a given chunk size lower GEMM efficiency; that is usually the biggest gap (`levers.md`, MoE prefill chunk).

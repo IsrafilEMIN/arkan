@@ -24,7 +24,7 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
 
 ## Startup and TTFT
 
-- **[G] Persist every JIT, compile and autotune cache across restarts:** the SYCL/NEO/Triton/Inductor caches, the DeepGEMM cache and `~/.cache`.
+- **[G] Persist every JIT, compile and autotune cache across restarts** (startup −50–70%): the SYCL/NEO/Triton/Inductor caches, the DeepGEMM cache and `~/.cache`.
   - Arc B390 / SGLang: 113 s → 43 s.
   - 4× RTX PRO 6000 / vLLM: about 22 min → 7 min on later starts.
 - **[S: vLLM] mmap weight loading ran at about 60 MB/s on some filesystems:** 26 min for 27 GB. `--safetensors-load-strategy eager` brought it down to seconds.
@@ -33,7 +33,7 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
 
 ## Decode
 
-- **[G] Decode graphs (CUDA/XPU graph capture) are the first lever.**
+- **[G] Decode graphs (CUDA/XPU graph capture) are the first lever,** often 2× c1 on their own.
   - Arc Pro B70: 14.4 → 28.4 tok/s.
   - SGLang XPU: 16 → 32 tok/s.
   - vLLM INT4: 11 → 27 tok/s.
@@ -55,7 +55,7 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
 - **[G] Kernel thread counts and split-K tuned for one card are wrong for another.**
   - B70: 4096 → 1024 threads took code c1 from 48.5 to 56.9.
   - B390: 256 threads was a small win over defaults copied from a larger card.
-- **[G] Under graphs, fusing small kernels rarely helps when the time is inside the big kernels.** Three separate fusion attempts on B390 (fused GEMV, shared-expert fusion, fold attention) were correct and gave 0% gain. Fusion pays only where dependent-chain latency is a measured gap in the budget (`diagnosis.md`); graphs remove CPU launch cost, not that.
+- **[G] Under graphs, fusing small kernels rarely helps when the time is inside the big kernels.** Three separate fusion attempts on B390 (fused GEMV, shared-expert fusion, fold attention) were correct and gave 0% gain. Fusion pays only where dependent-chain latency is a measured gap in the budget (`diagnosis.md`); graphs remove CPU launch cost, not that. A chain on an under-filled grid needs more blocks or fewer dependent steps, not fusion that adds grid barriers.
 - **[G] KV cache dtype is a trade.**
   - FP8 KV halves memory, but halved attention throughput on one flash-attention kernel (39 vs 69–74 TFLOPS). Dequantizing blocks to fp16 with an LSE merge recovered it: 128K prefill 760 → 1,059 tok/s.
   - On a model with KV in only 16 of 64 layers, q8_0 KV went from 45.4 to 27.0 tok/s on llama.cpp.
@@ -63,14 +63,14 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
 ## Concurrency and memory
 
 - **[G] For hybrid SSM/GDN/Mamba models, state slots and page size cap concurrency, not KV tokens.**
-  - SGLang refused to schedule more than 1 request until `--max-mamba-cache-size` was raised.
+  - SGLang: `--max-mamba-cache-size` (`gotchas.md`, SGLang).
   - Keeping vLLM's exact 1,600-token block instead of rounding to 2,048 raised c16 from 10 to 14 streams, +17% aggregate.
 - **[G] Size the KV pool to N × context deliberately, and prove it with a concurrent full-length soak.** B390: 264K → 1.05M tokens (4 × 256K); the soak found 4/4 needles at a 36.8 GiB peak.
-- **[G] Enable prefix caching explicitly** and confirm `cached_tokens` > 0. Some engines disable it silently for hybrid models.
+- **[G] Enable prefix caching explicitly** and confirm `cached_tokens` > 0 (vLLM: `gotchas.md`, vLLM).
   - 66K-token turn-2 TTFT: 36 s → 0.45 s.
   - 32K-token turn-2 TTFT: 29 s → 0.95 s.
 - **[G] Memory outside the framework allocator causes OOMs.** Examples: a library scratchpad, a new primitive per shape, allocator fragmentation. Route scratchpads through the allocator, pad shapes to a few buckets, and use `expandable_segments:True`.
-- **[G] Leave headroom.** Over-allocating device memory on Arc livelocked the machine; keep ≥1.5 GB free. vLLM on unified memory checks `gpu_memory_utilization` against free *host* RAM.
+- **[G] Leave headroom.** Over-allocating device memory on Arc livelocked the machine; keep ≥1.5 GB free. vLLM on unified memory: `gotchas.md`, vLLM.
 
 ## Prefill
 
@@ -86,15 +86,13 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
   - Intermediate block sizes for M = 17–48 rows: −5%.
   - A 64-row M-block, which halves weight decode per row: +7% end-to-end prefill on B390, bit-exact.
   - An NT=2 tile fix: +22% at c16 on B70.
-- **[G] Profile by stage first.** In one 32K prefill, GEMMs were 40% and already at the int8 ceiling, so further GEMM work was pointless.
+- **[G] Profile by stage first** (GEMM, attention, MoE, linear attention, norms and Hadamards). In one 32K prefill, GEMMs were 40% and already at the int8 ceiling, so further GEMM work was pointless.
 
 ## Kernel work (after config levers plateau)
 
 The procedure is in `kernel-work.md`: the inner loop, per-kernel roofline, decode and prefill design rules, and the correctness ladder. Its design rules are priors, not measurements. The measured evidence stays here.
 
-- Write a bit-exact or tight-tolerance test against the old kernel at every row count M you serve.
-  - A "−4%" kernel once produced wrong outputs that a two-path test missed.
-  - The correctness ladder in `kernel-work.md` and the model-level evidence in `quality.md` set what to check.
+- A "−4%" kernel once produced wrong outputs that a two-path test missed. What to check: the correctness ladder in `kernel-work.md` and the model-level evidence in `quality.md`.
 - Read the ISA. On B70, stride-3 register regions turned into per-element moves; making them planar took the LM head from 4.05 to 1.72 ms.
 - Check memory-model fences on new GPU generations. Split-K partial stores on Xe3 needed L1-uncached stores plus a cache-clean fence. Without them, results were silently wrong at some M.
 - Measured and rejected on Intel Xe (try with care elsewhere):
