@@ -5,7 +5,22 @@ Each lever is tagged:
 - **[G]**: general.
 - **[S: stack]**: seen on one stack; check whether it applies to yours.
 
-The numbers come from real hill-climbs (see the README's results). Use them as priors, not promises.
+The numbers come from real hill-climbs (see the README's results). Use them as priors, not promises. Pick a lever from the diagnosis (`diagnosis.md`), not from this list's order.
+
+## Lever 0: audit the engine's defaults
+
+- **[G] Before any other lever, list the engine's flags and environment defaults** and check which are tuned for another GPU or turned off by default. Read `--help`, the config defaults, and the source (`grep -rn getenv`, or the language's equivalent, for env switches). One engine's prompt path ran 2.7–3.9× faster with a default-off flag turned on.
+- Record each default you change and why in `PLAN.md`. Each one is still its own experiment.
+
+## Placement and format
+
+- **[G] When the model does not fit,** compare the placement ceilings "as placed" and "if everything fit" (`ceilings.md`, placement). A large gap makes a format or placement that fits the first lever: fewer bits per weight, a smaller KV dtype, or a different split across cards. This changes quality: it is a labelled trade the user decides, with the evidence `quality.md` asks for its class.
+
+## Structure
+
+- **[G] When the practical ceiling at the current graph is far above the hard ceiling** (`ceilings.md`, structural budget), the lever is structural: fewer dependent steps per token, or overlap of independent work (copies, collectives, the draft and the target, prefill chunks and decode). Graphs remove CPU launch cost; they do not remove the per-node GPU cost of a long dependent chain.
+- **[G] A one-block or serial-chain kernel on an under-filled grid** needs more blocks (split-K, split along N or the sequence), not fusion into a neighbour (`kernel-work.md`).
+- When the sum check in `diagnosis.md` comes up short, propose the structural change to the user at once; it is usually above the go/no-go threshold.
 
 ## Startup and TTFT
 
@@ -40,7 +55,7 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
 - **[G] Kernel thread counts and split-K tuned for one card are wrong for another.**
   - B70: 4096 → 1024 threads took code c1 from 48.5 to 56.9.
   - B390: 256 threads was a small win over defaults copied from a larger card.
-- **[G] Under graphs, fusing small kernels rarely helps.** Three separate fusion attempts on B390 (fused GEMV, shared-expert fusion, fold attention) were correct and gave 0% gain. The time is inside the big kernels.
+- **[G] Under graphs, fusing small kernels rarely helps when the time is inside the big kernels.** Three separate fusion attempts on B390 (fused GEMV, shared-expert fusion, fold attention) were correct and gave 0% gain. Fusion pays only where dependent-chain latency is a measured gap in the budget (`diagnosis.md`); graphs remove CPU launch cost, not that.
 - **[G] KV cache dtype is a trade.**
   - FP8 KV halves memory, but halved attention throughput on one flash-attention kernel (39 vs 69–74 TFLOPS). Dequantizing blocks to fp16 with an LSE merge recovered it: 128K prefill 760 → 1,059 tok/s.
   - On a model with KV in only 16 of 64 layers, q8_0 KV went from 45.4 to 27.0 tok/s on llama.cpp.
@@ -65,8 +80,9 @@ The numbers come from real hill-climbs (see the README's results). Use them as p
 - **[G] Swap in a faster attention library before writing one.**
   - oneDNN fused SDPA: +7–18% over FA2 at 4K–254K.
   - A hand-written flash attention reached only 48 vs 61 TFLOPS.
-- **[G] Int8/fp8 prefill GEMMs, a labelled lossy trade.** In a Hadamard-rotated domain, per-row scales suffice. All linears ran 1.89× faster with NLL +0.17% and top-1 agreement 97.2%; decode stayed bit-exact. Prefill is often compute bound, so this pays.
-- **[G] Grouped MoE GEMMs: avoid padding cliffs and reuse decoded weights.**
+- **[G] Int8/fp8 prefill GEMMs, a labelled lossy trade** (evidence for the lossy-format class in `quality.md`). In a Hadamard-rotated domain, per-row scales suffice. All linears ran 1.89× faster with NLL +0.17% and top-1 agreement 97.2%; decode stayed bit-exact. Prefill is often compute bound, so this pays.
+- **[G] Grouped MoE GEMMs: size the chunk from rows per expert, avoid padding cliffs and reuse decoded weights.**
+  - Rows per expert ≈ chunk × top_k ÷ n_experts (routing is uneven, so check the real distribution). Choose a chunk that gives each expert at least one full GEMM tile M of rows. For example, 256 experts at top-8 need a chunk of 2,048 for 64 rows per expert.
   - Intermediate block sizes for M = 17–48 rows: −5%.
   - A 64-row M-block, which halves weight decode per row: +7% end-to-end prefill on B390, bit-exact.
   - An NT=2 tile fix: +22% at c16 on B70.
@@ -78,7 +94,7 @@ The procedure is in `kernel-work.md`: the inner loop, per-kernel roofline, decod
 
 - Write a bit-exact or tight-tolerance test against the old kernel at every row count M you serve.
   - A "−4%" kernel once produced wrong outputs that a two-path test missed.
-  - A 4-level lossless check: weights bit-identical → each layer vs fp64 → graph vs eager → model KL.
+  - The correctness ladder in `kernel-work.md` and the model-level evidence in `quality.md` set what to check.
 - Read the ISA. On B70, stride-3 register regions turned into per-element moves; making them planar took the LM head from 4.05 to 1.72 ms.
 - Check memory-model fences on new GPU generations. Split-K partial stores on Xe3 needed L1-uncached stores plus a cache-clean fence. Without them, results were silently wrong at some M.
 - Measured and rejected on Intel Xe (try with care elsewhere):

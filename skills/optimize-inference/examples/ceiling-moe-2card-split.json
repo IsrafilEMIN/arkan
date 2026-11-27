@@ -1,0 +1,12 @@
+{"bandwidth_gbs": 780, "peak_tflops": 112, "peak_tflops_at_cap": 95, "mfu": 0.45,
+ "dense_gb": 1.9, "experts_gb": 58.0, "top_k": 8, "n_experts": 128, "lm_head_gb": 0.6,
+ "active_params_b": 5.1, "attn_layers": 48, "attn_heads": 32, "head_dim": 128, "kv_bytes_per_token": 98304,
+ "pipeline_split": true,
+ "placement": {"resident_gb": 6.0, "nonresident_gb": 0.5, "nonresident_bw_gbs": 22},
+ "latency": {"n_dependent_kernels": 1100, "node_us": 4.0, "nonbyte_us": 350},
+ "sliding_window": {"window": 4096, "n_swa_layers": 36},
+ "links": {"exchange_bytes_per_step": 8192, "link_gbs": 10},
+ "spec": [{"drafts": 0, "accept": 1.0}, {"drafts": 2, "accept": 2.2}],
+ "contexts": [4096, 32768, 131072], "concurrency": [1, 4],
+ "depths": [512, 32768, 65536, 131072], "context_target": 131072,
+ "config_hash": "example-only"}

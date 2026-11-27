@@ -7,7 +7,8 @@ description: >
   decoding, prefill tok/s, KV cache size, startup time and TTFT, under a memory cap
   and with full-context stability. Computes the theoretical ceiling first, zooms
   out to find the one cause behind several symptoms, runs noise-controlled A/B
-  experiments, keeps a ledger, and qualifies the winner before publishing it.
+  experiments with a written quality contract, keeps a ledger, and qualifies the
+  winner before publishing it.
   Use when asked to optimise, tune, speed up, benchmark or hill-climb
   a model server (vLLM, SGLang, llama.cpp, ExLlama/TabbyAPI, MLX, TensorRT-LLM,
   or a custom engine), to find the maximum possible tok/s on a machine, or to
@@ -23,46 +24,59 @@ description: >
 You improve how fast a model server runs on one machine, with evidence.
 The loop is:
 
-1. Measure the baseline.
-2. Calculate the ceiling.
-3. Zoom out: find the biggest bottleneck and the one cause behind the symptoms.
+1. Inventory the rig, write the targets and the quality contract, calibrate noise.
+2. Calculate the ceilings.
+3. Zoom out: find the root cause with the largest checked gap.
 4. Change one thing, at that cause.
-5. Measure it against controls.
+5. Measure it against the control.
 6. Keep it or reject it, and write down why.
 7. Zoom out again after each accepted change. Repeat until the remaining gap needs work out of scope, then qualify and publish.
 
 Detailed references, read when needed:
 
-- `references/ceilings.md`: how to compute theoretical maxima. It includes a worked example.
-- `references/methodology.md`: measurement pitfalls and statistics.
-- `references/diagnosis.md`: zooming out. Time budget, symptom list, competing theories, discriminating probes, known symptom clusters, whole-system score.
-- `references/levers.md`: levers by area, ordered by typical payoff, with measured evidence.
+- `references/rig.md`: rig safety. The six invariants, `rig.json`, `scripts/rig.py`, capped scopes, the watchdog, leaving the rig as found.
+- `references/logging.md`: what every run records. Run directory, ledger and request schemas, collectors, opt-in heavy logs, what the ledger gives without new runs.
+- `references/quality.md`: lossless levels l0/l1/l2, the quality contract table, distribution metrics, dump formats, the determinism check and `ANSWER_DIFF`, `scripts/quality.py`.
+- `references/ceilings.md`: theoretical maxima. Hard vs practical-at-current-graph ceilings, placement, pipeline split, links, per-depth ceilings, a worked example.
+- `references/methodology.md`: noise bars from pooled SD, load modes, drift checks, context depth buckets, tokens-per-word calibration, measurement pitfalls.
+- `references/diagnosis.md`: zooming out. Time budget per depth, symptoms, root theories, probes on a fixed token path, the sum check, known symptom clusters.
+- `references/levers.md`: levers by area with measured evidence, including lever 0 (engine defaults audit), placement/format and structural levers.
 - `references/gotchas.md`: engine- and hardware-specific traps.
 - `references/publishing.md`: qualification gates, pinning, poster and report.
-- `references/kernel-work.md`: lever 7 in detail. Per-kernel roofline, decode vs prefill kernel rules, split-K and split-KV, correctness ladder, the kernel inner loop.
-- `references/profiling.md`: reading a timeline (kernel sum vs busy time vs wall time), nsys and ncu recipes that work on any engine, multi-GPU joins.
+- `references/kernel-work.md`: lever 7 and custom engines. Default-off switches, ISA diff, per-kernel roofline, kernel probes, correctness ladder, the kernel inner loop.
+- `references/profiling.md`: reading a timeline, `scripts/budget.py`, nsys and ncu recipes, multi-GPU joins.
 - `templates/hypothesis.md`: the card you fill in before every experiment.
-- `scripts/`: an engine-agnostic harness. It has a bench, ceiling calculator, memory watchdog, serialized queue and ledger. A config's `tests` list runs extra test commands in the same server load. `scripts/bench.py verdict` applies the accept rule from section 2 to the ledger.
+- `scripts/`: an engine-agnostic harness. Run every script with no arguments for its usage.
+  - `bench.py`: `run`, `show`, `verdict`, `noise`, `board`, `resolve`. Drivers (`http`, `cli`), timing adapters, config `base` + deltas, test hooks.
+  - `rig.py`: `detect`, `check`, `state`, `noise`. `queue.sh`: serialized queue and `status`. `mem.sh`, `mem-macos.sh`: memory probes.
+  - `ceiling.py`: ceilings. `workloads.py`: depth sweep, clients, multi-turn, invariance. `budget.py`: trace to attributed time per part.
+  - `quality.py`: l0/l1/l2 checks. `isa_diff.py`: per-function ISA diff of two builds.
+- `examples/`: configs for several engines, a CLI driver, a `rig.json`, ceiling inputs.
 
 ## 0. Before touching anything
 
 - **Write down the targets and constraints** the user gave. Ask only if one is missing and it changes what you do.
   - Metrics that matter: c1 decode, cN decode, prefill at several lengths, TTFT, startup.
   - Memory cap.
-  - Context length that must stay stable.
-  - Which quality changes are allowed: lossless only, or labelled lossy trades such as int8 prefill.
-- **Inventory the machine:**
-  - accelerator, memory type and size, and whether memory is unified;
-  - driver, engine version, model, quantization, current launch command.
-- **Measure, don't trust spec sheets:**
-  - real memory bandwidth (device copy);
-  - real matmul throughput (large GEMM);
-  - clocks under load.
+  - Context target: the context that must stay stable. It sets the depth buckets (short, ~25%, 50%, 100% of it; `references/methodology.md`).
+  - Which quality classes are allowed: lossless only, or labelled lossy trades such as int8 prefill.
+- **Inventory the rig:** `python3 scripts/rig.py detect` writes `rig.json` (platform, collectors, checks, hooks, scopes). Then `python3 scripts/rig.py check`. See `references/rig.md`.
+  - Ask the user which daemons must stay alive (they become `hooks`) and which settings you must not touch (`settings.protected`).
+  - Record driver, engine version, model, quantization and the current launch command.
+- **Ask once, store in `PLAN.md`:**
+  - the lever-decision threshold: above it you ask go/no-go. Default: a redesign, multi-day work, a quality-class change, or an area the user excluded;
+  - the user's preferred report format.
+- **Measure, don't trust spec sheets.** Once per rig, short microbenchmarks into `rig.json` `microbench`: bandwidth at the real read sizes, cost of one dependent kernel node, link bandwidth under real traffic, peak FLOPs at the served power cap and clocks.
+- **Write the quality contract** in `THEORY.md` before the first run of a round: the class of each planned change, its per-change evidence and its margin (`references/quality.md`).
+- **Calibrate noise:** run the control several times (passes in one load plus a few loads); `python3 scripts/bench.py noise`. Once per rig, A/B logging off vs on (`bench.py run --no-samplers`) to show logging costs less than the noise bar.
+- **Lever 0, audit the engine's defaults:** read its flags and env defaults (grep `getenv`) for values tuned for another GPU or default-off fast paths (`references/levers.md`).
 - **Read any existing experiment log for this machine and model.** Never rerun a rejected experiment without a new reason.
 - **Create the working directory:**
-  - `PLAN.md`: a timestamped log of every experiment, with numbers, verdict and reason.
-  - `THEORY.md`: the ceilings, the time budget and the current diagnosis.
-  - `ledger.jsonl`: one line per run, from the harness.
+  - `rig.json`: the rig inventory and check levels.
+  - `PLAN.md`: a timestamped log of every experiment, with numbers, verdict and reason; the threshold and report format.
+  - `THEORY.md`: the ceilings, the quality contract, the time budget and the current diagnosis.
+  - `ledger.jsonl`: one line per run, from the harness. `runs/<run_id>/`: everything a run recorded (`references/logging.md`).
+  - `queue.jsonl`: queue events from `scripts/queue.sh`.
   - `configs/`: one JSON per run.
   - `scripts/`: a copy of this skill's `scripts/`. Run the harness from the working directory, so configs reach the memory probe as `scripts/mem.sh`.
   - `hypotheses/`: one card per experiment, from `templates/hypothesis.md`, written before the run.
@@ -71,89 +85,73 @@ Detailed references, read when needed:
 
 ## 1. Ceilings first
 
-Compute the theoretical maximum for each metric before optimising (`scripts/ceiling.py`, `references/ceilings.md`):
+Compute the ceilings for each metric and each depth bucket before optimising (`scripts/ceiling.py`, `references/ceilings.md`):
 
-- **Decode is memory-bandwidth bound.** Count the bytes read per emitted token:
-  - dense weights;
-  - active experts: top-k ÷ experts × expert bytes;
-  - LM head;
-  - KV read at the working context.
-  - Divide by measured bandwidth.
-  - Speculative decoding divides the target's bytes by the accepted length. It also adds the draft's bytes, and the draft's LM head is often the biggest part.
-- **Prefill is compute bound.** FLOPs per token ≈ 2 × active params, plus attention at about 4 × layers × hidden × position. Divide by ~50% of measured peak for a practical ceiling.
-- **TTFT floor:** one forward pass plus tokenize and schedule.
-- **Startup floor:** weight read from disk or page cache plus allocation, assuming JIT and graph caches persist.
-- **KV:** bytes per token per layer × the layers that actually have KV (hybrid models have few). That gives how many full-length sequences fit under the memory cap.
-- **Tensor parallel (several GPUs on one model):** each card reads its shard plus every replicated tensor. Divide by that card's measured bandwidth. Then add the communication floor: all-reduces per step × the measured latency of one all-reduce at decode size. At decode the payload is small, so latency, not link bandwidth, sets this floor.
-- **Looped layers (a block of layers run more than once per token):** count the block's weight bytes once per pass. Weights of a few GB do not stay in cache between passes. For a looped MoE block, the experts touched are the union over all passes. Count attention and KV for every pass that has them.
-- **Per kernel, once you reach lever 7:** place each dominant kernel on the roofline. Compare its arithmetic intensity (FLOPs ÷ bytes) with the measured machine balance (peak FLOPs ÷ bandwidth). A kernel below the balance is memory bound; judge it by achieved bandwidth, not by compute use. See `references/kernel-work.md`.
+- **Hard ceiling:** bytes ÷ measured bandwidth (decode), FLOPs ÷ peak at the served cap (prefill).
+- **Practical, at the current graph:** bytes ÷ bandwidth + dependent kernels × measured cost per node + work that moves no bytes (top-k, syncs, recurrence, sampling). It is not a floor: fusion, fewer dependent steps or overlap can go below it. The gap between the two is the structural budget.
+- **Decode bytes per emitted token:** dense weights, active experts (top-k ÷ experts × expert bytes), LM head, KV at the working depth. Speculative decoding divides the target's bytes by the accepted length `a` measured from engine counters, never the configured draft length, and adds the draft's bytes.
+- **Placement:** compute "as placed" (resident bytes ÷ VRAM bandwidth + non-resident bytes ÷ the bandwidth that serves them) and "if everything fit". A large gap makes a format or placement that fits the first lever; that is a quality trade the user decides.
+- **Layer or pipeline split:** c1 uses one card at a time, so the ceiling is one card's bandwidth; the metric is both-cards-busy time. Tensor parallel, links, sparse or sliding-window attention and looped layers: `references/ceilings.md`.
+- **TTFT, startup, KV size:** one forward pass plus tokenize and schedule; weight read plus allocation with persistent caches; KV bytes per token × layers that have KV.
+- **Recompute:** ceilings carry a config hash. A change of quant, card count, placement or power cap makes them stale.
+- **Per kernel, once you reach lever 7:** roofline against the measured machine balance (`references/kernel-work.md`).
 
-Report progress as a percentage of the practical ceiling. If the user's target is above the ceiling, say so early, with the arithmetic.
+Report progress as a percentage of the practical ceiling per bucket. If the user's target is above the ceiling, say so early, with the arithmetic.
 
 ## 2. Ground rules (non-negotiable)
 
-1. **One change per experiment.** Give each its own config file. Derive new configs from the current best.
-2. **Control for noise.** Run-to-run noise is typically ±5–10%.
-   - Take ≥6 decode samples per run and use the median.
-   - Run controls on both sides of each candidate: control, candidate, control.
-   - Accept only if the candidate beats both neighbouring controls on its target metric and regresses nothing by more than ~3%.
-   - Repeat any single surprising win.
-   - Bracket by server state, not by test. A load is the costly, noisy step. List every test first, then run all of them on one load per state, in the same order: control → candidate → control. That is one load per state in the run order, not one per test (4 tests, ABA: 3 loads, not 12). See `references/methodology.md`.
-3. **Keep the environment fixed.** Stay on AC power, on a fixed performance profile, with an idle host and no other GPU jobs.
-   - Make the harness refuse to run otherwise.
-   - Record the state at the end of each run, and void the run if it changed.
-   - Restore any profile you changed when you finish, and tell the user.
-4. **Run one GPU job at a time.** Serialize them with a lock (`scripts/queue.sh`).
-   - Never use `pkill -f`/`pgrep -f` patterns that can match your own shell.
-   - Detach long queues (`setsid nohup … &`) so they survive agent restarts. macOS has no `setsid`, and its `nohup` fails without a console session: use the `python3` `os.setsid()` form in `scripts/queue.sh`.
-5. **Enforce the memory cap with a watchdog** that kills the run.
-   - On unified memory, GPU allocations do not show in cgroup counters or MemAvailable. Measure driver residency (e.g. `drm-resident-*` in `/proc/<pid>/fdinfo`, or `nvidia-smi`) plus process anonymous memory. On Apple silicon, `scripts/mem-macos.sh <port>` reads the server's footprint, Metal buffers included.
-6. **Stability gates.** A config is only "best" after it passes:
-   - a long-context retrieval run, with needles in a ~50% then ~100% context document, found exactly. Run both lengths in one load: `--long N,N`;
-   - a soak with concurrent full-length requests, if the KV pool is sized for N users;
-   - a greedy output equivalence check, if the change claims to be lossless.
+1. **One change per experiment.** Give each its own config file, derived from the current best with `base` + deltas (`bench.py resolve` shows the result).
+2. **Control for noise.** Accept and regression bars are k × the pooled SD of the compared quantity, from every control run in the ledger (`bench.py noise`); defaults in `rig.json` `noise`. Recalibrate after a driver, power-cap or engine-build change. Default: one load per config with n passes each; the measured within- vs between-load SD picks the mode (alternating loads when between-load SD is large). Details and drift checks: `references/methodology.md`.
+3. **Keep the rig safe and fixed.** `rig.py check` runs before every run. A probe that ran and failed blocks the run by default; "not available" never blocks and is recorded. The rig may lower a check to warn or off. Leave the rig as found. See `references/rig.md`.
+4. **Run one GPU job at a time** through `scripts/queue.sh`. The queue stops at the first failure (`--keep-going` is opt-in).
+   - Wait only on a PID, the lock, or log lines written after a recorded offset. Never use `pkill -f`/`pgrep -f` or grep old log lines.
+   - Detach long queues so they survive agent restarts. macOS has no `setsid`, and its `nohup` fails without a console session: use the `python3` `os.setsid()` form in `scripts/queue.sh`.
+5. **Enforce the memory cap with a watchdog** that kills the run, plus the host-RAM floor and the no-progress timeout (`references/rig.md`).
+   - On unified memory, GPU allocations do not show in cgroup counters or MemAvailable. Use `scripts/mem.sh` (container or `--pid PID`) or, on Apple silicon, `scripts/mem-macos.sh <port>`.
+6. **Quality gates follow the contract.** Per change, collect only the cheap evidence its class needs (l0 hash, l1 distribution check, l2 labelled trade; `references/quality.md`). End-of-round gates (needles at depth, soak, long sessions, full sweep) are proposed; the user decides.
 7. **Never force-kill a server mid-batch.** Abort requests, wait for the drain, then stop with a timeout. A forced stop mid-prefill has caused GPU driver faults.
-8. **Verify outputs, not just speed.** Flag degenerate or looping output, failed requests and an idle GPU. A suspiciously fast result is usually broken output.
-9. **Log everything in `PLAN.md`,** including failures and why they failed. Negative results are the most reusable output.
+8. **Verify outputs, not just speed.** The harness flags looping output, failed requests, idle GPUs and `ANSWER_DIFF` (`references/quality.md`). A suspiciously fast result is usually broken output.
+9. **Logging is always on.** Every run writes a run directory and a ledger row (`references/logging.md`). Log every experiment in `PLAN.md`, including failures and why. Negative results are the most reusable output.
 10. **Secrets:** never ask twice for a credential the user already saved. Never print it, and never copy it or its path into anything published.
-11. **Decide the rule before the run.** Fill in a hypothesis card (`templates/hypothesis.md`) before each experiment:
-    - the one change, and what you deliberately left the same;
-    - the metric you expect to move, by how much, and why (link the ceiling gap or profile line);
-    - the metrics to watch for regressions;
-    - "accept if" and "reject if", written down now.
-    Never change the rule after seeing the numbers. A result the card did not predict is a reason to look closer, not a win.
+11. **Decide the rule before the run.** Fill in a hypothesis card (`templates/hypothesis.md`) before each experiment. Never change the rule after seeing the numbers. A result the card did not predict is a reason to look closer, not a win.
 12. **Prove the change ran.** A config flag, a new kernel or a default-on option does not prove that the server used it. After timing, record evidence from the real serving path in every phase the change claims: prefill, decode, verify, and every GPU rank. Use a short trace, a dispatch counter or a log line that only the new path prints. Without it, a "win" or a "no change" may measure the fallback. Set `"proof"` in the config to have `scripts/bench.py` record it.
-13. **Resume from the record, not from memory.** After an agent restart, context reset or long pause, read `PLAN.md`, `verdicts.jsonl` and the ledger first. If an experiment has runs but no verdict, it is unfinished: rerun it. Never reconstruct a result you cannot find.
+13. **Resume from the record, not from memory.** After an agent restart, context reset, compaction or long pause, reread sections 2 and 3 of this file, then `PLAN.md`, `verdicts.jsonl`, `queue.jsonl` and the ledger. If an experiment has runs but no verdict, it is unfinished: rerun it. Never reconstruct a result you cannot find.
+14. **Extend `scripts/`, don't replace it.** Add drivers, timing adapters and test hooks. If you must write your own tool, it writes ledger rows in the `references/logging.md` schema so `verdict` and `board` still work.
 
 ## 3. The loop
 
 ```
-baseline → profile → zoom out: diagnose the bottleneck → lever for its cause → hypothesis card → config
-   ↑                                                                                                 ↓
-   │                                                              A/B with controls (queue.sh ctl cand ctl)
-   │                                                                                                 ↓
-   └── update best-config + PLAN.md + ledger ←── bench.py verdict + proof it ran ←── accept / reject ─┘
+zoom out (fresh control) → ≥2 root theories → probe → largest checked root gap → card → config
+   ↑                                                                                     ↓
+   │                                                         bench.py run via queue.sh (ctl, cand)
+   │                                                                                     ↓
+   └── re-zoom ←── best-config + PLAN.md + checkpoint commit offer ←── verdict + proof ───┘
 ```
 
-`scripts/bench.py verdict ctl-a cand ctl-b` applies rule 2 to the ledger. It accepts only if the candidate beats both controls on the target metric and nothing else is worse by more than 3%. It asks for a repeat when the controls drifted apart or the win is surprisingly large. Your judgement still decides; the tool keeps the rule from bending.
+`python3 scripts/bench.py verdict --ctl NAME --cand NAME --predicted PCT` applies rule 2 to the ledger: paired per-prompt ratios with a CI, against bars from the pooled SD. Pass the card's predicted gain as `--predicted`; a win far above it asks for a repeat. Decisions: ACCEPT, REJECT, REPEAT, BELOW_BAR (a real gain under the bar: the user decides). The verdict is "calibrated" only with enough control loads and within-load samples (`rig.json` `noise.min_loads`, `noise.min_df`); an uncalibrated pair verdict is never ACCEPT or BELOW_BAR, so run more control loads first. Prompts stay paired on a reused server only with a rig `cache_bypass` (`references/logging.md`). A flagged run rejects; `HOST_BUSY` in a compared run asks for a repeat; NOISY and LOW_N only warn. Triple mode (`verdict CTL_A CAND CTL_B`) stays for alternating loads. Your judgement still decides; the tool keeps the rule from bending.
 
 ### Zoom out
 
-Zoom out before the first lever, after every accepted change, after two rejects in a row or one result the card did not predict, and before you declare a plateau. Stop tweaking and do this (`references/diagnosis.md`):
+Zoom out before the first lever, after each accepted lever, after two rejects in a row, after a surprise, and before you declare a plateau (`references/diagnosis.md`):
 
-1. **Build the time budget:** each part of the step, its exposed time, its floor. The largest gap is the bottleneck; a part near its floor is done.
-2. **List the symptoms:** ceiling gaps, rejects inside noise, surprises, harness flags, control drift, gate failures.
-3. **Form at least two competing theories.** For each, write the symptoms it explains, the ones it does not, and a prediction the others do not make.
-4. **Run a discriminating probe,** not a tweak. It changes nothing you keep; it only separates the theories.
-5. **Fix at the cause** with one change. Name the theory and the symptoms it should remove on the hypothesis card.
-6. **Score the whole system:** speed, quality (looping, greedy equivalence, matched-ID accuracy) and reliability (failed requests, sample spread, memory peak, needles). `bench.py verdict` compares only the speed metrics and `mem_peak_gib` with the controls, and rejects any run with a flag (`LOOP`, `REQ_FAIL`, `NEEDLE_MISS`, `TEST_FAIL`, `NO_PROOF`, `MEM_CAP`, `MEM_PROBE_FAIL`, `ON_BATTERY`). Greedy equivalence, accuracy and sample spread are your checks: ACCEPT does not mean quality was checked.
+1. **Measure the current control fresh** against the ceilings and build the time budget per depth bucket (`scripts/budget.py`). Never reuse an old trace.
+2. **Form at least two competing root theories:** "root X explains symptoms A, B, C".
+3. **Run a discriminating probe** on a fixed token path (teacher-forced tokens, forced acceptance length, replayed routing; result in ms per step). Probes: ablation, upper bound, gain vs noise. Probes are never kept or accepted.
+4. **A root's gap is the sum of the parts it explains.** Take the largest checked root gap. An estimated gap needs a probe before it goes first. The size of a known fix is not the size of the gap.
+5. **Name it and the reason in 1-2 lines, then attack.** No menus of levers. Ask go/no-go only above the threshold in `PLAN.md`.
+6. **Sum check:** the planned levers' predicted gains, scaled down by the measured prediction ratio so far, vs the target. If short, propose the structural change now.
 
-Record each zoom-out as a dated `## Diagnosis` section in `THEORY.md`. Keep refuted theories with the reason.
+Spend at most ~2 h of bench-only work on one part, then zoom out (`rig.json` or the user can change the cap). Record each zoom-out as a dated `## Diagnosis` section in `THEORY.md`. Keep refuted theories with the reason.
+
+### Context depth
+
+Per change, A/B only the depth buckets the card predicts a gain in, plus one short guard bucket (`scripts/workloads.py sweep`). Propose a full sweep at the round baseline, at round end, and when a ~20% gain lands or an attention, KV or cache change is accepted. Use real text (`references/methodology.md`).
 
 ### Lever order
 
-This is the default order, cheapest first, for when the diagnosis does not point at a cause. A diagnosed cause goes first. See `references/levers.md` for evidence.
+A diagnosed root goes first. Without a budget yet, and as a tie-breaker, use this order, cheapest first (`references/levers.md`):
 
+0. **Audit engine defaults:** flags and env defaults tuned for another GPU, default-off fast paths.
 1. **Persistent JIT, compile and graph caches** (startup −50–70%). Also use eager safetensors loading instead of mmap where it is slow.
 2. **Decode graphs** (CUDA/XPU graphs): often 2× c1 on their own.
 3. **Speculative decoding:**
@@ -172,15 +170,16 @@ This is the default order, cheapest first, for when the diagnosis does not point
    - Use int8/fp8 prefill GEMMs as a labelled quality trade.
    - Avoid padding cliffs in grouped MoE GEMMs.
 6. **Kernel thread and tile sizes:** defaults are often tuned for a bigger card.
-7. **Kernel work:** profile, read the ISA, fix the dominant kernel. Do this only after config levers plateau. Follow the inner loop in `references/kernel-work.md`:
+7. **Kernel work:** profile, read the ISA, fix the dominant kernel. Follow `references/kernel-work.md`:
    - Pick the kernel by *exposed* time on the timeline, not by its share of summed kernel time (`references/profiling.md`).
-   - Compute its own floor: bytes ÷ bandwidth if memory bound, FLOPs ÷ practical peak if compute bound. The gap to the floor is what this kernel can still give.
+   - Compute its own floor. The gap to the floor is what this kernel can still give.
    - One variable per version. Keep every old version; never overwrite one.
    - Correctness first, at every row count M you serve. Then an interleaved microbenchmark. Then proof it ran. Then the end-to-end A/B, which is the only test that accepts.
+   - In a custom engine, put new paths behind default-off switches and check the default path with `scripts/isa_diff.py`.
 
 ### When a lever fails
 
-- **If kernel-count reductions (fusion) give nothing** under graphs, the time is inside the main kernels. Stop fusing.
+- **If fusion gives nothing** under graphs, check where the time goes before you stop: inside the main kernels, or in a chain of small dependent kernels on an under-filled grid. A chain needs more blocks or fewer dependent steps, not fusion that adds grid barriers (`references/levers.md`).
 - **If higher acceptance doesn't give higher tok/s,** the draft costs too much. Measure per-step time.
 - **If a weird result appears,** suspect the measurement first: tokens counted per streamed chunk, prompt length not measured with the real tokenizer, cache hits, thermal state, or the battery.
 - **If a kernel wins in a microbenchmark but not end to end,** check three things in order:
@@ -190,37 +189,45 @@ This is the default order, cheapest first, for when the diagnosis does not point
 - **If summed kernel time exceeds step time,** kernels overlap. A kernel's share of the sum is not time you can remove.
 - **If one GPU in a tensor-parallel group is faster,** its spare time shows up as waiting inside the collective. The slowest rank sets the step. Profile every rank.
 
+### After each kept change
+
+Update `best-config.json` and `PLAN.md`, then offer the user a checkpoint commit to their branch.
+
 ### Plateau
 
-Before you declare a plateau, zoom out once. Three levers inside noise often treated symptoms of one cause that is not on this list. Declare a plateau when three consecutive levers land inside noise and the zoom-out finds no new cause. Write a STATUS section in `PLAN.md` with:
+Before you declare a plateau, zoom out once. Three levers inside noise often treated symptoms of one cause that is not on this list. Declare a plateau when three consecutive levers land inside noise and the zoom-out finds no new root. Write a STATUS section in `PLAN.md` with:
 
-- best numbers vs baseline vs ceiling;
+- best numbers vs baseline vs ceiling, per depth bucket;
 - what limits further gains, with evidence;
 - the latest diagnosis from `THEORY.md`: the budget, and the theories with their status;
-- a ranked list of the remaining levers and their estimated cost.
+- the remaining root gaps, checked or estimated, with the structural change each needs and its cost.
 
 Then keep the loop alive at a slower cadence if the user said "don't stop", or hand back.
 
 ## 4. Qualify and publish
 
-See `references/publishing.md`.
+See `references/publishing.md` and `references/quality.md`.
 
+- Propose the end-of-round gates from the quality contract; the user decides which run. Never start them on your own.
 - Pin weights by revision, engine by image digest or source commit, and kernels by commit. Build the published artifact from those pins in a clean checkout, never from a dirty tree.
-- Run the acceptance gates on the clean build: load, chat, reasoning, tools round-trip, a long-context needle, and speed.
+- Run the accepted gates on the clean build: load, chat, reasoning, tools round-trip, needles at depth, and speed.
 - Then A/B the clean build against your best image to prove they match.
-- Report which numbers come from which harness. Gate numbers (e.g. thinking on, first 30 s) and hill-climb numbers (thinking off, medians) are not comparable.
+- Report which numbers come from which harness. Gate numbers (e.g. thinking on, first 30 s) and hill-climb numbers (thinking off) are not comparable.
 - Keep four kinds of evidence apart, because none of them stands in for another:
   - operator correctness (the kernel test);
   - dispatch coverage (proof the path ran, rule 12);
-  - task accuracy;
+  - quality (the contract's level and task results);
   - speed.
-- A small accuracy difference that is not significant does not prove the two builds are equivalent. To claim equivalence, set a margin before the run and use enough samples.
+- "Not significant" does not prove two builds equivalent. To claim equivalence, set a margin before the run and use an equivalence test with enough samples (`references/quality.md`).
 
 ## 5. Reporting to the user
 
-- **Start with a table:** metric, baseline, now, ceiling, how it was measured (median of N, cold or warm, which harness).
-- **Then:** what got the gains, why it stops here, the known limitations, and the system state you changed (power profile, running servers, uncommitted code, branches that must not be deleted).
-- **Say plainly** what was not verified.
+- **Answer a status question first,** then the detail. Give ETAs from logged durations (`bash scripts/queue.sh status`), and take timestamps from `date`, never a guess of the user's local time.
+- **After each run:** a small table plus 2-3 plain sentences: what was tried, faster or not, kept or not, what next.
+- **Use the user's report format** from `PLAN.md`. Build the progress board from the ledger (`python3 scripts/bench.py board`).
+- **Define every label or codename** in plain words the first time you use it.
+- **At the end, start with a table:** metric, baseline, now, ceiling, how it was measured (passes and loads, cold or warm, which harness).
+- **Then:** what got the gains, why it stops here, the known limitations, what was not verified, and the system state you changed (settings, running servers, background processes, uncommitted code, branches that must not be deleted).
 - **Define every throughput number:**
   - per-GPU throughput is total ÷ physical GPUs, never divided again by the tensor-parallel size;
   - say whether an acceptance length counts only accepted drafts or also the target's bonus token;
