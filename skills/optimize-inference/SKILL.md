@@ -108,7 +108,10 @@ Report progress as a percentage of the practical ceiling per bucket. If the user
    - Detach long queues so they survive agent restarts. macOS has no `setsid`, and its `nohup` fails without a console session: use the `python3` `os.setsid()` form in `scripts/queue.sh`.
 5. **Enforce the memory cap with a watchdog** that kills the run, plus the host-RAM floor and the no-progress timeout (`references/rig.md`).
    - On unified memory, GPU allocations do not show in cgroup counters or MemAvailable. Use `scripts/mem.sh` (container or `--pid PID`) or, on Apple silicon, `scripts/mem-macos.sh <port>`.
-6. **Quality gates follow the contract.** Per change, collect only the cheap evidence its class needs (l0 hash, l1 distribution check, l2 labelled trade; `references/quality.md`). End-of-round gates (needles at depth, soak, long sessions, full sweep) are proposed; the user decides.
+6. **Quality gates follow the contract.**
+   - Per change, collect only the cheap evidence its class needs (l0 hash, l1 distribution check, l2 labelled trade; `references/quality.md`).
+   - A config is only "best" after it passes the stability gate: needles at ~50% and ~100% of the context target C, found exactly; a concurrent full-length soak if the config sizes the KV pool for N users; the per-change evidence above if the change claims l0 or l1. Needles and soak are run flags on the candidate run only, e.g. C = 131072 and N = 4: `BENCH_FLAGS="--long 65536,131072 --soak 4" bash scripts/queue.sh cand` (`references/methodology.md`). The gate is not optional.
+   - Other end-of-round gates (full sweep, multi-turn, long sessions, paired tasks) are proposed; the user decides.
 7. **Never force-kill a server mid-batch.** Abort requests, wait for the drain, then stop with a timeout. A forced stop mid-prefill has caused GPU driver faults.
 8. **Verify outputs, not just speed.** The harness flags looping output, failed requests, idle GPUs and `ANSWER_DIFF` (`references/quality.md`). A suspiciously fast result is usually broken output.
 9. **Logging is always on.** Every run writes a run directory and a ledger row (`references/logging.md`). Log every experiment in `PLAN.md`, including failures and why. Negative results are the most reusable output.
@@ -125,10 +128,12 @@ zoom out (fresh control) → ≥2 root theories → probe → largest checked ro
    ↑                                                                                     ↓
    │                                                         bench.py run via queue.sh (ctl, cand)
    │                                                                                     ↓
-   └── re-zoom ←── best-config + PLAN.md + checkpoint commit offer ←── verdict + proof ───┘
+   └── re-zoom ←── best-config + PLAN.md + commit offer ←── verdict + proof + gate ───────┘
 ```
 
 `python3 scripts/bench.py verdict --ctl NAME --cand NAME --predicted PCT` applies rule 2 to the ledger: paired per-prompt ratios with a CI, against bars from the pooled SD. Pass the card's predicted gain as `--predicted`; a win far above it asks for a repeat. Decisions: ACCEPT, REJECT, REPEAT, BELOW_BAR (a real gain under the bar: the user decides). The verdict is "calibrated" only with enough control loads and within-load samples (`rig.json` `noise.min_loads`, `noise.min_df`); an uncalibrated pair verdict is never ACCEPT or BELOW_BAR, so run more control loads first. Prompts stay paired on a reused server only with a rig `cache_bypass` (`references/logging.md`). A flagged run rejects; `HOST_BUSY` in a compared run asks for a repeat; NOISY and LOW_N only warn. Triple mode (`verdict CTL_A CAND CTL_B`) stays for alternating loads. Your judgement still decides; the tool keeps the rule from bending.
+
+ACCEPT alone does not keep a change. The candidate must also pass the stability gate (rule 6). Its needles and soak run last in the candidate load, after every timed pass and test; the control load skips them. A miss flags that load, so `verdict` rejects. If that load would get too long (e.g. a long N-user soak), run them in one gate-only load under the candidate's name after ACCEPT, then rerun `verdict`; an ACCEPT from before the gate load is not final. A candidate that wins on speed but fails the gate is rejected with reason "stability gate".
 
 ### Zoom out
 
@@ -191,13 +196,13 @@ A diagnosed root goes first. Without a budget yet, and as a tie-breaker, use thi
 
 ### After each kept change
 
-Update `best-config.json` and `PLAN.md`, then offer the user a checkpoint commit to their branch.
+Keep a change only after ACCEPT and a stability gate pass. Then update `best-config.json` and `PLAN.md`, and offer the user a checkpoint commit to their branch.
 
 ### Plateau
 
 Before you declare a plateau, zoom out once. Three levers inside noise often treated symptoms of one cause that is not on this list. Declare a plateau when three consecutive levers land inside noise and the zoom-out finds no new root. Write a STATUS section in `PLAN.md` with:
 
-- best numbers vs baseline vs ceiling, per depth bucket;
+- best numbers vs baseline vs ceiling, per depth bucket, from a config that passed the stability gate;
 - what limits further gains, with evidence;
 - the latest diagnosis from `THEORY.md`: the budget, and the theories with their status;
 - the remaining root gaps, checked or estimated, with the structural change each needs and its cost.
@@ -208,7 +213,7 @@ Then keep the loop alive at a slower cadence if the user said "don't stop", or h
 
 See `references/publishing.md` and `references/quality.md`.
 
-- Propose the end-of-round gates from the quality contract; the user decides which run. Never start them on your own.
+- The stability gate already ran on the best config and is not optional; run it again if the config changed since. Propose the other end-of-round gates from the quality contract; the user decides which run. Never start those on your own.
 - Pin weights by revision, engine by image digest or source commit, and kernels by commit. Build the published artifact from those pins in a clean checkout, never from a dirty tree.
 - Run the accepted gates on the clean build: load, chat, reasoning, tools round-trip, needles at depth, and speed.
 - Then A/B the clean build against your best image to prove they match.

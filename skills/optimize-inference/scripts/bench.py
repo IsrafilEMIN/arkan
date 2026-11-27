@@ -2,8 +2,8 @@
 """Engine-agnostic hill-climb benchmark for any OpenAI-compatible server (vLLM, SGLang, llama.cpp server,
 TabbyAPI, MLX-LM server, LM Studio, Ollama's /v1 ...) or any engine behind a small CLI driver. Standard library only.
 
-  python3 scripts/bench.py run configs/NAME.json [--passes N] [--long N[,N...]] [--skip-cN] [--reps 6] [--reuse]
-                                                 [--determinism] [--no-samplers] [--rig rig.json]
+  python3 scripts/bench.py run configs/NAME.json [--passes N] [--long N[,N...]] [--soak N] [--skip-cN] [--reps 6]
+                                                 [--reuse] [--determinism] [--no-samplers] [--rig rig.json]
   python3 scripts/bench.py show [ledger.jsonl]
   python3 scripts/bench.py verdict --ctl NAME --cand NAME [--since ISO] [--metric c1_decode] [--watch m1,m2]
                                    [--predicted PCT] [--surprise-ratio 2] [--ledger ledger.jsonl] [--rig rig.json]
@@ -20,6 +20,8 @@ run options
   --passes N     timed passes inside one load (default: config "passes", else 1). Each pass repeats ttft, c1, cN,
                  prefill and tests with fresh prompt prefixes, so the prefix cache cannot hit between passes.
   --long N,...   one long-context needle retrieval per length after the passes (e.g. 65536,131072).
+  --soak N       after the passes, run `workloads.py soak --n N --context <largest --long>` as the test "soak"
+                 (needs --long). With --long, the stability gate as run flags: give them to the candidate run only.
   --skip-cN      skip the concurrency test.   --reps 6   c1 requests per pass.
   --reuse        skip stop+launch if the server is healthy and .bench-server.json records the same launch,
                  base_url and env (use it for request-field options, e.g. an extra_body toggle).
@@ -742,6 +744,22 @@ def filler(n_words, rng):
     return " ".join(rng.choice(WORDS) for _ in range(max(1, n_words)))
 
 
+NEEDLE_QUESTION = ("\n\nList every secret code number and its value that appears in the document above. "
+                   "Answer only with the codes.")
+
+
+def plant_needles(words, rng, needles=3):
+    n_words = len(words)
+    codes = ["".join(rng.choices(string.ascii_uppercase + string.digits, k=8)) for _ in range(needles)]
+    for i, c in enumerate(codes):
+        words.insert(int(n_words * (i + 1) / (needles + 1)), f". The secret code number {i + 1} is {c}. ")
+    return codes
+
+
+def missing_needles(text, codes):
+    return [c for c in codes if c not in text]
+
+
 class Bench:
     def __init__(self, cfg, rig_path, samplers):
         self.cfg, self.name, self.t0 = cfg, cfg["name"], time.monotonic()
@@ -966,7 +984,7 @@ class Bench:
             self.watch = MemWatch(self.cfg["memory"], self.cfg.get("pidfile"), self.client.env, self.on_memcap)
             self.watch.start()
 
-    def run(self, passes, long_ctx, skip_cn, reps, reuse, determinism):
+    def run(self, passes, long_ctx, skip_cn, reps, reuse, determinism, soak):
         cfg, res = self.cfg, self.res
         log("run", self.run_id, "->", self.dir)
         self.event("start", passes=passes, config_hash=res["config_hash"])
@@ -1025,7 +1043,7 @@ class Bench:
                 self.watch.server_up = True
             self.write_identity(self.client.models())
             res["state_start"] = self.state()
-            self.timed(passes, long_ctx, skip_cn, reps, determinism)
+            self.timed(passes, long_ctx, skip_cn, reps, determinism, soak)
             self.save_server_state(state, self.pass_offset + passes)
             res["ok"] = True
         except Abort as e:
@@ -1052,7 +1070,7 @@ class Bench:
         with open(SERVER_STATE, "w") as f:
             json.dump({**state, "passes_used": used, "pids": self.allow_pids}, f)
 
-    def timed(self, passes, long_ctx, skip_cn, reps, determinism):
+    def timed(self, passes, long_ctx, skip_cn, reps, determinism, soak):
         cfg = self.cfg
         self.phase("warmup")
         self.req("warmup", "warmup", "Say hello.", 16, 0, prefix=False)
@@ -1108,13 +1126,17 @@ class Bench:
             self.tests(p)
             self.res["passes"] = p + 1
 
+        if soak:
+            cmd = [sys.executable, os.path.join(HERE, "workloads.py"), "soak", "--n", str(soak),
+                   "--context", str(max(long_ctx))]
+            self.tests(passes - 1, only=[{"name": "soak", "cmd": cmd}])
         if long_ctx:
             self.phase("long")
         for L in long_ctx:
             pid = f"long-{L}"
             prompt, codes = self.document(L, 0, pid)
             r = self.req("long", pid, prompt, 256, 0, prefix=False, temperature=0.0)
-            hits = sum(c in r["text"] for c in codes)
+            hits = len(codes) - len(missing_needles(r["text"], codes))
             pt, tt = r["prompt_tokens"], r["ttft_ms"]
             self.res.setdefault("long", {})[str(L)] = {
                 "prompt_tokens": pt, "ttft_s": tt and round(tt / 1000, 1),
@@ -1145,17 +1167,12 @@ class Bench:
 
     def document(self, tokens, p, pid, needles=3):
         rng = random.Random(f"{self.seed}-{p + self.pass_offset}-{pid}")
-        n_words = int(tokens / self.tpw)
-        words = [rng.choice(WORDS) for _ in range(n_words)]
-        codes = ["".join(rng.choices(string.ascii_uppercase + string.digits, k=8)) for _ in range(needles)]
-        for i, c in enumerate(codes):
-            words.insert(int(n_words * (i + 1) / (needles + 1)), f". The secret code number {i + 1} is {c}. ")
-        q = ("\n\nList every secret code number and its value that appears in the document above. "
-             "Answer only with the codes.")
-        return self.prefix(p, pid) + " ".join(words) + q, codes
+        words = [rng.choice(WORDS) for _ in range(int(tokens / self.tpw))]
+        codes = plant_needles(words, rng, needles)
+        return self.prefix(p, pid) + " ".join(words) + NEEDLE_QUESTION, codes
 
-    def tests(self, p):
-        tests = [t for t in self.cfg.get("tests") or [] if not (t.get("once") and p > 0)]
+    def tests(self, p, only=None):
+        tests = only if only is not None else [t for t in self.cfg.get("tests") or [] if not (t.get("once") and p > 0)]
         if tests:
             self.phase("tests")
         for t in tests:
@@ -1295,10 +1312,10 @@ class Bench:
 
 
 def run(cfg_path, passes=None, long_ctx=(), skip_cn=False, reps=6, reuse=False, determinism=False, samplers=True,
-        rig_path="rig.json"):
+        rig_path="rig.json", soak=None):
     cfg = load_config(cfg_path)
     passes = max(1, int(passes or cfg.get("passes", 1)))
-    return Bench(cfg, rig_path, samplers).run(passes, long_ctx, skip_cn, reps, reuse, determinism)
+    return Bench(cfg, rig_path, samplers).run(passes, long_ctx, skip_cn, reps, reuse, determinism, soak)
 
 
 def normalize(d):
@@ -1828,11 +1845,13 @@ def main(a):
     else:
         if len(a) < 2 or a[1].startswith("--"):
             sys.exit(__doc__)
+        if opt("--soak") and not opt("--long"):
+            sys.exit("--soak N needs --long: the soak runs at the largest --long length")
         res = run(a[1], passes=opt("--passes"),
                   long_ctx=[int(x) for x in opt("--long").split(",")] if opt("--long") else (),
                   skip_cn="--skip-cN" in a, reps=int(opt("--reps", 6)), reuse="--reuse" in a,
                   determinism="--determinism" in a, samplers="--no-samplers" not in a,
-                  rig_path=opt("--rig", "rig.json"))
+                  rig_path=opt("--rig", "rig.json"), soak=int(opt("--soak")) if opt("--soak") else None)
         sys.exit(0 if res["ok"] else 1)
 
 
