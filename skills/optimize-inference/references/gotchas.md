@@ -11,7 +11,7 @@ These were found the hard way. Versions matter; re-check on newer releases.
 - **Gateway or proxy timeouts** (often 600 s) cut off long-context tests. Test against the engine directly. Retry only on dropped connections, never on timeouts.
 - **Shells and agents:** `pkill -f pattern` can kill the shell that runs it, and `pgrep -f` matches its own command line, so a wait on it never ends. Kill by PID. What to wait on: `rig.md`, Six invariants.
 - **Agent restarts** kill child processes. Detach long jobs and make them resumable:
-  - macOS: use the `python3` `os.setsid()` form in `scripts/queue.sh`. macOS has no `setsid`, and its `nohup` fails without a console session.
+  - macOS: use the `python3` `start_new_session=True` form in `scripts/queue.sh`. macOS has no `setsid`, its `nohup` fails without a console session, and a bare `os.setsid()` fails with `EPERM` when the shell made the job its own process-group leader.
   - Linux: `setsid nohup … & disown`.
 
 ## Multi-GPU
