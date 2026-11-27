@@ -4,13 +4,24 @@ These were found the hard way. Versions matter; re-check on newer releases.
 
 ## General
 
-- **A second engine on the same GPU,** or a stray benchmark still running, silently halves results or crashes both. Lock the GPU (`scripts/queue.sh`).
+- **A second engine on the same GPU,** or a stray benchmark still running, silently halves results or crashes both. Lock the GPU (`scripts/queue.sh`) and check that the cards are idle before each run (`scripts/rig.py check`, `rig.md`).
 - **Correlate "device lost" crashes with the kernel log before blaming code.** Arc Pro B70 crashes turned out to be PCIe link drops: AER replay timeouts, then link down, 8 times in 3 days. They also spread to other devices on the same root complex.
 - **Forced container stops during a long prefill** caused an Intel xe GPU page fault. Always abort, drain, then stop with a timeout.
 - **Very large images can crash vision encoders.** Cap the longest edge.
 - **Gateway or proxy timeouts** (often 600 s) cut off long-context tests. Test against the engine directly. Retry only on dropped connections, never on timeouts.
-- **Shells and agents:** `pkill -f pattern` can kill the shell that runs it, and `pgrep -f` can wait on itself. Kill by PID.
+- **Shells and agents:** `pkill -f pattern` can kill the shell that runs it, and `pgrep -f` matches its own command line, so a wait on it never ends. Kill by PID. Wait only on a PID, the lock, or log lines written after an offset you recorded; a grep over old log lines matches a previous run.
 - **Agent restarts** kill child processes. Detach long jobs (`setsid nohup … & disown`) and make them resumable.
+
+## Multi-GPU
+
+- **The driver's peer-access flag can lie.** `cudaDeviceCanAccessPeer` (or the vendor equivalent) can report P2P as available while copies fail, fall back to host staging, or corrupt data. Measure a real peer copy: check its bandwidth and compare the data. Check the kernel log for IOMMU faults (for example `AMD-Vi` or `DMAR` page-fault lines) during the copy; an IOMMU in translated mode can block or slow P2P.
+- **For overlapped collectives, prefer copy engines over spinning kernels.** A kernel that spin-waits for a peer's flag holds SMs that the overlapped compute needs, and hangs under tools that serialize kernels. An async peer copy runs on a copy engine and leaves the SMs free.
+
+## Builds and code generation
+
+- **FMA contraction can break bit identity.** A refactor that lets the compiler fuse a multiply and an add changes rounding, while the source math looks the same. Compare FFMA counts in the ISA (`kernel-work.md`, custom engines).
+- **Instruction cache:** big unrolled kernels can miss the instruction cache in serving, after other large kernels ran, but not in a tight benchmark loop. Run another large kernel between iterations and check the code size.
+- **Stale objects in a reused build directory** make an ISA diff report changes that are not there. Compare against a fresh compile of the same tree (`scripts/isa_diff.py`).
 
 ## vLLM
 
@@ -79,6 +90,9 @@ Unlike the sections above, these notes come from reading headers, tool output an
 
 - **ncu locks GPU clocks to base by default** (`--clock-control base`). Its kernel times are slower than serving, so never compare them with nsys or serving times.
 - **ncu replays each kernel** to collect counters. Multi-stream overlap disappears under it.
+- **ncu hangs on kernels that spin-wait on another GPU.** It serializes kernels, so the peer kernel never runs alongside. Use PC sampling or a single-GPU reproduction (`profiling.md`).
+- **nsys tracing a whole long prefill** can hang or run out of device memory: trace buffers and graph-node tracing use VRAM. Trace a short window and leave headroom (`profiling.md`).
+- **A gap that shows only under the profiler** can be profiler overhead. Confirm it with an in-engine timer in an untraced run (`profiling.md`).
 - **A high DRAM throughput percentage is the goal for a memory-bound decode kernel.** Some guides call "DRAM throughput < 50%" healthy. That only holds for compute-bound kernels that reuse data from cache.
 - **`ERR_NVGPUCTRPERM` from ncu** is the NVIDIA driver's admin-only counter setting (`NVreg_RestrictProfilingToAdminUsers`). `perf_event_paranoid` does not fix it. Ask before changing driver options.
 - **`nsys recipe …` needs extra Python packages** that a toolkit install may not have. With nsys 2024.6.2 in CUDA 12.8 it failed with `No module named 'psutil'` and named the install script. `nsys stats -r …` reports work without them. Ask before installing anything.

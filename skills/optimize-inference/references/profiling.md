@@ -7,11 +7,14 @@ The commands below are for NVIDIA tools: nsys for the timeline, ncu for one kern
 ## Timeline first, then one kernel
 
 - **Start with nsys.** It shows what ran, when, on which stream and on which GPU. ncu explains one kernel. Open it only after the timeline has told you which kernel matters.
-- **Profile a warmed step.** Keep startup, JIT and graph capture out of the capture. Choose one of these:
+- **Profile in its own load,** after the A/B, from a fresh run of the current control (`methodology.md`, loads).
+- **Trace only the window you need:** a few warmed steps of one phase. Keep startup, JIT and graph capture out of the capture. Choose one of these:
   - Call `cudaProfilerStart()` and `cudaProfilerStop()` around a few steps in the engine, then run `nsys profile -c cudaProfilerApi …`.
   - Put an NVTX range around the steps, then run `nsys profile -c nvtx -p RANGE_NAME …`.
   - As a coarse fallback, use `--delay` and `--duration`.
+- **Leave device-memory headroom for the profiler.** Trace buffers and graph-node tracing use VRAM. A server sized to the last GiB can OOM or hang under the profiler. Tracing a whole long prefill can hang or run out of memory: trace a short window, or lower the server's memory fraction for the profiled load only.
 - **CUDA graphs** show up as one item by default. Use `--cuda-graph-trace=node` to see each kernel inside the graph. It costs more overhead, so do not time with it on.
+- **Split prefill and decode before ranking.** Mark the phases with NVTX ranges, or give `budget.py` a phases file. A prefill kernel ranked against decode kernels is noise in both lists.
 
 ## Three numbers that are not the same
 
@@ -31,6 +34,26 @@ What the differences mean:
 - **`nsys stats -r cuda_kern_exec_sum report.nsys-rep`** splits each kernel's time into API call, queue and execution. A long queue means the GPU is busy. A short execution with long host gaps means the host is the bottleneck.
 - **`nsys stats -r cuda_gpu_kern_sum`** gives totals per kernel. Use it to rank kernels, then check each one's exposed time on the timeline.
 
+## The time budget from a trace: `budget.py`
+
+`scripts/budget.py` turns a trace into the budget table of `diagnosis.md`: per device and phase, busy time (union), idle time, copy-only time, and per kernel family the attributed exposed time. A time slice shared by k kernels running at once counts 1/k to each, so overlap is not counted twice.
+
+```bash
+nsys export --type sqlite -o step.sqlite step.nsys-rep
+python3 scripts/budget.py summary step.sqlite --phases phases.json --floors floors.json --out BUDGET.md
+python3 scripts/budget.py diff ctl.sqlite cand.sqlite --phases phases.json
+```
+
+- **Phases** come from NVTX ranges in the SQLite (regex on the range names), or from `phases.json` time windows.
+- **`floors.json`** is `{family: floor_us_per_step}` from `ceilings.md`. With it, `summary` ranks families by gap = time − floor.
+- **`diff`** compares two traces per family per step, for example control and candidate.
+- **Other vendors:** map the profiler's output (rocprof and others) to a CSV `start_ns,end_ns,device,stream,name,kind`, with kind `kernel`, `memcpy` or `memset`.
+- **Copy-only time is not idle time.** A copy that runs while no kernel runs still sits on the critical path.
+
+## Confirm profiler-only gaps
+
+A gap that shows only under the profiler can be the profiler's own overhead: graph-node tracing, serialized launches, trace-buffer flushes. Before you plan a lever on it, time the same part with an in-engine timer (CUDA events or a host clock around the part, logged per step) in an untraced run. If the untraced timer does not show the gap, it is not there.
+
 ## Exposed time and joins
 
 - **What counts is time on the critical path:** the part of a kernel that nothing else overlaps.
@@ -42,11 +65,11 @@ What the differences mean:
 
 ## Stages with NVTX (any engine)
 
-- **Put NVTX ranges around stages in the engine:** attention, MoE, all-reduce, LM head, sampling. This gives the "profile by stage" step in `methodology.md` for a custom engine.
+- **Put NVTX ranges around stages in the engine:** attention, MoE, all-reduce, LM head, sampling, and the prefill and decode phases. This gives the "profile by stage" step in `methodology.md` for a custom engine, and the phases for `budget.py`.
   - NVTX v3 is header-only: `#include <nvtx3/nvToolsExt.h>`, from the CUDA toolkit's `include/nvtx3`. No library link is needed.
 - **`nsys stats -r nvtx_gpu_proj_sum report.nsys-rep`** projects the ranges onto GPU time. You get GPU time per stage even though launches are asynchronous.
-- **To compare control and candidate,** profile both the same way and compare the per-kernel and per-stage tables.
-  - `nsys recipe diff` does this where your nsys version has it (`nsys recipe --help` lists recipes).
+- **To compare control and candidate,** profile both the same way and run `budget.py diff`.
+  - `nsys recipe diff` does a similar comparison where your nsys version has it (`nsys recipe --help` lists recipes).
   - Recipes need extra Python packages; the error message names the install script. Ask before installing anything.
   - `nsys stats` reports work without those packages.
 
@@ -61,6 +84,7 @@ What the differences mean:
   Add `-lineinfo` to the build to map stalls to source lines.
 - **ncu locks the GPU clocks to base by default** (`--clock-control base`). Its durations are therefore longer than serving times. Compare ncu numbers only with other ncu numbers. Use `--clock-control none` to see boost behaviour.
 - **ncu replays each kernel several times** to collect counters. Overlap between streams disappears while it runs. Use it to explain a kernel, never to time the step.
+- **ncu hangs on kernels that spin-wait on another GPU.** It serializes kernels, so the peer kernel that would release the flag never runs alongside. For those kernels use PC sampling (stall reasons sampled while kernels run at normal concurrency, for example through the CUPTI PC sampling API), or profile a single-GPU reproduction of the kernel.
 - **For a memory-bound kernel,** read `dram__throughput.avg.pct_of_peak_sustained_elapsed` and the achieved bytes per second. Compare them with your *measured* bandwidth (`ceilings.md`), not the spec sheet.
   - High DRAM throughput is the goal here.
   - Low DRAM throughput is good only for a compute-bound kernel that reuses data from cache.

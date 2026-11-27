@@ -1,0 +1,6 @@
+{
+  "name": "cand-ubatch-1024",
+  "base": "configs/ctl-a.json",
+  "args_set": {"--ubatch-size": "1024"},
+  "claims": "l1"
+}

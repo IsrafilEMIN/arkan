@@ -2,46 +2,55 @@
 
 Copy this to `hypotheses/<run-name>.md` and fill it in **before** the run (`SKILL.md` rule 11). Do not edit the decision rule after you see numbers. If you must change it, write a new card with a new run name and say why.
 
+Stages: probe → opt-in build → A/B → gate. Gates are only proposed; the user decides whether they run.
+
 ```markdown
-# <run-name>  (<date, time>)
+# <run-name>  (<date, time from `date`>)
 
 ## Change
 - One change: <e.g. split-K 1 → 4 in the decode down-projection GEMV>
 - Derived from: <best config or kernel version, e.g. configs/best.json, kernels/gemv/v3>
 - Deliberately not changed: <the things a reader might expect you also touched>
+- Quality class: <same bits | rounding level | discrete decisions | lossy format | spec decoding, sampling | cache, batching, concurrency; see references/quality.md>
+- Per-change quality evidence: <from the contract in THEORY.md, e.g. l0 hash on decode and verify rows>
 
 ## Why
-- Gap it targets: <metric, now vs ceiling, from THEORY.md>
-- Evidence: <profile line, roofline numbers, or earlier result in PLAN.md>
+- Root it targets: <root theory from THEORY.md and the symptoms it explains>
+- Gap: <checked root gap, metric and depth bucket, now vs ceiling>
+- Probe that checked it: <ablation or upper bound, ms per step, run name>
 - Why this change should close part of the gap: <one or two sentences>
-- Theory it tests: <cause from the THEORY.md diagnosis, or "none: default lever order">
-- Symptoms it should remove: <e.g. host gaps between decode kernels, idle GPU flag>
 
 ## Prediction
-- Target metric: <e.g. c1_decode>, expected <+x% or a range>
-- Watch for regressions: <other metrics, e.g. prefill_32768, mem_peak_gib, accuracy; reliability: failed requests, sample spread, looping flag>
-- Lossless? <yes: greedy-equivalence check planned | no: labelled lossy trade, which quality gate>
+- Target metric: <e.g. c1_decode at d50>, expected <+x% or a range>. Pass the point value to `bench.py verdict --predicted PCT`.
+- Mechanism metric: <what must move if the theory holds, e.g. step_ms, accept_len, bytes per step>. A win without movement there is REJECT/LOOK.
+- Max gain vs bar: <probe upper bound> vs <bar from `bench.py noise`>. Below the bar: bundle, reduce noise, or skip.
+- Watch for regressions: <other metrics and depth buckets, mem_peak_gib; reliability: failed requests, looping flag>
+- Constraints still met: <context target, memory cap, quality class>. If one is not, the result is CONDITIONAL.
 
 ## Load plan
-- Server states: <e.g. ctl = configs/best.json, cand = configs/splitk4.json; same `launch`? yes: `--reuse` | no: reload>
-- Tests per state, fixed order: <built-in timing, `--long N,N`, `tests` entries (greedy equivalence, accuracy), proof; profiling is a separate load after the A/B>
-- Load order and count: <e.g. ctl → cand → ctl = 3 loads>
+- Loads and ETA: <e.g. ctl + cand, 2 loads × 3 passes, ~25 min>
 
 ## Proof it ran
 - How we will show the new path ran in serving: <trace, counter, log line>
 - Phases and ranks it must cover: <prefill / decode / verify; rank 0 and rank 1>
 
 ## Decision rule
-- Accept if: <beats both controls on the target metric; nothing worse than 3%; proof present>
+- Accept if: <`bench.py verdict` ACCEPT on the target metric, mechanism metric moved, quality evidence passes, proof present>
 - Reject if: <...>
-- Repeat if: <win above ~10%, or the controls differ by more than 5%>
+- BELOW_BAR: the user decides.
+
+## Observation (optional)
+- <anything seen during the run that the card did not predict>
 
 ## Result (fill in after)
-- Runs: <ctl-a, cand, ctl-b, plus repeats>
-- `scripts/bench.py verdict` output: <ACCEPT / REJECT / REPEAT, with its reasons>
+- Runs: <ctl, cand, plus extra loads>
+- `scripts/bench.py verdict` output: <ACCEPT / REJECT / REPEAT / BELOW_BAR, with its reasons>
+- Mechanism metric: <moved or not>
+- Quality evidence: <pass / fail, numbers>
 - Proof: <what it showed>
 - What it says about the theory: <confirmed / weakened / refuted; which symptoms stayed>
-- Decision and reason: <one line, copied to PLAN.md>
+- Decision and reason: <ACCEPT / REJECT / CONDITIONAL / user decision; one line, copied to PLAN.md>
+- Gates proposed: <which, or none>
 ```
 
 For kernel versions, use the same card in `kernels/<name>/v<K>/hypothesis.md`. Add the shapes (M, K, N per phase and per card), the roofline numbers and the floor time from `references/kernel-work.md`.

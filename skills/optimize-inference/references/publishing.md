@@ -22,7 +22,13 @@ A tuned config is only useful if someone else can rebuild it and get the same re
 - Copy the environment and arguments from the best config, then diff them mechanically. Change nothing "while you're there".
 - Make advertised numbers true. If a registry derives KV capacity as `ctx × seqs (+ margin)`, set the engine's pool to that value. Note any difference from what you soak-tested.
 
-## 4. Acceptance gates (all required, on the clean build)
+## 4. Propose the gates
+
+- **The full gates are proposed; the user decides** which ones to run and whether the round's result can ship. Base the proposal on the quality contract in `THEORY.md` (`quality.md`): the end-of-round column for each change class that landed in the round, plus the release gates below.
+- **Stacked same-bits changes:** when several accepted changes each claimed l0 (same bits) behind their own switches, run one final l0 check on the final binary: all switches off vs all switches on, on every path the changes touched (`quality.md`, l0). Each change passing alone does not prove the stack is bit-identical.
+- **Rounding-level, discrete-decision and lossy changes** need the end-of-round evidence `quality.md` lists for their class (needles at depth, multi-turn, long agent sessions, paired tasks).
+
+Release gates, on the clean build:
 
 1. **Load:** the server becomes healthy, and `/v1/models` lists the model.
 2. **Chat:** a short answer with a stop finish.
@@ -36,7 +42,8 @@ A tuned config is only useful if someone else can rebuild it and get the same re
 
 ## 5. Prove the published build equals the best
 
-- Run your harness back to back on the clean build and your hill-climb best image, against interleaved controls. They should match within noise.
+- Run your harness on the clean build and on your hill-climb best image, with the load mode and bars from `methodology.md` (`bench.py verdict --ctl best --cand clean`). They should match within the bar.
+- If the clean build claims the same bits as the best image, its l0 fingerprints must match too (`quality.md`).
 - If they don't, find the difference before publishing.
 
 ## 6. Publish
@@ -52,7 +59,8 @@ A tuned config is only useful if someone else can rebuild it and get the same re
   - the check and test logs;
   - the experiment log (`PLAN.md`, `THEORY.md`, ledger);
   - the hypothesis cards and `verdicts.jsonl`;
-  - the proof that each accepted change ran in serving (trace excerpt, counter or log line).
+  - the proof that each accepted change ran in serving (trace excerpt, counter or log line);
+  - the quality evidence per change and the gate results the user chose (`quality.py` output, the quality contract in `THEORY.md`).
 - **Grep the bundle** for secrets, credential-file paths, tokens, personal emails and home-directory usernames before pushing.
 - **State in the README** which numbers come from the gates and which from the hill-climb harness, and how each was measured.
 

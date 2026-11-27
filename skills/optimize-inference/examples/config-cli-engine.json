@@ -1,0 +1,23 @@
+{
+  "name": "ctl-a",
+  "driver": "cli",
+  "cli": ["python3", "examples/cli-driver.py", "--url", "http://127.0.0.1:8080", "--model", "default"],
+  "base_url": "http://127.0.0.1:8080",
+  "model": "default",
+  "launch": ["bash", "-c", "python3 -c 'import os,sys; os.setsid(); os.execvp(sys.argv[1], sys.argv[1:])' \"$@\" > server.log 2>&1 < /dev/null & echo $! > server.pid", "launch",
+             "/path/to/llama.cpp/build/bin/llama-server", "-m", "/path/to/model.gguf",
+             "--host", "127.0.0.1", "--port", "8080", "-c", "32768", "-ngl", "99", "--no-mmap"],
+  "pidfile": "server.pid",
+  "engine_log": "server.log",
+  "timings": "llamacpp",
+  "identity": {"binary": "/path/to/llama.cpp/build/bin/llama-server", "repo": "/path/to/llama.cpp"},
+  "claims": null,
+  "health_timeout_s": 600,
+  "passes": 3,
+  "concurrency": 2,
+  "prefill_lengths": [4096, 16384],
+  "temperature": 0.6,
+  "token_log": {"top_logprobs": 5},
+  "memory": {"cap_gib": 30, "probe": ["bash", "scripts/mem.sh", "--pid", "{pid}"], "interval_s": 3},
+  "preflight": [["test", "-x", "/path/to/llama.cpp/build/bin/llama-server"]]
+}
