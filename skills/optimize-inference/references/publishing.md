@@ -22,11 +22,12 @@ A tuned config is only useful if someone else can rebuild it and get the same re
 - Copy the environment and arguments from the best config, then diff them mechanically. Change nothing "while you're there".
 - Make advertised numbers true. If a registry derives KV capacity as `ctx × seqs (+ margin)`, set the engine's pool to that value. Note any difference from what you soak-tested.
 
-## 4. Propose the gates
+## 4. Check the stability gate, propose the rest
 
-- **The full gates are proposed; the user decides** which ones to run and whether the round's result can ship. Base the proposal on the quality contract in `THEORY.md` (`quality.md`): the end-of-round column for each change class that landed in the round, plus the release gates below.
+- **The stability gate is a precondition, not a proposal.** The best config passed it before it became best (`SKILL.md` rule 6, `methodology.md`): needles at C/2 and C, the soak if the config sizes the KV pool for N users, the lossless evidence if the change claims l0 or l1. If the config changed since, run it again before anything ships.
+- **The other gates are proposed; the user decides** which ones to run and whether the round's result can ship. Base the proposal on the quality contract in `THEORY.md` (`quality.md`): the end-of-round column for each change class that landed in the round, plus the release gates below.
 - **Stacked same-bits changes:** when several accepted changes each claimed l0 (same bits) behind their own switches, run one final l0 check on the final binary: all switches off vs all switches on, on every path the changes touched (`quality.md`, l0). Each change passing alone does not prove the stack is bit-identical.
-- **Rounding-level, discrete-decision and lossy changes** need the end-of-round evidence `quality.md` lists for their class (needles at depth, multi-turn, long agent sessions, paired tasks).
+- **Rounding-level, discrete-decision and lossy changes** need the end-of-round evidence `quality.md` lists for their class (needles at every depth bucket, multi-turn, long agent sessions, paired tasks).
 
 Release gates, on the clean build:
 
@@ -36,7 +37,7 @@ Release gates, on the clean build:
 4. **Tools:** a full round trip. The model calls the tool, receives the result, and quotes a code from it.
 5. **Context:** a needle in a document at about 85% of the window, answered exactly.
 6. **Speed:** single-user decode over the first 30 s after the first token, with no output cap, counted with the server tokenizer, above a floor.
-- Also check **vision** if the model has it, plus a **concurrent full-length soak** if the recipe advertises N users at full context.
+- Also check **vision** if the model has it. If the recipe advertises N users at full context, run the stability gate's soak (`workloads.py soak`) on the clean build too; it is not optional.
 - Gate the same config more than once if acceptance ramps up (draft methods with warm-up). Never publish a "validated" result from a single wave.
 - Record peak memory: driver residency plus anon on unified memory.
 
@@ -60,7 +61,7 @@ Release gates, on the clean build:
   - the experiment log (`PLAN.md`, `THEORY.md`, ledger);
   - the hypothesis cards and `verdicts.jsonl`;
   - the proof that each accepted change ran in serving (trace excerpt, counter or log line);
-  - the quality evidence per change and the gate results the user chose (`quality.py` output, the quality contract in `THEORY.md`).
+  - the quality evidence per change, the stability gate results, and the gate results the user chose (`quality.py` output, the quality contract in `THEORY.md`).
 - **Grep the bundle** for secrets, credential-file paths, tokens, personal emails and home-directory usernames before pushing.
 - **State in the README** which numbers come from the gates and which from the hill-climb harness, and how each was measured.
 

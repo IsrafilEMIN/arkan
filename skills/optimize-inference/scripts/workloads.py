@@ -2,12 +2,14 @@
 import hashlib, json, os, random, statistics, sys, threading, time
 
 USAGE = """Workloads against a running server: context-depth sweep, concurrent clients, multi-turn sessions,
-together vs alone. Standard library only; talks to the engine through bench.Client (http or cli driver).
+together vs alone, full-context soak. Standard library only; talks to the engine through bench.Client (http or cli
+driver).
 
   python3 scripts/workloads.py sweep --context N [--buckets 0.0,0.25,0.5,1.0] [--text FILE] [--questions 4] [--max-tokens 256]
   python3 scripts/workloads.py clients --n 1,2,4,8 [--text FILE] [--max-tokens 256]
   python3 scripts/workloads.py multiturn --turns K [--interleave M] [--text FILE]
   python3 scripts/workloads.py invariance --n N
+  python3 scripts/workloads.py soak --n N --context C [--needles 3] [--rounds 1] [--text FILE] [--max-tokens 256]
 
 Common options:
   --config configs/x.json --out-dir DIR   standalone use (the server must already be up). Inside a bench.py run
@@ -35,6 +37,12 @@ multiturn: each conversation grows by the answer plus --turn-tokens (default 256
 invariance: N prompts at temperature 0, first one at a time, then all N together; invariance_same = share of
   prompts whose output_sha12 is identical. Uses rig.json cache_bypass "request_field" when set, else the together
   run hits a warm prefix cache (the path differs in cache state too; the warning says so).
+soak: --rounds (default 1) rounds of N concurrent requests started together, each a different full-length document
+  (--context minus --max-tokens, 128 tokens of question room and 16 per needle) with --needles (default 3) random
+  codes at evenly spaced depths (the bench.py --long needle convention), at temperature 0. A code counts as found
+  only when it appears verbatim in the answer. Any missed code or failed request exits non-zero, so a config
+  "tests" entry flags TEST_FAIL. soak_needles = codes planted = N x rounds x needles; a failed request's codes count
+  as missed.
 
 Output: one row per request appended to <run_dir>/requests.jsonl (requests.jsonl schema plus "test", "workload",
 "wall_ms"); flat numeric metrics in <run_dir>/tests/<name>/metrics.json, <name> = env BENCH_TEST_NAME or the
@@ -42,7 +50,9 @@ subcommand. Metric names: decode_step_ms_d<pct>, decode_ms_per_token_d<pct>, dec
 prefill_tokens_d<pct>, cached_share_d<pct>, low_n_d<pct>, clients<N>_aggregate, clients<N>_per_stream,
 clients<N>_ttft_p50_ms, clients<N>_ttft_p99_ms, multiturn_reused_tokens, multiturn_fresh_tokens,
 multiturn_reusable_tokens, multiturn_reuse_share, multiturn_ttft_ms_t<k>, invariance_same, invariance_n,
-invariance_bypass, real_text, failed. A failed request is logged with "error" and counted in failed."""
+invariance_bypass, soak_n, soak_rounds, soak_needles, soak_found, soak_missed, soak_prompt_tokens (median),
+soak_ttft_p50_ms, soak_ttft_p99_ms, real_text, failed. A failed request is logged with "error" and counted in
+failed."""
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bench
@@ -52,9 +62,11 @@ SUBS = {
     "clients": {"n", "max_tokens", "prompt_tokens", "rounds"},
     "multiturn": {"turns", "interleave", "max_tokens", "prompt_tokens", "turn_tokens"},
     "invariance": {"n", "max_tokens", "prompt_tokens"},
+    "soak": {"n", "context", "needles", "rounds", "max_tokens"},
 }
 COMMON = {"config", "out_dir", "text", "seed", "tpw", "rig"}
-REQUIRED = {"sweep": {"context"}, "clients": {"n"}, "multiturn": {"turns"}, "invariance": {"n"}}
+REQUIRED = {"sweep": {"context"}, "clients": {"n"}, "multiturn": {"turns"}, "invariance": {"n"},
+            "soak": {"n", "context"}}
 QUESTIONS = [
     "Summarize the text above in detail, section by section.",
     "List the main claims of the text above and explain each one.",
@@ -371,10 +383,56 @@ def invariance(run, o):
                        "invariance_bypass": int(bool(extra))})
 
 
+def soak(run, o):
+    n, ctx, k = int(o["n"]), int(o["context"]), int(o.get("needles", 3))
+    rounds, mt = int(o.get("rounds", 1)), int(o.get("max_tokens", 256))
+    depth = ctx - mt - 128 - 16 * k
+    run.calibrate(bench.Client(run.cfg))
+    found = missed = 0
+    ttfts, pts = [], []
+    print(f"{'round':>5} {'ok':>4} {'found':>9} {'TTFT p50 ms':>12} {'TTFT max ms':>12}")
+    for rd in range(rounds):
+        out = [None] * n
+        barrier = threading.Barrier(n)
+
+        def worker(i, rd=rd, out=out, barrier=barrier):
+            c = bench.Client(run.cfg)
+            tag = f"soak-r{rd}-s{i}"
+            words = run.text(depth, tag).split()
+            codes = bench.plant_needles(words, random.Random(f"{run.seed}-{run.pass_}-{tag}-needles"), k)
+            msgs = user(run.prefix(tag) + " ".join(words) + bench.NEEDLE_QUESTION)
+            barrier.wait()
+            out[i] = run.chat(c, msgs, mt, tag, batch=n, temperature=0), codes
+
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(n)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        hits_rd, ts = 0, []
+        for i, (r, codes) in enumerate(out):
+            lost = codes if r.get("error") else bench.missing_needles(r.get("text") or "", codes)
+            hits_rd += k - len(lost)
+            if lost:
+                print(f"NEEDLE_MISS soak-r{rd}-s{i}: {k - len(lost)}/{k} found, missing {' '.join(lost)}",
+                      file=sys.stderr)
+            if not r.get("error"):
+                ts += [ttft(r)] if ttft(r) is not None else []
+                pts += [r["prompt_tokens"]] if r.get("prompt_tokens") else []
+        found, missed, ttfts = found + hits_rd, missed + n * k - hits_rd, ttfts + ts
+        print(f"{rd:>5} {len([r for r, _ in out if not r.get('error')]):>4} {f'{hits_rd}/{n * k}':>9} "
+              f"{cell(pctl(ts, 0.5), 12)} {cell(max(ts) if ts else None, 12)}")
+    run.write_metrics({"soak_n": n, "soak_rounds": rounds, "soak_needles": found + missed, "soak_found": found,
+                       "soak_missed": missed, "soak_prompt_tokens": statistics.median(pts) if pts else None,
+                       "soak_ttft_p50_ms": pctl(ttfts, 0.5), "soak_ttft_p99_ms": pctl(ttfts, 0.99)})
+    if missed:
+        sys.exit(f"soak failed: {missed}/{found + missed} code(s) missed, {run.failed} request(s) failed")
+
+
 def main(argv):
     sub, o = parse(argv)
     run = Run(sub, o)
-    {"sweep": sweep, "clients": clients, "multiturn": multiturn, "invariance": invariance}[sub](run, o)
+    {"sweep": sweep, "clients": clients, "multiturn": multiturn, "invariance": invariance, "soak": soak}[sub](run, o)
     if run.failed:
         sys.exit(f"{run.failed} request(s) failed")
 

@@ -64,10 +64,16 @@ A load is the costly, noisy step: weight load, JIT and graph capture, allocator 
 - **List every test for the experiment before the first run** and put them in the config's `tests` list, so they run in the same load:
   - built-in timing;
   - the depth buckets the card predicts a gain in (next section);
-  - needles (`--long N,N`, one load);
   - the quality evidence for the change's class (`quality.md`);
   - proof (`"proof"`).
   A failed test flags `TEST_FAIL`. Keep the same order in every load: position in the load changes thermals and cache state.
+- **The stability gate (`SKILL.md` rule 6): its needles and soak run last, in the candidate load only.** The control is the current best and already passed them; they are pass/fail, not a paired comparison. The gate's lossless part is the quality evidence above, which runs in both loads. In the candidate load:
+  - needles at C/2 and C, the context target and its half (`bench.py run --long C/2,C`; they run after all passes and tests; a miss flags `NEEDLE_MISS`);
+  - if the config sizes the KV pool or max running requests for N users at full context: a `tests` entry `python3 scripts/workloads.py soak --n N --context C [--text FILE] [--needles 3] [--rounds 1]` with `"last": true`, so it runs once after all passes. A missed code or failed request fails it (`TEST_FAIL`).
+  The candidate config then differs from the control only by gate entries at the end; they run after everything compared, so timing stays paired. If the candidate load would get too long (e.g. a long N-user soak), run them in one gate-only load after ACCEPT instead. Write `best-config.json` only after ACCEPT and a gate pass; a gate failure rejects with reason "stability gate".
+- **How `verdict` sees a gate failure:** a hard flag (`NEEDLE_MISS`, `TEST_FAIL`) on the latest candidate load makes it REJECT; in triple mode any flagged compared run rejects. Older flagged candidate loads are only skipped.
+  - Gate in the candidate load: `verdict` rejects on its own. Write "stability gate" and the flag in `PLAN.md`.
+  - Gate-only load after ACCEPT: run it under the candidate's config name, then rerun `verdict`; a flagged gate load makes it REJECT. Never take an ACCEPT from before the gate load as final.
 - **Smoke-start the candidate once before queueing:** launch it, send one short request, read the answer and the proof line, stop it. A candidate that fails to load or falls back should not cost a queue slot.
 - **Default: two loads.** One control load with every test, then one candidate load with every test, each with several passes. Run them with `bash scripts/queue.sh ctl cand` and decide with `python3 scripts/bench.py verdict --ctl ctl --cand cand --predicted PCT`. `verdict` reads every ok load of both configs (`--since ISO` to limit them). If the bar is above the effect you predict, add loads of both configs: from the formula, `bar = max(k × sd_load × sqrt(1/L_ctl + 1/L_cand), floor_pct)`; extra passes only shrink `se_prompt` and the trend check.
 - **The noise split picks the mode:**

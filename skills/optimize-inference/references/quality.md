@@ -48,14 +48,16 @@ long sessions.
 ## Quality contract
 
 Write it in `THEORY.md` before the first run of a round. Each planned change gets a class, its per-change evidence and
-a margin. Per change, collect only the cheap evidence. The end-of-round gates are proposed; the user decides.
+a margin. Per change, collect only the cheap evidence. The stability gate (`SKILL.md` rule 6: needles at C/2 and C, a
+soak if sized for N users, the per-change evidence if the change claims l0 or l1) is always required, for every class.
+The end-of-round column lists what is proposed on top of it; the user decides.
 
-| change class | example | per-change evidence | end of round (proposed; user decides) |
+| change class | example | per-change evidence | end of round, on top of the stability gate (proposed; user decides) |
 |---|---|---|---|
 | same bits | layout, schedule, fusion | l0 hash on touched paths | none extra |
-| rounding level | summation order, chunk size, accumulation dtype | routing REPLAYED; per-step full-vocab KL/TV vs floor per depth bucket; dNLL equivalence | needles, multi-turn, thinking on/off |
+| rounding level | summation order, chunk size, accumulation dtype | routing REPLAYED; per-step full-vocab KL/TV vs floor per depth bucket; dNLL equivalence | needles at every depth bucket, multi-turn, thinking on/off |
 | discrete decisions | router dtype, expert skip, top-k | FREE routing, on-policy at served settings: expert-set agreement + resulting KL/TV and dNLL vs floor | long agent sessions with loop flags, paired tasks |
-| lossy format | quant, int8 KV, fp8 prefill | dNLL ± CI, KL quantiles vs reference | full suite, needles at depth, long sessions |
+| lossy format | quant, int8 KV, fp8 prefill | dNLL ± CI, KL quantiles vs reference | full suite, needles at every depth bucket, long sessions |
 | spec decoding, sampling | draft length, verify kernel | l0 on verify logits; target distribution unchanged | none extra |
 | cache, batching, concurrency | prefix cache, lanes | l0 or l1 on cached appends, together vs alone | multi-turn switching, N streams |
 

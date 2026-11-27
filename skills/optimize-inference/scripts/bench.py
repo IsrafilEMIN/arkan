@@ -62,7 +62,7 @@ Config (JSON; the notes after "<-" are explanation only, not JSON):
     "memory": {"cap_gib": 46, "probe": ["bash", "scripts/mem.sh", "--pid", "{pid}"], "interval_s": 3},
     "preflight": [["systemctl", "is-active", "fan-guard"]],   <- must exit 0 before launch and at the end
     "tests": [{"name": "sweep", "cmd": ["python3", "scripts/workloads.py", "sweep", "--context", "65536"],
-               "timeout_s": 1800, "once": false}],
+               "timeout_s": 1800, "once": false, "last": false}],
     "proof": ["bash", "proof.sh"], "proof_timeout_s": 300
   }
 
@@ -125,7 +125,8 @@ commands; a failed blocking check writes a RIG_BLOCK row and exits 1. rig.json c
 on_ac (default block) also sets ON_BATTERY at the end of the run only when its level is block; host_ram_floor at
 level block lets the watchdog stop the server. Machine state (rig.state) is recorded at start and end.
 
-Test hooks run after each pass (or only the first with "once": true), with env BENCH_BASE_URL, BENCH_MODEL,
+Test hooks run after each pass (or only the first with "once": true, or once after all passes, before the --long
+needles, with "last": true; "once" and "last" together are an error), with env BENCH_BASE_URL, BENCH_MODEL,
 BENCH_RUN, BENCH_RUN_ID, BENCH_RUN_DIR, BENCH_CONFIG (resolved config path), BENCH_PASS, BENCH_ENGINE_LOG,
 BENCH_LOG_OFFSET (engine-log byte offset at test start), BENCH_TEST_NAME. Non-zero exit or timeout flags TEST_FAIL.
 proof runs once after everything, while the server is up; it must exit 0 only if the changed code path really ran.
@@ -352,6 +353,10 @@ def load_config(path, _seen=()):
         out["launch"] = _edit_args(out["launch"], cfg.get("args_set") or {}, cfg.get("args_del") or [], path)
     if "name" not in out:
         sys.exit(f"{path}: missing name")
+    for t in out.get("tests") or []:
+        if t.get("once") and t.get("last"):
+            sys.exit(f"{path}: test {t.get('name')}: \"once\" (first pass only) and \"last\" (once after all passes) "
+                     "are mutually exclusive")
     return out
 
 
@@ -742,6 +747,22 @@ def filler(n_words, rng):
     return " ".join(rng.choice(WORDS) for _ in range(max(1, n_words)))
 
 
+NEEDLE_QUESTION = ("\n\nList every secret code number and its value that appears in the document above. "
+                   "Answer only with the codes.")
+
+
+def plant_needles(words, rng, needles=3):
+    n_words = len(words)
+    codes = ["".join(rng.choices(string.ascii_uppercase + string.digits, k=8)) for _ in range(needles)]
+    for i, c in enumerate(codes):
+        words.insert(int(n_words * (i + 1) / (needles + 1)), f". The secret code number {i + 1} is {c}. ")
+    return codes
+
+
+def missing_needles(text, codes):
+    return [c for c in codes if c not in text]
+
+
 class Bench:
     def __init__(self, cfg, rig_path, samplers):
         self.cfg, self.name, self.t0 = cfg, cfg["name"], time.monotonic()
@@ -1108,13 +1129,14 @@ class Bench:
             self.tests(p)
             self.res["passes"] = p + 1
 
+        self.tests(passes - 1, last=True)
         if long_ctx:
             self.phase("long")
         for L in long_ctx:
             pid = f"long-{L}"
             prompt, codes = self.document(L, 0, pid)
             r = self.req("long", pid, prompt, 256, 0, prefix=False, temperature=0.0)
-            hits = sum(c in r["text"] for c in codes)
+            hits = len(codes) - len(missing_needles(r["text"], codes))
             pt, tt = r["prompt_tokens"], r["ttft_ms"]
             self.res.setdefault("long", {})[str(L)] = {
                 "prompt_tokens": pt, "ttft_s": tt and round(tt / 1000, 1),
@@ -1145,17 +1167,12 @@ class Bench:
 
     def document(self, tokens, p, pid, needles=3):
         rng = random.Random(f"{self.seed}-{p + self.pass_offset}-{pid}")
-        n_words = int(tokens / self.tpw)
-        words = [rng.choice(WORDS) for _ in range(n_words)]
-        codes = ["".join(rng.choices(string.ascii_uppercase + string.digits, k=8)) for _ in range(needles)]
-        for i, c in enumerate(codes):
-            words.insert(int(n_words * (i + 1) / (needles + 1)), f". The secret code number {i + 1} is {c}. ")
-        q = ("\n\nList every secret code number and its value that appears in the document above. "
-             "Answer only with the codes.")
-        return self.prefix(p, pid) + " ".join(words) + q, codes
+        words = [rng.choice(WORDS) for _ in range(int(tokens / self.tpw))]
+        codes = plant_needles(words, rng, needles)
+        return self.prefix(p, pid) + " ".join(words) + NEEDLE_QUESTION, codes
 
-    def tests(self, p):
-        tests = [t for t in self.cfg.get("tests") or [] if not (t.get("once") and p > 0)]
+    def tests(self, p, last=False):
+        tests = [t for t in self.cfg.get("tests") or [] if bool(t.get("last")) == last and not (t.get("once") and p > 0)]
         if tests:
             self.phase("tests")
         for t in tests:
