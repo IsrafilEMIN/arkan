@@ -54,7 +54,7 @@ Tell the user the worktree path and the branch.
 - The bash tool resets its working directory after each turn. Give the worktree path as `cwd` on every bash call, and give absolute worktree paths to `read`, `edit` and `write`. A relative path or a missing `cwd` changes the main checkout.
 - Give the worktree path to each subagent in its task.
 - Keep unrelated work out. A second change gets its own worktree.
-- Commit each finished unit as you go, as a small commit that can land alone. Never change git config. If git has no committer identity, give it for that one commit with `git -c user.name=<name> -c user.email=<email> commit`, with the identity the host uses.
+- Commit each finished unit as you go, as a small commit that can land alone. Commit from bash with the worktree as `cwd`, not with the eval commit helper (`commit.draft()`): it works on the session's checkout, not the worktree. Never change git config. If git has no committer identity, give it for that one commit with `git -c user.name=<name> -c user.email=<email> commit`, with the identity the host uses.
 
 ## 4. Hand off
 
