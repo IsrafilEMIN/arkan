@@ -29,7 +29,7 @@ Stages: probe → opt-in build → A/B → stability gate → other gates. The s
 
 ## Load plan
 - Loads and ETA: <e.g. ctl + cand, 2 loads × 3 passes, ~25 min>
-- Stability gate: needles at <C/2>, <C>; soak N = <N, or n/a>; lossless evidence: <l0 / l1, or n/a>; runs <last in cand load | gate-only load after ACCEPT>
+- Stability gate: `--long <C/2>,<C>`; `--soak <N>` or n/a; lossless evidence: <l0 / l1, or n/a>; runs <last in cand load | gate-only load after ACCEPT>
 
 ## Proof it ran
 - How we will show the new path ran in serving: <trace, counter, log line>

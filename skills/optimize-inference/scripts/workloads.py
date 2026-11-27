@@ -394,13 +394,16 @@ def soak(run, o):
     for rd in range(rounds):
         out = [None] * n
         barrier = threading.Barrier(n)
-
-        def worker(i, rd=rd, out=out, barrier=barrier):
-            c = bench.Client(run.cfg)
+        docs = []
+        for i in range(n):
             tag = f"soak-r{rd}-s{i}"
             words = run.text(depth, tag).split()
             codes = bench.plant_needles(words, random.Random(f"{run.seed}-{run.pass_}-{tag}-needles"), k)
-            msgs = user(run.prefix(tag) + " ".join(words) + bench.NEEDLE_QUESTION)
+            docs.append((tag, user(run.prefix(tag) + " ".join(words) + bench.NEEDLE_QUESTION), codes,
+                         bench.Client(run.cfg)))
+
+        def worker(i, out=out, barrier=barrier, docs=docs):
+            tag, msgs, codes, c = docs[i]
             barrier.wait()
             out[i] = run.chat(c, msgs, mt, tag, batch=n, temperature=0), codes
 

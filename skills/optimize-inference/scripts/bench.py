@@ -2,8 +2,8 @@
 """Engine-agnostic hill-climb benchmark for any OpenAI-compatible server (vLLM, SGLang, llama.cpp server,
 TabbyAPI, MLX-LM server, LM Studio, Ollama's /v1 ...) or any engine behind a small CLI driver. Standard library only.
 
-  python3 scripts/bench.py run configs/NAME.json [--passes N] [--long N[,N...]] [--skip-cN] [--reps 6] [--reuse]
-                                                 [--determinism] [--no-samplers] [--rig rig.json]
+  python3 scripts/bench.py run configs/NAME.json [--passes N] [--long N[,N...]] [--soak N] [--skip-cN] [--reps 6]
+                                                 [--reuse] [--determinism] [--no-samplers] [--rig rig.json]
   python3 scripts/bench.py show [ledger.jsonl]
   python3 scripts/bench.py verdict --ctl NAME --cand NAME [--since ISO] [--metric c1_decode] [--watch m1,m2]
                                    [--predicted PCT] [--surprise-ratio 2] [--ledger ledger.jsonl] [--rig rig.json]
@@ -20,6 +20,8 @@ run options
   --passes N     timed passes inside one load (default: config "passes", else 1). Each pass repeats ttft, c1, cN,
                  prefill and tests with fresh prompt prefixes, so the prefix cache cannot hit between passes.
   --long N,...   one long-context needle retrieval per length after the passes (e.g. 65536,131072).
+  --soak N       after the passes, run `workloads.py soak --n N --context <largest --long>` as the test "soak"
+                 (needs --long). With --long, the stability gate as run flags: give them to the candidate run only.
   --skip-cN      skip the concurrency test.   --reps 6   c1 requests per pass.
   --reuse        skip stop+launch if the server is healthy and .bench-server.json records the same launch,
                  base_url and env (use it for request-field options, e.g. an extra_body toggle).
@@ -62,7 +64,7 @@ Config (JSON; the notes after "<-" are explanation only, not JSON):
     "memory": {"cap_gib": 46, "probe": ["bash", "scripts/mem.sh", "--pid", "{pid}"], "interval_s": 3},
     "preflight": [["systemctl", "is-active", "fan-guard"]],   <- must exit 0 before launch and at the end
     "tests": [{"name": "sweep", "cmd": ["python3", "scripts/workloads.py", "sweep", "--context", "65536"],
-               "timeout_s": 1800, "once": false, "last": false}],
+               "timeout_s": 1800, "once": false}],
     "proof": ["bash", "proof.sh"], "proof_timeout_s": 300
   }
 
@@ -125,8 +127,7 @@ commands; a failed blocking check writes a RIG_BLOCK row and exits 1. rig.json c
 on_ac (default block) also sets ON_BATTERY at the end of the run only when its level is block; host_ram_floor at
 level block lets the watchdog stop the server. Machine state (rig.state) is recorded at start and end.
 
-Test hooks run after each pass (or only the first with "once": true, or once after all passes, before the --long
-needles, with "last": true; "once" and "last" together are an error), with env BENCH_BASE_URL, BENCH_MODEL,
+Test hooks run after each pass (or only the first with "once": true), with env BENCH_BASE_URL, BENCH_MODEL,
 BENCH_RUN, BENCH_RUN_ID, BENCH_RUN_DIR, BENCH_CONFIG (resolved config path), BENCH_PASS, BENCH_ENGINE_LOG,
 BENCH_LOG_OFFSET (engine-log byte offset at test start), BENCH_TEST_NAME. Non-zero exit or timeout flags TEST_FAIL.
 proof runs once after everything, while the server is up; it must exit 0 only if the changed code path really ran.
@@ -353,10 +354,6 @@ def load_config(path, _seen=()):
         out["launch"] = _edit_args(out["launch"], cfg.get("args_set") or {}, cfg.get("args_del") or [], path)
     if "name" not in out:
         sys.exit(f"{path}: missing name")
-    for t in out.get("tests") or []:
-        if t.get("once") and t.get("last"):
-            sys.exit(f"{path}: test {t.get('name')}: \"once\" (first pass only) and \"last\" (once after all passes) "
-                     "are mutually exclusive")
     return out
 
 
@@ -987,7 +984,7 @@ class Bench:
             self.watch = MemWatch(self.cfg["memory"], self.cfg.get("pidfile"), self.client.env, self.on_memcap)
             self.watch.start()
 
-    def run(self, passes, long_ctx, skip_cn, reps, reuse, determinism):
+    def run(self, passes, long_ctx, skip_cn, reps, reuse, determinism, soak):
         cfg, res = self.cfg, self.res
         log("run", self.run_id, "->", self.dir)
         self.event("start", passes=passes, config_hash=res["config_hash"])
@@ -1046,7 +1043,7 @@ class Bench:
                 self.watch.server_up = True
             self.write_identity(self.client.models())
             res["state_start"] = self.state()
-            self.timed(passes, long_ctx, skip_cn, reps, determinism)
+            self.timed(passes, long_ctx, skip_cn, reps, determinism, soak)
             self.save_server_state(state, self.pass_offset + passes)
             res["ok"] = True
         except Abort as e:
@@ -1073,7 +1070,7 @@ class Bench:
         with open(SERVER_STATE, "w") as f:
             json.dump({**state, "passes_used": used, "pids": self.allow_pids}, f)
 
-    def timed(self, passes, long_ctx, skip_cn, reps, determinism):
+    def timed(self, passes, long_ctx, skip_cn, reps, determinism, soak):
         cfg = self.cfg
         self.phase("warmup")
         self.req("warmup", "warmup", "Say hello.", 16, 0, prefix=False)
@@ -1129,7 +1126,10 @@ class Bench:
             self.tests(p)
             self.res["passes"] = p + 1
 
-        self.tests(passes - 1, last=True)
+        if soak:
+            cmd = [sys.executable, os.path.join(HERE, "workloads.py"), "soak", "--n", str(soak),
+                   "--context", str(max(long_ctx))]
+            self.tests(passes - 1, only=[{"name": "soak", "cmd": cmd}])
         if long_ctx:
             self.phase("long")
         for L in long_ctx:
@@ -1171,8 +1171,8 @@ class Bench:
         codes = plant_needles(words, rng, needles)
         return self.prefix(p, pid) + " ".join(words) + NEEDLE_QUESTION, codes
 
-    def tests(self, p, last=False):
-        tests = [t for t in self.cfg.get("tests") or [] if bool(t.get("last")) == last and not (t.get("once") and p > 0)]
+    def tests(self, p, only=None):
+        tests = only if only is not None else [t for t in self.cfg.get("tests") or [] if not (t.get("once") and p > 0)]
         if tests:
             self.phase("tests")
         for t in tests:
@@ -1312,10 +1312,10 @@ class Bench:
 
 
 def run(cfg_path, passes=None, long_ctx=(), skip_cn=False, reps=6, reuse=False, determinism=False, samplers=True,
-        rig_path="rig.json"):
+        rig_path="rig.json", soak=None):
     cfg = load_config(cfg_path)
     passes = max(1, int(passes or cfg.get("passes", 1)))
-    return Bench(cfg, rig_path, samplers).run(passes, long_ctx, skip_cn, reps, reuse, determinism)
+    return Bench(cfg, rig_path, samplers).run(passes, long_ctx, skip_cn, reps, reuse, determinism, soak)
 
 
 def normalize(d):
@@ -1845,11 +1845,13 @@ def main(a):
     else:
         if len(a) < 2 or a[1].startswith("--"):
             sys.exit(__doc__)
+        if opt("--soak") and not opt("--long"):
+            sys.exit("--soak N needs --long: the soak runs at the largest --long length")
         res = run(a[1], passes=opt("--passes"),
                   long_ctx=[int(x) for x in opt("--long").split(",")] if opt("--long") else (),
                   skip_cn="--skip-cN" in a, reps=int(opt("--reps", 6)), reuse="--reuse" in a,
                   determinism="--determinism" in a, samplers="--no-samplers" not in a,
-                  rig_path=opt("--rig", "rig.json"))
+                  rig_path=opt("--rig", "rig.json"), soak=int(opt("--soak")) if opt("--soak") else None)
         sys.exit(0 if res["ok"] else 1)
 
 

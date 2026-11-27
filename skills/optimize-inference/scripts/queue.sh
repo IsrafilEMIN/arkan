@@ -12,7 +12,7 @@ QUEUE_STOP_FLAGS (default: RIG_BLOCK HOST_FLOOR NO_PROGRESS STATE_CHANGED MEM_CA
 ON_BATTERY TEST_FAIL NO_PROOF), QUEUE_LOCK, RIG_JSON (rig.json), LEDGER (ledger.jsonl), QUEUE_LOG (queue.jsonl).
 Examples:
   BENCH_FLAGS="--passes 3" bash scripts/queue.sh ctl cand        # one load per config, passes inside each load
-  BENCH_FLAGS="--long 65536,131072" bash scripts/queue.sh cand   # both needle lengths in one load
+  BENCH_FLAGS="--long 65536,131072 --soak 4" bash scripts/queue.sh cand   # stability gate, candidate only
   BENCH_FLAGS="--reuse" bash scripts/queue.sh ctl cand ctl cand  # same launch (e.g. extra_body toggle): alternate in one load
   bash scripts/queue.sh ctl-a cand ctl-b                         # triple mode, when between-load noise is large
 Detach long queues so they survive agent/terminal restarts (on macOS, which has no setsid, python3 calls it):
