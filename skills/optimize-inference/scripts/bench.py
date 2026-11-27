@@ -797,10 +797,7 @@ class Bench:
         log("phase", name)
         self.event("phase", name=name)
         if self.sampler:
-            try:
-                self.sampler.phase(name)
-            except Exception:
-                pass
+            self.sampler.phase(name)
 
     def prefix(self, p, pid):
         return f"[run-seed {self.seed} pass {p + self.pass_offset} prompt {pid}] "
@@ -900,10 +897,7 @@ class Bench:
         cfg, results, blocked = self.cfg, [], []
         if self.rigmod:
             try:
-                try:
-                    results = self.rigmod.preflight(self.rig, cards=cfg.get("cards"), allow_pids=self.allow_pids or None)
-                except TypeError:
-                    results = self.rigmod.preflight(self.rig, cards=cfg.get("cards"))
+                results = self.rigmod.preflight(self.rig, cards=cfg.get("cards"), allow_pids=self.allow_pids or None)
                 if own_server_up and not self.allow_pids:
                     for r in results:
                         if r.get("check") == "cards_idle" and r.get("status") == "fail":
